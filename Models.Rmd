@@ -1,0 +1,617 @@
+---
+title: "Model"
+output: html_document
+date: "2025-11-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, user functions}
+mkLogGaborFilters <- function(orientations = orientations, spatialfrequency = spatialfrequency, imageSize = imageSize, stimSizeDeg = stimSizeDeg, OrientationBandwidth = 20, SpatialFrequencyBandwidth = 0.65, returnSFGabor = FALSE){
+  
+  # Define gabor matrices
+  SFGaborFFT <- array(NA, dim = c(imageSize,imageSize,length(spatialfrequency)))
+  ORIGaborFFT <- array(NA, dim = c(imageSize,imageSize,length(orientations),length(spatialfrequency)))
+  
+  # Make the Radius and Angle Maps
+  xrange <- seq(-imageSize/2,(imageSize/2-1), length.out = imageSize)
+  yrange <- seq(-imageSize/2,(imageSize/2-1), length.out = imageSize)
+  meshOut <- matlab::meshgrid(xrange,yrange)
+  Radius <- sqrt(meshOut$x**2+meshOut$y**2)
+  Radius.FFTShift <- circshift(Radius, c(matlab::fix(imageSize/2),matlab::fix(imageSize/2)))
+  Radius.FFTShift[1,1] <- 1
+  Radius.NoDC <- circshift(Radius.FFTShift, c(matlab::fix(imageSize/2),matlab::fix(imageSize/2)))
+  
+  thetaMap <- atan2(meshOut$x, meshOut$y)
+  sinThetaMap <- sin(thetaMap)
+  cosThetaMap <- cos(thetaMap)
+  
+  # Define filter tuning
+  logCF <- spatialfrequency
+  logCFcpi <- spatialfrequency * stimSizeDeg
+  sigmaonF <- SpatialFrequencyBandwidth
+  sigmaonO <- OrientationBandwidth * (pi/180)
+  
+  # Make the filters
+  for (S in 1:length(spatialfrequency)){
+    SFGabor <- normalizeBR(exp(-((log(Radius/logCFcpi[S])**2)/(2*log(sigmaonF)**2))))
+    SFGaborFFT[,,S] <- circshift(SFGabor, c(matlab::fix(imageSize/2),matlab::fix(imageSize/2)))
+    
+    for (O in 1:length(orientations)){
+      angl <- orientations[O] * (pi/180)
+      differenceSine1 <- sinThetaMap * cos(angl) - cosThetaMap * sin(angl)
+      differenceCosine1 <- cosThetaMap * cos(angl) + sinThetaMap * sin(angl)
+      differenceTheta1 <- abs(atan2(differenceSine1,differenceCosine1))
+      
+      differenceSine2 <- sinThetaMap * cos(angl+pi) - cosThetaMap * sin(angl+pi)
+      differenceCosine2 <- cosThetaMap * cos(angl+pi) + sinThetaMap * sin(angl+pi)
+      differenceTheta2 <- abs(atan2(differenceSine2,differenceCosine2))
+      
+      thetaGauss1 <- exp((-differenceTheta1**2) / (2*sigmaonO**2))
+      thetaGauss2 <- exp((-differenceTheta2**2) / (2*sigmaonO**2))
+      
+      OrientationFilter <- thetaGauss1 + thetaGauss2
+      OrientationFilter[1,1] <- 0
+      ORIGabor <- normalizeBR(OrientationFilter*SFGabor)
+      ORIGabor <- ORIGabor
+      ORIGaborFFT[,,O,S] <- circshift(ORIGabor, c(matlab::fix(imageSize/2),matlab::fix(imageSize/2)))
+    }
+  }
+  if (returnSFGabor){
+    return(SFGaborFFT)
+  } else {
+    return(ORIGaborFFT)
+  }
+}
+
+makeSymmetric <- function(aMatrix){
+  matrixSize <- dim(aMatrix)
+  h <- matrixSize[1]
+  w <- matrixSize[2]
+  
+  SYMMTRC_RAND_PHASE <- matrix(NA, nrow = w, ncol = w)
+  
+  extrapixl <- (h+1)
+  midC <- h/2
+  after_midC1 <- ((h/2)+1)
+  after_midC2 <- ((h/2)+2)
+  
+  tmp_phse1 <- aMatrix
+  tmp_phse2 <- matrix(0,nrow = extrapixl, ncol = extrapixl)
+  tmp_phse2[1:h,1:w] <- tmp_phse1*-1
+  tmp_phse2[after_midC2:extrapixl,1:w] <- matlab::flipud(tmp_phse2[1:midC,1:w])
+  tmp_phse2[after_midC2:extrapixl,1:extrapixl] <- matlab::fliplr(tmp_phse2[after_midC2:extrapixl,1:extrapixl])
+  tmp_phse2[after_midC2:extrapixl,1:1] <- matlab::flipud(tmp_phse2[1:midC,1:1])
+  tmp_phse2[after_midC1:after_midC1,1:midC] <- matlab::fliplr(tmp_phse2[after_midC1:after_midC1,after_midC2:extrapixl])
+  tmp_phse2[1:midC,1:w] <- tmp_phse1[1:midC,1:w]
+  tmp_phse2[1:1,1:midC] <- matlab::fliplr(tmp_phse2[1:1,after_midC2:extrapixl])*-1
+  tmp_phse2[after_midC1:after_midC1,1:midC] <- matlab::fliplr(tmp_phse2[after_midC1:after_midC1,after_midC2:extrapixl])*-1
+  SYMMTRC_RAND_PHASE[1:w,1:w] <- tmp_phse2[1:h,1:w]
+  SYMMTRC_RAND_PHASE[1,after_midC1] <- 0
+  SYMMTRC_RAND_PHASE[after_midC1,after_midC1] <- 0
+  return(SYMMTRC_RAND_PHASE)
+}
+
+mkRadiusMap <- function(imageSize){
+  theGrid <- matlab::meshgrid(0:(imageSize/2),0:(imageSize/2))
+  theRadius <- sqrt(theGrid$x**2 + theGrid$y**2)
+  theRadius <- cbind(theRadius, matlab::fliplr(theRadius[,2:(imageSize/2)]))
+  theRadius <- rbind(theRadius, matlab::flipud(theRadius[2:(imageSize/2),]))
+  theRadius[1,1] <- 1
+  theRadius <- fftshift.BR(theRadius)
+  return(theRadius)
+}
+
+fftshift.BR <- function(im){
+  imageSize <- max(dim(im))
+  imageShifted <- fliplr(flipud(circshift(im,c(matlab::fix(imageSize/2),matlab::fix(imageSize/2)))))
+  return(imageShifted)
+}
+
+normalizeBR <- function(input){
+  A <- input - min(input)
+  out <- A / max(A)
+  return(out)
+}
+```
+
+# preliminaries
+
+```{r, preliminaries, echo = FALSE, warning=FALSE, message=FALSE }
+packagelist <- c('R.matlab','pracma','EnvStats', "matlab")
+
+missingpackages <- packagelist[!packagelist %in% installed.packages()[,1]]
+if (length(missingpackages)>0){install.packages(missingpackages)}
+toinstall <- packagelist[which(!packagelist %in% (.packages()))]
+invisible(lapply(toinstall,library,character.only=TRUE))
+
+addalpha <- function(col, alpha=1){apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))}
+
+posterColours <- c("#333E47", "#6a757c", "#e31936")
+posterColoursRamped <- colorRampPalette(posterColours, space = "Lab", interpolate = "spline")(8)
+categoricalPalette <- c("#333E47","#3B5C62","#777079", "#4A6F74","#B94256", "#5E767B", "#955F6D", "#E31835")
+
+```
+
+# Get Participant Data
+
+```{r, dataload,  echo = FALSE}
+theCompleteParticipants <- c("001", "002", "003", "004", "007", "008", "009", "010", "011", "012", "013", "014", "015")
+
+currentDirectory <- getwd()
+processedEEGdir <- paste0(currentDirectory, "/Processed Data/")
+
+theParticipantFiles <- list.files(processedEEGdir, pattern = paste0(theCompleteParticipants, collapse = "|"))
+allPConditionData <- array(NA, dim = c(200,13,length(theParticipantFiles)))
+
+for (P in 1:length(theParticipantFiles)){
+  load(paste0(currentDirectory, "/Processed Data/", theParticipantFiles[P]))
+  allPConditionData[,,P] <- avgSNRCondition2
+}
+
+allPConditionData[1,,] <- 1
+
+pAveragedSNRLog <- apply(allPConditionData, c(1,2), median, na.rm = TRUE)
+noiseConditionsAvg <- pAveragedSNRLog[,c(1:3, 13)]
+noiseConditionsIndv <- allPConditionData[, c(1:3, 13), ]
+pAveragedSNRLog <- apply(allPConditionData, c(1,2), median, na.rm = TRUE)
+
+theFs <- c(31, 61, 91, 121, 151, 181)
+conditions <- c("Correlated Noise", "Correlated Noise\nWith Stereo Cue", "Anticorrelated Noise", "Control")
+```
+
+```{r, fig.width=12}
+par(mfcol = c(1,4), pty = "s", mai = c(.1,.2,.1,.1), omi = c(.25,.4,.1,.1))
+noiseConditionsAvg[1:10,] <-1
+
+for (i in 1:4){
+  plot(x = NULL, y = NULL, ylim = c(0,6), xlim = c(0,210), axes = FALSE, ann = FALSE)
+  axis(1,  at = c(0,3,6,9,12,15,18,21)*10+1, tck = -.015, lwd = 2, labels = FALSE)
+  axis(2,  at = pretty(c(0,6)), tck = -.015, lwd = 2, labels = FALSE)
+  
+  mtext(c(0,3,6,9,12,15,18,21), 1, at = c(0,3,6,9,12,15,18,21)*10+1, line = .6)
+  mtext("Frequency (Hz)", 1, font = 2, line = 2)
+  if (i == 1) {
+    mtext(pretty(c(0,6)), 2, at = pretty(c(0,6)), line = .6, las = 1)
+    mtext("SNR", 2, font = 2, line = 2 )
+  }
+  mtext(conditions[i], 3, font = 2)
+  
+  abline(h = 1, lwd = 2, col = posterColours[2])
+  abline(v = theFs, lty = 2, col = posterColours[2])
+  
+  lines(1:200, noiseConditionsAvg[,i], lwd = 3, col = posterColours[1])
+}
+```
+
+# Compare the conditions
+
+```{r, Correlated Noise to Control}
+realMedianDiff <- noiseConditionsAvg[31,1] - noiseConditionsAvg[31,4]
+nPerm <- 1000
+
+subset <- c(noiseConditionsIndv[31,c(1,4),])
+medianDiff <- NULL
+for (i in 1:nPerm){
+  IDX1 <- sample(1:length(subset), length(subset)/2, replace = FALSE)
+  IDX2 <- setdiff(1:length(subset), IDX1)
+  medianDiff[i] <- median(subset[IDX1]) - median(subset[IDX2])
+}
+pValue <- mean(abs(medianDiff) > realMedianDiff)
+hist(medianDiff)
+abline(v = c(-realMedianDiff, realMedianDiff), lwd = 2)
+legend("topleft", legend = paste0("p = ", pValue), bty = "n")
+```
+
+```{r, Correlated Noise with Stereo to Control}
+realMedianDiff <- noiseConditionsAvg[31,2] - noiseConditionsAvg[31,4]
+nPerm <- 1000
+
+subset <- c(noiseConditionsIndv[31,c(2,4),])
+medianDiff <- NULL
+for (i in 1:nPerm){
+  IDX1 <- sample(1:length(subset), length(subset)/2, replace = FALSE)
+  IDX2 <- setdiff(1:length(subset), IDX1)
+  medianDiff[i] <- median(subset[IDX1]) - median(subset[IDX2])
+}
+pValue <- mean(abs(medianDiff) > realMedianDiff)
+hist(medianDiff)
+abline(v = c(-realMedianDiff, realMedianDiff), lwd = 2)
+legend("topleft", legend = paste0("p = ", pValue), bty = "n")
+```
+
+```{r, Anticorrelated Noise to Control}
+realMedianDiff <- noiseConditionsAvg[31,3] - noiseConditionsAvg[31,4]
+nPerm <- 1000
+
+subset <- c(noiseConditionsIndv[31,c(3,4),])
+medianDiff <- NULL
+for (i in 1:nPerm){
+  IDX1 <- sample(1:length(subset), length(subset)/2, replace = FALSE)
+  IDX2 <- setdiff(1:length(subset), IDX1)
+  medianDiff[i] <- median(subset[IDX1]) - median(subset[IDX2])
+}
+pValue <- mean(abs(medianDiff) > realMedianDiff)
+hist(medianDiff)
+abline(v = c(-realMedianDiff, realMedianDiff), lwd = 2)
+legend("topleft", legend = paste0("p = ", pValue), bty = "n")
+```
+
+
+# Make the stimuli
+
+```{r, stim display values}
+pixperdeg <- 36.73247
+hz <- 60
+ifi.seconds <- 1/hz*1000
+
+stim.Size.Deg <- 15
+stim.Size <- round(stim.Size.Deg * pixperdeg) + round(stim.Size.Deg * pixperdeg) %% 2
+stim.grating.sf <- 3
+stim.RMS <- .15
+stim.Blank.Duration <- 3
+stim.Duration <- 11 + stim.Blank.Duration
+stim.TemporalF <- 3
+```
+
+```{r, lowpassfilter}
+radiusMap <- mkRadiusMap(stim.Size)
+radius.i <- round(radiusMap)
+lowPassFilter <-(radius.i/max(radius.i))*pixperdeg/2 < stim.grating.sf
+
+windowTaper <- .5/(.5+exp(1*(radius.i-(stim.Size/2))))
+windowTaper[windowTaper < .001] <- 0
+```
+
+```{r, temporal oscillation}
+stim.TargetFrames <- hz / stim.TemporalF
+displayTimes <- seq(ifi.seconds, ifi.seconds*stim.TargetFrames, ifi.seconds)
+stim.cosineProfile <- cos(2 * (pi/1000) * stim.TemporalF * displayTimes)
+stim.cosineProfile <- (stim.cosineProfile + 1) /2
+```
+
+```{r, disparity stuff}
+peakPosition <- stim.Size/2
+disparitySF <- .3
+disparityCPI <- disparitySF * (stim.Size/pixperdeg)
+nPixelsPerCycle <- (1/(disparityCPI/stim.Size))
+maxDisparity <- 5
+Xdisparity <- maxDisparity * -cos(2*(pi/pixperdeg)*disparitySF * seq(0, nPixelsPerCycle, length.out = nPixelsPerCycle))
+Ydisparity <- 0 
+sigma <- 1
+X <- -(stim.Size/2):(stim.Size/2-1)
+Y <- X
+
+stim.GaussianL <- array(NA, dim = c(stim.Size, stim.Size, length(Xdisparity)))
+stim.GaussianR <- array(NA, dim = c(stim.Size, stim.Size, length(Xdisparity)))
+
+grid <- matlab::meshgrid(X,Y)
+for (xD in 1:length(Xdisparity)){
+  xGaussL <- ((grid$x - Xdisparity[xD])**2)/(2*sigma**2)
+  yGaussL <- ((grid$y - Ydisparity)**2)/(2*sigma**2)
+  stim.GaussianL[,,xD] <- exp(-(xGaussL + yGaussL))
+  
+  xGaussR <- ((grid$x + Xdisparity[xD])**2)/(2*sigma**2)
+  yGaussR <- ((grid$y + Ydisparity)**2)/(2*sigma**2)
+  stim.GaussianR[,,xD] <- exp(-(xGaussR + yGaussR))
+}
+```
+
+```{r, eval = FALSE}
+noiseIM <- matrix(runif(stim.Size*stim.Size), nrow = stim.Size, ncol = stim.Size)
+fIM.Amplitude <- abs(fft(noiseIM))
+fIM.phase <- pracma::angle(fft(noiseIM))
+theCoef <- NULL
+theCoefAnti <- NULL
+
+# Save arrays
+theImagesLeft <- array(NA, dim = c(stim.Size,stim.Size,length(stim.cosineProfile)))
+theImagesRight <- theImagesLeft
+disparityTempL <- matrix(NA, nrow = stim.Size, ncol =stim.Size)
+disparityTempR <- matrix(NA, nrow = stim.Size, ncol =stim.Size)
+theImagesLeftDisparity <- theImagesLeft
+theImagesRightDisparity <- theImagesLeft
+theAntiImagesLeft <- theImagesLeft
+theAntiImagesRight <- theImagesLeft
+
+for (i in 1:length(stim.cosineProfile)){
+  # Correlated Noise
+  
+  lowPassIM <- fIM.Amplitude * fftshift.BR(lowPassFilter)
+  lowPassIM[1,1] <- 1
+  
+  inputPL <- (matrix(runif(stim.Size*stim.Size), nrow = stim.Size, ncol = stim.Size)*(pi*2)-pi) * stim.cosineProfile[i]
+  inputPR <- (matrix(runif(stim.Size*stim.Size), nrow = stim.Size, ncol = stim.Size)*(pi*2)-pi) * stim.cosineProfile[i]
+  
+  phaseL <- fIM.phase + makeSymmetric(inputPL)
+  phaseR <- fIM.phase + makeSymmetric(inputPR)
+  
+  newImageL <- Real(fft(lowPassIM * exp(1i*phaseL), inverse = TRUE))
+  newImageR <- Real(fft(lowPassIM * exp(1i*phaseR), inverse = TRUE))
+  theCoef[i] <- cor(c(newImageL),c(newImageR))
+  
+  newImageL <- newImageL / max(abs(newImageL)) /2
+  RMSAltered <- sd(newImageL+.5)/mean(newImageL+.5)
+  rmsAlteredScale <- stim.RMS*3/RMSAltered
+  newImageL <- (newImageL*rmsAlteredScale * windowTaper)*.5 +.5
+  newImageL <- normalizeBR(newImageL)
+  
+  newImageR <- newImageR / max(abs(newImageR)) /2
+  RMSAltered <- sd(newImageR+.5)/mean(newImageR+.5)
+  rmsAlteredScale <- stim.RMS*3/RMSAltered
+  newImageR <- (newImageR*rmsAlteredScale * windowTaper)*.5 +.5
+  newImageR <- normalizeBR(newImageR)
+  
+  theImagesLeft[,,i] <- newImageL
+  theImagesRight[,,i] <- newImageR
+  
+  ## Add disparity
+  currentRow <- 0
+  for (D in 1:stim.Size){
+    currentRow <- currentRow + 1
+    rowIDX = ((currentRow-1) %% dim(stim.GaussianL)[3]) + 1 
+    
+    leftDImageFFT <- lowPassIM * fft(stim.GaussianL[,,rowIDX])
+    rightDImageFFT <- lowPassIM * fft(stim.GaussianR[,,rowIDX])
+    DnewImageL <- Real(fft(leftDImageFFT * exp(1i * phaseL), inverse = TRUE))
+    DnewImageL = DnewImageL / max(abs(DnewImageL)) / 2 
+    DnewImageR <- Real(fft(rightDImageFFT * exp(1i * phaseR), inverse = TRUE))
+    DnewImageR = DnewImageR / max(abs(DnewImageR)) / 2 
+    
+    disparityTempL[currentRow, ] <- DnewImageL[currentRow,]
+    disparityTempR[currentRow, ] <- DnewImageR[currentRow,]
+  }
+  
+  disparityTempL <- disparityTempL / max(abs(disparityTempL)) /2
+  RMSAltered <- sd(disparityTempL+.5)/mean(disparityTempL+.5)
+  rmsAlteredScale <- stim.RMS*3/RMSAltered
+  disparityTempL <- (disparityTempL*rmsAlteredScale * windowTaper)*.5 +.5
+  disparityTempL <- normalizeBR(disparityTempL)
+  
+  disparityTempR <- disparityTempR / max(abs(disparityTempR)) /2
+  RMSAltered <- sd(disparityTempR+.5)/mean(disparityTempR+.5)
+  rmsAlteredScale <- stim.RMS*3/RMSAltered
+  disparityTempR <- (disparityTempR*rmsAlteredScale * windowTaper)*.5 +.5
+  disparityTempR <- normalizeBR(disparityTempR)
+  
+  theImagesLeftDisparity[,,i] <- disparityTempL
+  theImagesRightDisparity[,,i] <- disparityTempR
+  
+  # Anticorrelated Noise
+  newImageL <- Real(fft(lowPassIM * exp(1i*phaseL), inverse = TRUE))
+  newImageR <- Real(fft(lowPassIM * exp(1i*phaseR), inverse = TRUE))*-1
+  theCoefAnti[i] <- cor(c(newImageL),c(newImageR))
+  
+  newImageL <- newImageL / max(abs(newImageL)) / 2
+  RMSAltered <- sd(newImageL+.5)/mean(newImageL+.5)
+  rmsAlteredScale <- stim.RMS*3/RMSAltered
+  newImageL <- (newImageL*rmsAlteredScale * windowTaper)*.5 +.5
+  newImageL <- normalizeBR(newImageL)
+  
+  newImageR <- newImageR / max(abs(newImageR)) /2
+  RMSAltered <- sd(newImageR+.5)/mean(newImageR+.5)
+  rmsAlteredScale <- stim.RMS*3/RMSAltered
+  newImageR <- (newImageR*rmsAlteredScale * windowTaper)*.5 +.5
+  newImageR <- normalizeBR(newImageR)
+  
+  theAntiImagesLeft[,,i] <- newImageL
+  theAntiImagesRight[,,i] <- newImageR
+}
+
+save(theImagesLeft, theImagesRight, theImagesLeftDisparity, theImagesRightDisparity, theAntiImagesLeft,theAntiImagesRight, file = paste0(currentDirectory, "stimulusSet.RData"))
+```
+
+```{r}
+load(paste0(currentDirectory, "/Binocular Noise StudystimulusSet.RData"))
+```
+
+## Make Filters
+
+```{r}
+gaborFilters <- mkLogGaborFilters(orientations = seq(0,165,15), spatialfrequency = c(0.5,1,2,4,8,16), imageSize = stim.Size, stimSizeDeg = 15, returnSFGabor = FALSE)
+nOrientations <- dim(gaborFilters)[3]
+nSF <- dim(gaborFilters)[4]
+```
+
+# Model Architecture
+## Image based two stage contrast gain control (no disparity for now)
+
+```{r}
+
+# theImagesLeft
+# theImagesRight
+# theAntiImagesLeft
+# theAntiImagesRight
+
+# Stage One - Get Filter Responses
+nFrames <- dim(theImagesLeft)[3]
+filteredIM.Left <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
+filteredIM.Right <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
+
+# Left Eye
+for (T in 1:20){
+  fIM.Left <- fft(theImagesLeft[,,T])
+  fIM.Right <- fft(theImagesRight[,,T])
+  
+  for (O in 1:nOrientations){
+    for (S in 1:nSF){
+      filterResponseL <- fIM.Left * gaborFilters[,,O,S]
+      filterResponseR <- fIM.Right * gaborFilters[,,O,S]
+      filteredIM.Left[,,O,S,T] <- Real(fft(abs(filterResponseL)*exp(1i*angle(filterResponseL)), inverse = TRUE))
+      filteredIM.Right[,,O,S,T] <- Real(fft(abs(filterResponseR)*exp(1i*angle(filterResponseR)), inverse = TRUE))
+    }
+  }
+}
+```
+
+```{r, monocular responses}
+m <- 1.3
+S <- 1
+stage1.Left <- filteredIM.Left**m
+stage1.Right <- filteredIM.Right**m
+```
+
+
+
+
+```{r}
+summedImages <- array(NA, dim = c(stim.Size, stim.Size, nOrientations, nSF, nFrames))
+for (T in 1:20){
+  for (O in 1:nOrientations){
+    for (S in 1:nSF){
+      summedImages[,,O,S,T] <- filteredIM.Left[,,O,S,T]**2 + filteredIM.Right[,,O,S,T]**2
+    }
+  }
+}
+spatialSum <- apply(summedImages, MARGIN = c(3,4,5), FUN = base::sum)
+
+```
+
+```{r}
+image(spatialSum[,1,])
+image(spatialSum[,2,])
+image(spatialSum[,3,])
+image(spatialSum[,4,])
+image(spatialSum[,5,])
+image(spatialSum[,6,])
+```
+
+
+
+
+
+
+
+
+# Behaviour
+
+```{r, get behaviour data}
+behaviourDatadir <- paste0(currentDirectory, "/Behaviour Data/")
+
+correct <- NULL
+levels <- NULL
+reversals <- NULL
+
+threshold <- matrix(NA, nrow = 6, ncol = length(theCompleteParticipants))
+
+for (p in 1:length(theCompleteParticipants)){
+dataTemp <- readMat(paste0(behaviourDatadir,theCompleteParticipants[p],'/',paste0(theCompleteParticipants[p], "Final.mat")))
+
+correct <- NULL
+levels <- NULL
+reversals <- NULL
+block <- NULL
+
+for (i in 1:6){
+correct <- c(correct, dataTemp$Exp[,,1]$Staircase[,,i]$response)
+levels <- c(levels, round(dataTemp$Exp[,,1]$Staircase[,,i]$x,2))
+reversals <- c(reversals, dataTemp$Exp[,,1]$Staircase[,,i]$reversal)
+block <- c(block, rep(i, length(dataTemp$Exp[,,1]$Staircase[,,i]$reversal)))
+}
+
+theVariableName <- paste0("allStaircases", p)
+assign(theVariableName, data.frame(participant=theCompleteParticipants[p], block = block, correct = correct, levels = levels, reversals = reversals))
+
+threshold[,p] <- dataTemp$Exp[,,1]$MeanReversalThreshold
+}
+
+allStaircases <- rbind(allStaircases1, allStaircases2,allStaircases3,allStaircases4,allStaircases5,allStaircases6,allStaircases7,allStaircases8,allStaircases9,allStaircases10,allStaircases11,allStaircases12,allStaircases13)
+remove(allStaircases1,allStaircases2,allStaircases3,allStaircases4,allStaircases5,allStaircases6,allStaircases7,allStaircases8,allStaircases9,allStaircases10,allStaircases11,allStaircases12,allStaircases13)
+```
+
+```{r}
+psychometricData <- aggregate(correct ~ levels + participant, data = allStaircases, FUN = mean)
+psychometricData.SD <- aggregate(correct ~ levels + participant, data = allStaircases, FUN = sd)
+staircaseThresholds <- aggregate(levels ~ participant, data = allStaircases, FUN = geomean, subset = reversals %in% c(12,11,10,9,8))
+```
+
+```{r}
+fitCumWeibull <- function(params,X, data){
+shape <- params[1]
+scale <- params[2]
+guessRate <- .5
+lapse <- params[3]
+Y <- 1-exp(-(X/shape)**scale)
+YY <- guessRate + (1-guessRate-lapse) * Y
+err <- sum((YY - data)**2)
+return(err)
+}
+```
+
+
+```{r, fig.width= 10}
+pixperdeg <- 36.73247
+xLimit <- range(pretty(range(psychometricData$level)))
+threshold <- NULL
+shape <- NULL
+par(mfrow = c(4,4), mai = c(.25,.25,0,0), omi = c(.2,.3,.2,.2))
+
+for (i in 1:length(theCompleteParticipants)){
+plot(x = NULL, y = NULL, xlim = xLimit, ylim = c(0.5,1), axes = FALSE, ann = FALSE)
+axis(1, at = pretty(xLimit), tck = -.015, lwd = 2, labels = FALSE)
+axis(2, at = pretty(c(0.5,1)), tck = -.015, lwd = 2, labels = FALSE)
+if (i >=9){
+mtext("Disparity (arc sec)", 1, font = 2, line = 2)
+mtext(pretty(xLimit/pixperdeg*3600),1, at =pretty(xLimit), line =.4)
+}
+if (i %in% c(1,5,9)){
+mtext("Proportion Correct", 2, font = 2, line = 2.5)
+mtext(pretty(c(0.5,1)),2, at =pretty(c(0.5,1)), line =.4, las = 1)
+}
+
+params <- c(.2,4,.01)
+X <- psychometricData$level[psychometricData$participant == theCompleteParticipants[i]]
+data <- psychometricData$correct[psychometricData$participant == theCompleteParticipants[i]]
+sdData <- psychometricData.SD$correct[psychometricData.SD$participant == theCompleteParticipants[i]]
+out <- optim(params,fn = fitCumWeibull, X = X, data = data)
+
+threshold[i] <- out$par[1]/pixperdeg*3600
+shape[i] <- out$par[2]
+guessRate <- .5
+XX <- seq(0, max(X), length.out = 100)
+YY <- guessRate + (1-guessRate-out$par[3]) * (1-exp(-(XX/out$par[1])**out$par[2]))
+lines(XX, YY, lwd = 2, col = "gray75")
+points(X, data, pch = 19, col = posterColours[1], cex = 1+sdData)
+legend("bottomright", legend = paste0("Threshold = ", round(threshold[i],3)), bty = "n", cex = 1.2)
+legend("bottomleft", legend = paste0("Threshold = ", round(staircaseThresholds$levels[staircaseThresholds$participant == theCompleteParticipants[i]]/pixperdeg*3600,3)), bty = "n", cex = 1.2)
+mtext(theCompleteParticipants[i], 3, font = 2, at = .01, cex = .8, line = -1)
+}
+```
+
+```{r, fig.width=10}
+theConditions <- 1:3
+thers <- matrix(NA, nrow = length(theFs), ncol = 3)
+therps <- thers
+par(mfcol = c(2,3), mai = c(0.25,0.25,0.1,0.1), omi = c(.25,.25,0,0))
+
+xRange <- range(pretty(range(noiseConditionsIndv[theFs,theConditions,])))
+yRange <- range(pretty(range(pretty(range(staircaseThresholds$levels/pixperdeg*3600)))))
+for (C in theConditions){
+count <- 0
+for (F in theFs[1:2]){
+count <- count+1
+plot(x = NULL, y = NULL, xlim = xRange, ylim = yRange, axes=FALSE, ann = FALSE)
+axis(1, at = pretty(xRange), lwd = 2, tck = -.015, labels = FALSE)
+axis(2, at = pretty(yRange), lwd = 2, tck = -.015, labels = FALSE)
+if (F == 61){
+mtext(pretty(xRange),1, at =pretty(xRange), line = .5)
+mtext("SNR", 1, font = 2, line = 2)
+}
+if (C == 1){
+mtext(pretty(yRange),2, at =pretty(yRange), line = .5, las = 2)
+mtext("Threshold", 2, font = 2, line = 2)
+}
+
+mod <- lm(staircaseThresholds$levels/pixperdeg*3600 ~ noiseConditionsIndv[F,C,])
+abline(mod, col = posterColours[2], lwd = 2)
+points(noiseConditionsIndv[F,C,],staircaseThresholds$levels/pixperdeg*3600, pch = 19, col = posterColours[1], cex = 1.5)
+out <- cor.test(noiseConditionsIndv[F,C,],staircaseThresholds$levels/pixperdeg*3600)
+thers[count,C] <- out$estimate
+therps[count,C] <- out$p.value
+
+legend("topright", legend = paste0("r = ", round(thers[count,C],3), ", p = ", round(therps[count,C],3)), bty = "n")
+}
+}
+```
