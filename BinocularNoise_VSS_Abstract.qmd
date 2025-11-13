@@ -1,12 +1,209 @@
 ---
-title: "Binocular Noise VSS Abstract"
-format: pdf
-editor: visual
+title: "Neural responses to binocular correlated and anticorrelated noise stimuli"
+author:
+  - name: "Bruno Richard"
+    email: "br379@newark.rutgers.edu"
+    affil-id: 1
+  - name: "Robert F. Hess"
+    affil-id: 2
+  - name: "Sing Ip Lee"
+    affil-id: 3
+  - name: "Daniela Marinova"
+    affil-id: 3
+  - name: "Daniel H. Baker"
+    affil-id: 3
+affiliations:
+  - id: 1
+    name: "Department of Mathematics and Computer Science, Rutgers University, Newark, New Jersey, USA"
+  - id: 2
+    name: "Department of Ophthalmology, McGill University, Montreal, Qc, Canada"
+  - id: 3
+    name: "Department of Psychology, University of York, York, UK"
+    format: pdf
+
+format:
+  pdf:
+    keep-tex: true
+    template-partials:
+      - title.tex   
+      - keywords.tex
+    geometry:
+      - left=25mm
+      - right=25mm
+      - top=25mm
+      - bottom=25mm
+    fontsize: 12pt
+    tbl-cap-location: bottom
+    include-in-header:
+      text: |
+        \usepackage{indentfirst}
+        \setlength{\parindent}{15pt}
+        \setlength{\parskip}{10pt}
+        \usepackage[font=small]{caption}  % Options: small, footnotesize, scriptsize, etc.
+        \usepackage[noblocks]{authblk}
+        \renewcommand*{\Authsep}{, }
+        \renewcommand*{\Authand}{, }
+        \renewcommand*{\Authands}{, }
+        \renewcommand\Affilfont{\small}
+        % Define a keywords command for inline keywords
+        \newcommand{\printkeywords}[1]{\noindent\textbf{Keywords:} #1\par}
+
+abstract: >
+  Binocular vision fuses monocular inputs into a single percept. To integrate the input from the eyes, the visual system is thought to encode the monocular signals with summation and differencing channels. Here, we investigate the ability of Steady-State Visually Evoked Potentials (SSVEPs) to record neural responses associated with summation and differencing mechanisms. We measured responses to binocular noise stimuli with differing degrees of interocular correlation. Across the eyes, stimuli could oscillate from (i) no correlation to perfect interocular correlation (i.e., the same image in both eyes), (ii) no correlation to perfect interocular correlation with a disparity cue, (iii) from no correlation to perfect interocular anticorrelation (i.e., opposite interocular contrast), and (iv) a control condition with no interocular correlation. A total of XX observers participated in the study. Responses to correlated stimuli showed a peak at the fundamental frequency (3Hz), while adding a disparity cue led to a response at the fundamental and its second harmonic (6Hz). Surprisingly, no steady-state responses were found for interocular anticorrelation; signal-to-noise ratios at 3Hz were no different from those of the control condition. We modelled our data using an image-based variant of the two-stage contrast gain control model of binocular summation. To generate SSVEPs dependent on interocular correlation, the noise images were filtered with a bank of log-Gabors that had preferred orientations ranging from 0° to 165°, in increments of 15°, and preferred spatial frequencies of 0.5, 1, 2, 4, 8, and 16 cycles/°. The monocular filter responses underwent an early non-linearity and contrast gain control before binocular summation and binocular difference. The sum and difference responses were fed through a second non-linear and contrast gain control. The resulting output was Fourier transformed to generate model SSVEPs. 
 ---
 
+## Figures
 
-This is going to be an abstract. 
+```{r, preliminaries, echo = FALSE, warning=FALSE, message=FALSE }
+packagelist <- c('R.matlab','pracma','EnvStats', "matlab")
+
+missingpackages <- packagelist[!packagelist %in% installed.packages()[,1]]
+if (length(missingpackages)>0){install.packages(missingpackages)}
+toinstall <- packagelist[which(!packagelist %in% (.packages()))]
+invisible(lapply(toinstall,library,character.only=TRUE))
+
+addalpha <- function(col, alpha=1){apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))}
+
+posterColours <- c("#333E47", "#6a757c", "#e31936")
+posterColoursRamped <- colorRampPalette(posterColours, space = "Lab", interpolate = "spline")(8)
+categoricalPalette <- c("#333E47","#3B5C62","#777079", "#4A6F74","#B94256", "#5E767B", "#955F6D", "#E31835")
+
+```
 
 
+```{r, dataload,  echo = FALSE}
+theCompleteParticipants <- c("001", "002", "003", "004", "007", "008", "009", "010", "011", "012", "013", "014", "015")
 
+currentDirectory <- getwd()
+processedEEGdir <- paste0(currentDirectory, "/Processed Data/")
 
+theParticipantFiles <- list.files(processedEEGdir, pattern = paste0(theCompleteParticipants, collapse = "|"))
+allPConditionData <- array(NA, dim = c(200,13,length(theParticipantFiles)))
+
+for (P in 1:length(theParticipantFiles)){
+  load(paste0(currentDirectory, "/Processed Data/", theParticipantFiles[P]))
+  allPConditionData[,,P] <- avgSNRCondition2
+}
+
+allPConditionData[1,,] <- 1
+
+pAveragedSNRLog <- apply(allPConditionData, c(1,2), median, na.rm = TRUE)
+noiseConditionsAvg <- pAveragedSNRLog[,c(1:3, 13)]
+noiseConditionsIndv <- allPConditionData[, c(1:3, 13), ]
+pAveragedSNRLog <- apply(allPConditionData, c(1,2), median, na.rm = TRUE)
+
+theFs <- c(31, 61, 91, 121, 151, 181)
+conditions <- c("Correlated Noise", "Correlated Noise\nWith Stereo Cue", "Anticorrelated Noise", "Control")
+```
+
+### Median SNRs
+
+```{r, fig.width=8, echo = FALSE}
+par(mfcol = c(1,4), pty = "s", mai = c(.1,.2,.1,.1), omi = c(.25,.4,.1,.1))
+noiseConditionsAvg[1:10,] <-1
+
+for (i in 1:4){
+  plot(x = NULL, y = NULL, ylim = c(0,6), xlim = c(0,210), axes = FALSE, ann = FALSE)
+  axis(1,  at = c(0,3,6,9,12,15,18,21)*10+1, tck = -.015, lwd = 2, labels = FALSE)
+  axis(2,  at = pretty(c(0,6)), tck = -.015, lwd = 2, labels = FALSE)
+  
+  mtext(c(0,3,6,9,12,15,18,21), 1, at = c(0,3,6,9,12,15,18,21)*10+1, line = .6)
+  mtext("Frequency (Hz)", 1, font = 2, line = 2)
+  if (i == 1) {
+    mtext(pretty(c(0,6)), 2, at = pretty(c(0,6)), line = .6, las = 1)
+    mtext("SNR", 2, font = 2, line = 2 )
+  }
+  mtext(conditions[i], 3, font = 2)
+  
+  abline(h = 1, lwd = 2, col = posterColours[2])
+  abline(v = theFs, lty = 2, col = posterColours[2])
+  
+  lines(1:200, noiseConditionsAvg[,i], lwd = 3, col = posterColours[1])
+}
+```
+
+### Condition Comparisons
+
+```{r, Correlated Noise to Control, echo = FALSE, fig.width=10}
+par(mfcol = c(1,3), mai = c(.1,.1,.1,.1), omi = c(.4,.5,.4,.1))
+realMedianDiff <- noiseConditionsAvg[31,1] - noiseConditionsAvg[31,4]
+nPerm <- 1000
+
+subset <- c(noiseConditionsIndv[31,c(1,4),])
+medianDiff <- NULL
+for (i in 1:nPerm){
+  IDX1 <- sample(1:length(subset), length(subset)/2, replace = FALSE)
+  IDX2 <- setdiff(1:length(subset), IDX1)
+  medianDiff[i] <- median(subset[IDX1]) - median(subset[IDX2])
+}
+pValue <- mean(abs(medianDiff) > realMedianDiff)
+
+axisValues <- hist(medianDiff, plot = FALSE)
+xLimit <- range(axisValues$breaks)
+yLimit <- range(pretty(range(axisValues$counts)))
+
+hist(medianDiff, axes = FALSE, ann = FALSE, xlim =xLimit, ylim = yLimit, col = posterColours[1], border = "white")
+abline(v = c(-realMedianDiff, realMedianDiff), lwd = 2,col = posterColours[3], lty = 2)
+axis(1, at = axisValues$breaks, tck = -.015, labels = FALSE, lwd = 2)
+axis(2, at = pretty(yLimit), tck = -.015, labels = FALSE, lwd = 2)
+mtext(axisValues$breaks,1, at = axisValues$breaks, line = .5, cex = .8)
+mtext(pretty(yLimit)/nPerm,2,at =pretty(yLimit), las = 1, line = .5, cex = .8)
+mtext("Median Difference", 1, font = 2, line = 2)
+mtext("Proportion of Scores", 2, font = 2, line = 3)
+mtext(paste0("1F Median Difference = ", round(realMedianDiff, 2), ", p = ", round(pValue,3)), 3, font = 1, adj = 0, cex = .8, line = -0.5)
+mtext("Correlated Noise VS Control", 3, line = 1, font = 2)
+
+# Stereo to control
+
+realMedianDiff <- noiseConditionsAvg[31,2] - noiseConditionsAvg[31,4]
+nPerm <- 1000
+
+subset <- c(noiseConditionsIndv[31,c(2,4),])
+medianDiff <- NULL
+for (i in 1:nPerm){
+  IDX1 <- sample(1:length(subset), length(subset)/2, replace = FALSE)
+  IDX2 <- setdiff(1:length(subset), IDX1)
+  medianDiff[i] <- median(subset[IDX1]) - median(subset[IDX2])
+}
+pValue <- mean(abs(medianDiff) > realMedianDiff)
+
+axisValues <- hist(medianDiff, plot = FALSE)
+xLimit <- range(axisValues$breaks)
+
+hist(medianDiff, axes = FALSE, ann = FALSE, xlim =xLimit, ylim = yLimit, col = posterColours[1], border = "white")
+abline(v = c(-realMedianDiff, realMedianDiff), lwd = 2,col = posterColours[3], lty = 2)
+axis(1, at = axisValues$breaks, tck = -.015, labels = FALSE, lwd = 2)
+axis(2, at = pretty(yLimit), tck = -.015, labels = FALSE, lwd = 2)
+mtext(axisValues$breaks,1, at = axisValues$breaks, line = .5, cex = .8)
+mtext("Median Difference", 1, font = 2, line = 2)
+mtext(paste0("1F Median Difference = ", round(realMedianDiff, 2), ", p = ", round(pValue,3)), 3, font = 1, adj = 0, cex = .8, line = -0.5)
+mtext("Stereo VS Control", 3, line = 1, font = 2)
+
+# Anti-correlated to control
+
+realMedianDiff <- noiseConditionsAvg[31,3] - noiseConditionsAvg[31,4]
+nPerm <- 1000
+
+subset <- c(noiseConditionsIndv[31,c(3,4),])
+medianDiff <- NULL
+for (i in 1:nPerm){
+  IDX1 <- sample(1:length(subset), length(subset)/2, replace = FALSE)
+  IDX2 <- setdiff(1:length(subset), IDX1)
+  medianDiff[i] <- median(subset[IDX1]) - median(subset[IDX2])
+}
+pValue <- mean(abs(medianDiff) > realMedianDiff)
+
+axisValues <- hist(medianDiff, plot = FALSE)
+xLimit <- range(axisValues$breaks)
+
+hist(medianDiff, axes = FALSE, ann = FALSE, xlim =xLimit, ylim = yLimit, col = posterColours[1], border = "white")
+abline(v = c(-realMedianDiff, realMedianDiff), lwd = 2,col = posterColours[3], lty = 2)
+axis(1, at = axisValues$breaks, tck = -.015, labels = FALSE, lwd = 2)
+axis(2, at = pretty(yLimit), tck = -.015, labels = FALSE, lwd = 2)
+mtext(axisValues$breaks,1, at = axisValues$breaks, line = .5, cex = .8)
+mtext("Median Difference", 1, font = 2, line = 2)
+# mtext("Proportion of Scores", 2, font = 2, line = 3)
+mtext(paste0("1F Median Difference = ", round(realMedianDiff, 2), ", p = ", round(pValue,3)), 3, font = 1, adj = 0, cex = .8, line = -0.5)
+mtext("Anticorrelated Noise VS Control", 3, line = 1, font = 2)
+
+```

@@ -1,0 +1,15 @@
+$if(title)$
+\title{$title$$if(thanks)$\thanks{$thanks$}$endif$}
+$endif$
+
+$for(by-author)$
+  \author[$if(it.metadata.affil-id)$$it.metadata.affil-id$$endif$]{$by-author.name.literal$}
+$endfor$
+
+$if(by-affiliation)$
+  $for(by-affiliation)$
+    \affil[$it.id$]{$it.name$}
+  $endfor$
+$endif$
+
+\date{$date$}

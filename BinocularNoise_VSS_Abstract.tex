@@ -1,0 +1,238 @@
+% Options for packages loaded elsewhere
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
+\documentclass[
+  12pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[left=25mm,right=25mm,top=25mm,bottom=25mm]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+% Make \paragraph and \subparagraph free-standing
+\makeatletter
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}{
+    \@ifstar
+      \xxxParagraphStar
+      \xxxParagraphNoStar
+  }
+  \newcommand{\xxxParagraphStar}[1]{\oldparagraph*{#1}\mbox{}}
+  \newcommand{\xxxParagraphNoStar}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}{
+    \@ifstar
+      \xxxSubParagraphStar
+      \xxxSubParagraphNoStar
+  }
+  \newcommand{\xxxSubParagraphStar}[1]{\oldsubparagraph*{#1}\mbox{}}
+  \newcommand{\xxxSubParagraphNoStar}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+\makeatother
+
+
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+
+
+
+
+
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+
+
+ 
+
+
+\usepackage{indentfirst}
+\setlength{\parindent}{15pt}
+\setlength{\parskip}{10pt}
+\usepackage[font=small]{caption}  % Options: small, footnotesize, scriptsize, etc.
+\usepackage[noblocks]{authblk}
+\renewcommand*{\Authsep}{, }
+\renewcommand*{\Authand}{, }
+\renewcommand*{\Authands}{, }
+\renewcommand\Affilfont{\small}
+% Define a keywords command for inline keywords
+\newcommand{\printkeywords}[1]{\noindent\textbf{Keywords:} #1\par}
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\AtBeginDocument{%
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Table of contents}
+\else
+  \newcommand\contentsname{Table of contents}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{List of Figures}
+\else
+  \newcommand\listfigurename{List of Figures}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{List of Tables}
+\else
+  \newcommand\listtablename{List of Tables}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figure}
+\else
+  \newcommand\figurename{Figure}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Table}
+\else
+  \newcommand\tablename{Table}
+\fi
+}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listing}
+\newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Neural responses to binocular correlated and anticorrelated noise stimuli},
+  pdfauthor={Bruno Richard; Robert F. Hess; Sing Ip Lee; Daniela Marinova; Daniel H. Baker},
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+
+\title{Neural responses to binocular correlated and anticorrelated noise
+stimuli}
+
+  \author[1]{Bruno Richard}
+  \author[2]{Robert F. Hess}
+  \author[3]{Sing Ip Lee}
+  \author[3]{Daniela Marinova}
+  \author[3]{Daniel H. Baker}
+
+      \affil[1]{Department of Mathematics and Computer Science, Rutgers
+University, Newark, New Jersey, USA}
+      \affil[2]{Department of Ophthalmology, McGill University,
+Montreal, Qc, Canada}
+      \affil[3]{Department of Psychology, University of York, York, UK}
+  
+\date{}
+\begin{document}
+\maketitle
+\begin{abstract}
+Binocular vision fuses monocular inputs into a single percept. To
+integrate the input from the eyes, the visual system is thought to
+encode the monocular signals with summation and differencing channels.
+Here, we investigate the ability of Steady-State Visually Evoked
+Potentials (SSVEPs) to record neural responses associated with summation
+and differencing mechanisms. We measured responses to binocular noise
+stimuli with differing degrees of interocular correlation. Across the
+eyes, stimuli could oscillate from (i) no correlation to perfect
+interocular correlation (i.e., the same image in both eyes), (ii) no
+correlation to perfect interocular correlation with a disparity cue,
+(iii) from no correlation to perfect interocular anticorrelation (i.e.,
+opposite interocular contrast), and (iv) a control condition with no
+interocular correlation. A total of XX observers participated in the
+study. Responses to correlated stimuli showed a peak at the fundamental
+frequency (3Hz), while adding a disparity cue led to a response at the
+fundamental and its second harmonic (6Hz). Surprisingly, no steady-state
+responses were found for interocular anticorrelation; signal-to-noise
+ratios at 3Hz were no different from those of the control condition. We
+modelled our data using an image-based variant of the two-stage contrast
+gain control model of binocular summation. To generate SSVEPs dependent
+on interocular correlation, the noise images were filtered with a bank
+of log-Gabors that had preferred orientations ranging from 0° to 165°,
+in increments of 15°, and preferred spatial frequencies of 0.5, 1, 2, 4,
+8, and 16 cycles/°. The monocular filter responses underwent an early
+non-linearity and contrast gain control before binocular summation and
+binocular difference. The sum and difference responses were fed through
+a second non-linear and contrast gain control. The resulting output was
+Fourier transformed to generate model SSVEPs.
+\end{abstract}
+
+
+\subsection{Figures}\label{figures}
+
+\subsubsection{Median SNRs}\label{median-snrs}
+
+\pandocbounded{\includegraphics[keepaspectratio]{BinocularNoise_VSS_Abstract_files/figure-pdf/unnamed-chunk-1-1.pdf}}
+
+\subsubsection{Condition Comparisons}\label{condition-comparisons}
+
+\pandocbounded{\includegraphics[keepaspectratio]{BinocularNoise_VSS_Abstract_files/figure-pdf/Correlated Noise to Control-1.pdf}}
+
+
+
+
+\end{document}
