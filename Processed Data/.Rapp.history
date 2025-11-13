@@ -2,3 +2,4 @@ load("/Users/brunorichard/Library/CloudStorage/Box-Box/Binocularity Noise/SSVEP_
 ls
 ls()
 avgSNRCondition
+load("/Users/brunorichard/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/reprocessedData_P001.RData")

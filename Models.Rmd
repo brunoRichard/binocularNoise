@@ -431,7 +431,7 @@ filteredIM.Left <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFr
 filteredIM.Right <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
 
 # Left Eye
-for (T in 1:20){
+for (T in 1:nFrames){
   fIM.Left <- fft(theImagesLeft[,,T])
   fIM.Right <- fft(theImagesRight[,,T])
   
@@ -449,34 +449,62 @@ for (T in 1:20){
 ```{r, monocular responses}
 m <- 1.3
 S <- 1
-stage1.Left <- filteredIM.Left**m
-stage1.Right <- filteredIM.Right**m
-```
 
+stage1.Left <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
+stage1.Right <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
 
-
-
-```{r}
-summedImages <- array(NA, dim = c(stim.Size, stim.Size, nOrientations, nSF, nFrames))
-for (T in 1:20){
+for (T in 1:nFrames){
   for (O in 1:nOrientations){
     for (S in 1:nSF){
-      summedImages[,,O,S,T] <- filteredIM.Left[,,O,S,T]**2 + filteredIM.Right[,,O,S,T]**2
+      stage1.Left[,,O,S,T] <- (filteredIM.Left[,,O,S,T]**m)/(S + filteredIM.Left[,,O,S,T]+filteredIM.Right[,,O,S,T])
+      stage1.Right[,,O,S,T] <- (filteredIM.Right[,,O,S,T]**m)/(S + filteredIM.Right[,,O,S,T]+filteredIM.Left[,,O,S,T])
     }
   }
 }
-spatialSum <- apply(summedImages, MARGIN = c(3,4,5), FUN = base::sum)
 
+remove(filteredIM.Left,filteredIM.Right)
 ```
 
 ```{r}
-image(spatialSum[,1,])
-image(spatialSum[,2,])
-image(spatialSum[,3,])
-image(spatialSum[,4,])
-image(spatialSum[,5,])
-image(spatialSum[,6,])
+summedResponse <- stage1.Left + stage1.Right
+differenceResponse <- stage1.Left - stage1.Right
+remove(stage1.Left,stage1.Right)
 ```
+
+```{r}
+p <- 6.5
+q <- 5
+w <- 4
+Z <- .01
+
+stage2.Sum <- array(NA, dim = c(nOrientations, nSF, nFrames))
+stage2.Diff<- array(NA, dim = c(nOrientations, nSF, nFrames))
+
+for (T in 1:nFrames){
+  for (O in 1:nOrientations){
+    for (S in 1:nSF){
+      stage2.Sum[O,S,T] <- (base::sum(((summedResponse[,,O,S,T]**p)/(Z + summedResponse[,,O,S,T]**q))**w, na.rm = TRUE)**(1/w))
+      stage2.Diff[O,S,T] <- (base::sum(((differenceResponse[,,O,S,T]**p)/(Z + differenceResponse[,,O,S,T]**q))**w, na.rm = TRUE)**(1/w))
+    }
+  }
+}
+
+sumResp <- apply(stage2.Sum**w, 3, base::sum)**(1/w)
+diffResp <- apply(stage2.Diff**w, 3, base::sum)**(1/w)
+```
+
+```{r}
+plot(sumResp)
+plot(diffResp)
+
+plot(abs(fft(sumResp[2:20])))
+plot(abs(fft(diffResp[2:20])))
+
+```
+
+
+
+
 
 
 
@@ -497,24 +525,24 @@ reversals <- NULL
 threshold <- matrix(NA, nrow = 6, ncol = length(theCompleteParticipants))
 
 for (p in 1:length(theCompleteParticipants)){
-dataTemp <- readMat(paste0(behaviourDatadir,theCompleteParticipants[p],'/',paste0(theCompleteParticipants[p], "Final.mat")))
-
-correct <- NULL
-levels <- NULL
-reversals <- NULL
-block <- NULL
-
-for (i in 1:6){
-correct <- c(correct, dataTemp$Exp[,,1]$Staircase[,,i]$response)
-levels <- c(levels, round(dataTemp$Exp[,,1]$Staircase[,,i]$x,2))
-reversals <- c(reversals, dataTemp$Exp[,,1]$Staircase[,,i]$reversal)
-block <- c(block, rep(i, length(dataTemp$Exp[,,1]$Staircase[,,i]$reversal)))
-}
-
-theVariableName <- paste0("allStaircases", p)
-assign(theVariableName, data.frame(participant=theCompleteParticipants[p], block = block, correct = correct, levels = levels, reversals = reversals))
-
-threshold[,p] <- dataTemp$Exp[,,1]$MeanReversalThreshold
+  dataTemp <- readMat(paste0(behaviourDatadir,theCompleteParticipants[p],'/',paste0(theCompleteParticipants[p], "Final.mat")))
+  
+  correct <- NULL
+  levels <- NULL
+  reversals <- NULL
+  block <- NULL
+  
+  for (i in 1:6){
+    correct <- c(correct, dataTemp$Exp[,,1]$Staircase[,,i]$response)
+    levels <- c(levels, round(dataTemp$Exp[,,1]$Staircase[,,i]$x,2))
+    reversals <- c(reversals, dataTemp$Exp[,,1]$Staircase[,,i]$reversal)
+    block <- c(block, rep(i, length(dataTemp$Exp[,,1]$Staircase[,,i]$reversal)))
+  }
+  
+  theVariableName <- paste0("allStaircases", p)
+  assign(theVariableName, data.frame(participant=theCompleteParticipants[p], block = block, correct = correct, levels = levels, reversals = reversals))
+  
+  threshold[,p] <- dataTemp$Exp[,,1]$MeanReversalThreshold
 }
 
 allStaircases <- rbind(allStaircases1, allStaircases2,allStaircases3,allStaircases4,allStaircases5,allStaircases6,allStaircases7,allStaircases8,allStaircases9,allStaircases10,allStaircases11,allStaircases12,allStaircases13)
@@ -529,14 +557,14 @@ staircaseThresholds <- aggregate(levels ~ participant, data = allStaircases, FUN
 
 ```{r}
 fitCumWeibull <- function(params,X, data){
-shape <- params[1]
-scale <- params[2]
-guessRate <- .5
-lapse <- params[3]
-Y <- 1-exp(-(X/shape)**scale)
-YY <- guessRate + (1-guessRate-lapse) * Y
-err <- sum((YY - data)**2)
-return(err)
+  shape <- params[1]
+  scale <- params[2]
+  guessRate <- .5
+  lapse <- params[3]
+  Y <- 1-exp(-(X/shape)**scale)
+  YY <- guessRate + (1-guessRate-lapse) * Y
+  err <- sum((YY - data)**2)
+  return(err)
 }
 ```
 
@@ -549,34 +577,34 @@ shape <- NULL
 par(mfrow = c(4,4), mai = c(.25,.25,0,0), omi = c(.2,.3,.2,.2))
 
 for (i in 1:length(theCompleteParticipants)){
-plot(x = NULL, y = NULL, xlim = xLimit, ylim = c(0.5,1), axes = FALSE, ann = FALSE)
-axis(1, at = pretty(xLimit), tck = -.015, lwd = 2, labels = FALSE)
-axis(2, at = pretty(c(0.5,1)), tck = -.015, lwd = 2, labels = FALSE)
-if (i >=9){
-mtext("Disparity (arc sec)", 1, font = 2, line = 2)
-mtext(pretty(xLimit/pixperdeg*3600),1, at =pretty(xLimit), line =.4)
-}
-if (i %in% c(1,5,9)){
-mtext("Proportion Correct", 2, font = 2, line = 2.5)
-mtext(pretty(c(0.5,1)),2, at =pretty(c(0.5,1)), line =.4, las = 1)
-}
-
-params <- c(.2,4,.01)
-X <- psychometricData$level[psychometricData$participant == theCompleteParticipants[i]]
-data <- psychometricData$correct[psychometricData$participant == theCompleteParticipants[i]]
-sdData <- psychometricData.SD$correct[psychometricData.SD$participant == theCompleteParticipants[i]]
-out <- optim(params,fn = fitCumWeibull, X = X, data = data)
-
-threshold[i] <- out$par[1]/pixperdeg*3600
-shape[i] <- out$par[2]
-guessRate <- .5
-XX <- seq(0, max(X), length.out = 100)
-YY <- guessRate + (1-guessRate-out$par[3]) * (1-exp(-(XX/out$par[1])**out$par[2]))
-lines(XX, YY, lwd = 2, col = "gray75")
-points(X, data, pch = 19, col = posterColours[1], cex = 1+sdData)
-legend("bottomright", legend = paste0("Threshold = ", round(threshold[i],3)), bty = "n", cex = 1.2)
-legend("bottomleft", legend = paste0("Threshold = ", round(staircaseThresholds$levels[staircaseThresholds$participant == theCompleteParticipants[i]]/pixperdeg*3600,3)), bty = "n", cex = 1.2)
-mtext(theCompleteParticipants[i], 3, font = 2, at = .01, cex = .8, line = -1)
+  plot(x = NULL, y = NULL, xlim = xLimit, ylim = c(0.5,1), axes = FALSE, ann = FALSE)
+  axis(1, at = pretty(xLimit), tck = -.015, lwd = 2, labels = FALSE)
+  axis(2, at = pretty(c(0.5,1)), tck = -.015, lwd = 2, labels = FALSE)
+  if (i >=9){
+    mtext("Disparity (arc sec)", 1, font = 2, line = 2)
+    mtext(pretty(xLimit/pixperdeg*3600),1, at =pretty(xLimit), line =.4)
+  }
+  if (i %in% c(1,5,9)){
+    mtext("Proportion Correct", 2, font = 2, line = 2.5)
+    mtext(pretty(c(0.5,1)),2, at =pretty(c(0.5,1)), line =.4, las = 1)
+  }
+  
+  params <- c(.2,4,.01)
+  X <- psychometricData$level[psychometricData$participant == theCompleteParticipants[i]]
+  data <- psychometricData$correct[psychometricData$participant == theCompleteParticipants[i]]
+  sdData <- psychometricData.SD$correct[psychometricData.SD$participant == theCompleteParticipants[i]]
+  out <- optim(params,fn = fitCumWeibull, X = X, data = data)
+  
+  threshold[i] <- out$par[1]/pixperdeg*3600
+  shape[i] <- out$par[2]
+  guessRate <- .5
+  XX <- seq(0, max(X), length.out = 100)
+  YY <- guessRate + (1-guessRate-out$par[3]) * (1-exp(-(XX/out$par[1])**out$par[2]))
+  lines(XX, YY, lwd = 2, col = "gray75")
+  points(X, data, pch = 19, col = posterColours[1], cex = 1+sdData)
+  legend("bottomright", legend = paste0("Threshold = ", round(threshold[i],3)), bty = "n", cex = 1.2)
+  legend("bottomleft", legend = paste0("Threshold = ", round(staircaseThresholds$levels[staircaseThresholds$participant == theCompleteParticipants[i]]/pixperdeg*3600,3)), bty = "n", cex = 1.2)
+  mtext(theCompleteParticipants[i], 3, font = 2, at = .01, cex = .8, line = -1)
 }
 ```
 
@@ -589,29 +617,29 @@ par(mfcol = c(2,3), mai = c(0.25,0.25,0.1,0.1), omi = c(.25,.25,0,0))
 xRange <- range(pretty(range(noiseConditionsIndv[theFs,theConditions,])))
 yRange <- range(pretty(range(pretty(range(staircaseThresholds$levels/pixperdeg*3600)))))
 for (C in theConditions){
-count <- 0
-for (F in theFs[1:2]){
-count <- count+1
-plot(x = NULL, y = NULL, xlim = xRange, ylim = yRange, axes=FALSE, ann = FALSE)
-axis(1, at = pretty(xRange), lwd = 2, tck = -.015, labels = FALSE)
-axis(2, at = pretty(yRange), lwd = 2, tck = -.015, labels = FALSE)
-if (F == 61){
-mtext(pretty(xRange),1, at =pretty(xRange), line = .5)
-mtext("SNR", 1, font = 2, line = 2)
-}
-if (C == 1){
-mtext(pretty(yRange),2, at =pretty(yRange), line = .5, las = 2)
-mtext("Threshold", 2, font = 2, line = 2)
-}
-
-mod <- lm(staircaseThresholds$levels/pixperdeg*3600 ~ noiseConditionsIndv[F,C,])
-abline(mod, col = posterColours[2], lwd = 2)
-points(noiseConditionsIndv[F,C,],staircaseThresholds$levels/pixperdeg*3600, pch = 19, col = posterColours[1], cex = 1.5)
-out <- cor.test(noiseConditionsIndv[F,C,],staircaseThresholds$levels/pixperdeg*3600)
-thers[count,C] <- out$estimate
-therps[count,C] <- out$p.value
-
-legend("topright", legend = paste0("r = ", round(thers[count,C],3), ", p = ", round(therps[count,C],3)), bty = "n")
-}
+  count <- 0
+  for (F in theFs[1:2]){
+    count <- count+1
+    plot(x = NULL, y = NULL, xlim = xRange, ylim = yRange, axes=FALSE, ann = FALSE)
+    axis(1, at = pretty(xRange), lwd = 2, tck = -.015, labels = FALSE)
+    axis(2, at = pretty(yRange), lwd = 2, tck = -.015, labels = FALSE)
+    if (F == 61){
+      mtext(pretty(xRange),1, at =pretty(xRange), line = .5)
+      mtext("SNR", 1, font = 2, line = 2)
+    }
+    if (C == 1){
+      mtext(pretty(yRange),2, at =pretty(yRange), line = .5, las = 2)
+      mtext("Threshold", 2, font = 2, line = 2)
+    }
+    
+    mod <- lm(staircaseThresholds$levels/pixperdeg*3600 ~ noiseConditionsIndv[F,C,])
+    abline(mod, col = posterColours[2], lwd = 2)
+    points(noiseConditionsIndv[F,C,],staircaseThresholds$levels/pixperdeg*3600, pch = 19, col = posterColours[1], cex = 1.5)
+    out <- cor.test(noiseConditionsIndv[F,C,],staircaseThresholds$levels/pixperdeg*3600)
+    thers[count,C] <- out$estimate
+    therps[count,C] <- out$p.value
+    
+    legend("topright", legend = paste0("r = ", round(thers[count,C],3), ", p = ", round(therps[count,C],3)), bty = "n")
+  }
 }
 ```
