@@ -132,7 +132,6 @@ addalpha <- function(col, alpha=1){apply(sapply(col, col2rgb)/255, 2, function(x
 posterColours <- c("#333E47", "#6a757c", "#e31936")
 posterColoursRamped <- colorRampPalette(posterColours, space = "Lab", interpolate = "spline")(8)
 categoricalPalette <- c("#333E47","#3B5C62","#777079", "#4A6F74","#B94256", "#5E767B", "#955F6D", "#E31835")
-
 ```
 
 # Get Participant Data
@@ -419,32 +418,61 @@ nSF <- dim(gaborFilters)[4]
 ## Image based two stage contrast gain control (no disparity for now)
 
 ```{r}
-
 # theImagesLeft
 # theImagesRight
 # theAntiImagesLeft
 # theAntiImagesRight
 
 # Stage One - Get Filter Responses
-nFrames <- dim(theImagesLeft)[3]
+nFrames <- dim(theImagesLeft)[3]*3
 filteredIM.Left <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
 filteredIM.Right <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
 
+filteredIM.Stereo.Left <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
+filteredIM.Stereo.Right <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
+
+filteredIM.Anti.Left <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
+filteredIM.Anti.Right <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
 # Left Eye
 for (T in 1:nFrames){
-  fIM.Left <- fft(theImagesLeft[,,T])
-  fIM.Right <- fft(theImagesRight[,,T])
+  currentFrame <- ((T-1) %% 20) + 1
+  # Correlated Images
+  fIM.Left <- fft(theImagesLeft[,,currentFrame])
+  fIM.Right <- fft(theImagesRight[,,currentFrame])
+  # Stereo Images
+  fIM.Stereo.Left <- fft(theImagesLeftDisparity[,,currentFrame])
+  fIM.Stereo.Right <- fft(theImagesRightDisparity[,,currentFrame])
+  # Anticorrelated Images
+  fIM.Anti.Left <- fft(theAntiImagesLeft[,,currentFrame])
+  fIM.Anti.Right <- fft(theAntiImagesLeft[,,currentFrame])
   
   for (O in 1:nOrientations){
     for (S in 1:nSF){
+      # Filter the images
       filterResponseL <- fIM.Left * gaborFilters[,,O,S]
       filterResponseR <- fIM.Right * gaborFilters[,,O,S]
+      
+      filterResponseLS <- fIM.Stereo.Left * gaborFilters[,,O,S]
+      filterResponseRS <- fIM.Stereo.Right * gaborFilters[,,O,S]
+      
+      filterResponseLA <- fIM.Anti.Left * gaborFilters[,,O,S]
+      filterResponseRA <- fIM.Anti.Right * gaborFilters[,,O,S]
+      
+      # Return images to spatial domain
       filteredIM.Left[,,O,S,T] <- Real(fft(abs(filterResponseL)*exp(1i*angle(filterResponseL)), inverse = TRUE))
       filteredIM.Right[,,O,S,T] <- Real(fft(abs(filterResponseR)*exp(1i*angle(filterResponseR)), inverse = TRUE))
+      
+      filteredIM.Stereo.Left[,,O,S,T] <- Real(fft(abs(filterResponseL)*exp(1i*angle(filterResponseL)), inverse = TRUE))
+      filteredIM.Stereo.Right[,,O,S,T] <- Real(fft(abs(filterResponseR)*exp(1i*angle(filterResponseR)), inverse = TRUE))
+      
+      filteredIM.Anti.Left[,,O,S,T] <- Real(fft(abs(filterResponseL)*exp(1i*angle(filterResponseL)), inverse = TRUE))
+      filteredIM.Anti.Right[,,O,S,T] <- Real(fft(abs(filterResponseR)*exp(1i*angle(filterResponseR)), inverse = TRUE)) 
     }
   }
 }
 ```
+
+Merge the following chunk with the previous (save on a little space.)
 
 ```{r, monocular responses}
 m <- 1.3
@@ -453,23 +481,47 @@ S <- 1
 stage1.Left <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
 stage1.Right <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
 
+stage1.Stereo.Left <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
+stage1.Stereo.Right <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
+
+stage1.Anti.Left <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
+stage1.Anti.Right <- array(NA, dim = c(stim.Size,stim.Size,nOrientations, nSF, nFrames))
+
 for (T in 1:nFrames){
   for (O in 1:nOrientations){
     for (S in 1:nSF){
       stage1.Left[,,O,S,T] <- (filteredIM.Left[,,O,S,T]**m)/(S + filteredIM.Left[,,O,S,T]+filteredIM.Right[,,O,S,T])
       stage1.Right[,,O,S,T] <- (filteredIM.Right[,,O,S,T]**m)/(S + filteredIM.Right[,,O,S,T]+filteredIM.Left[,,O,S,T])
+      
+      stage1.Stereo.Left[,,O,S,T] <- (filteredIM.Stereo.Left[,,O,S,T]**m)/(S + filteredIM.Stereo.Left[,,O,S,T]+filteredIM.Stereo.Right[,,O,S,T])
+      stage1.Stereo.Right[,,O,S,T] <- (filteredIM.Stereo.Right[,,O,S,T]**m)/(S + filteredIM.Stereo.Right[,,O,S,T]+filteredIM.Stereo.Left[,,O,S,T])
+      
+      stage1.Anti.Left[,,O,S,T] <- (filteredIM.Anti.Left[,,O,S,T]**m)/(S + filteredIM.Anti.Right[,,O,S,T]+filteredIM.Anti.Right[,,O,S,T])
+      stage1.Anti.Right[,,O,S,T] <- (filteredIM.Anti.Right[,,O,S,T]**m)/(S + filteredIM.Right[,,O,S,T]+filteredIM.Anti.Left[,,O,S,T])
     }
   }
 }
-
-remove(filteredIM.Left,filteredIM.Right)
 ```
 
 ```{r}
 summedResponse <- stage1.Left + stage1.Right
 differenceResponse <- stage1.Left - stage1.Right
-remove(stage1.Left,stage1.Right)
+
+summedResponse.stereo <- stage1.Stereo.Left + stage1.Stereo.Right
+differenceResponse.stereo <- stage1.Stereo.Left - stage1.Stereo.Right
+
+summedResponse.anti <- stage1.Anti.Left + stage1.Anti.Right
+differenceResponse.anti <- stage1.Anti.Left - stage1.Anti.Right
 ```
+
+```{r}
+remove(stage1.Left,stage1.Right,
+       stage1.Stereo.Left, 
+       stage1.Stereo.Right,
+       stage1.Anti.Left, 
+       stage1.Anti.Right,filteredIM.Left,filteredIM.Right,filteredIM.Stereo.Left)
+```
+
 
 ```{r}
 p <- 6.5
@@ -480,25 +532,53 @@ Z <- .01
 stage2.Sum <- array(NA, dim = c(nOrientations, nSF, nFrames))
 stage2.Diff<- array(NA, dim = c(nOrientations, nSF, nFrames))
 
+stage2.Stereo.Sum <- array(NA, dim = c(nOrientations, nSF, nFrames))
+stage2.Stereo.Diff<- array(NA, dim = c(nOrientations, nSF, nFrames))
+
+stage2.Anti.Sum <- array(NA, dim = c(nOrientations, nSF, nFrames))
+stage2.Anti.Diff<- array(NA, dim = c(nOrientations, nSF, nFrames))
+
 for (T in 1:nFrames){
   for (O in 1:nOrientations){
     for (S in 1:nSF){
       stage2.Sum[O,S,T] <- (base::sum(((summedResponse[,,O,S,T]**p)/(Z + summedResponse[,,O,S,T]**q))**w, na.rm = TRUE)**(1/w))
       stage2.Diff[O,S,T] <- (base::sum(((differenceResponse[,,O,S,T]**p)/(Z + differenceResponse[,,O,S,T]**q))**w, na.rm = TRUE)**(1/w))
+      
+      stage2.Stereo.Sum[O,S,T] <- (base::sum(((summedResponse.stereo[,,O,S,T]**p)/(Z + summedResponse.stereo[,,O,S,T]**q))**w, na.rm = TRUE)**(1/w))
+      stage2.Stereo.Diff[O,S,T] <- (base::sum(((differenceResponse.stereo[,,O,S,T]**p)/(Z + differenceResponse.stereo[,,O,S,T]**q))**w, na.rm = TRUE)**(1/w))
+      
+      stage2.Anti.Sum[O,S,T] <- (base::sum(((summedResponse.anti[,,O,S,T]**p)/(Z + summedResponse.anti[,,O,S,T]**q))**w, na.rm = TRUE)**(1/w))
+      stage2.Anti.Diff[O,S,T] <- (base::sum(((differenceResponse.anti[,,O,S,T]**p)/(Z + differenceResponse.anti[,,O,S,T]**q))**w, na.rm = TRUE)**(1/w))
     }
   }
 }
 
 sumResp <- apply(stage2.Sum**w, 3, base::sum)**(1/w)
 diffResp <- apply(stage2.Diff**w, 3, base::sum)**(1/w)
+
+sumResp.stereo <- apply(stage2.Stereo.Sum**w, 3, base::sum)**(1/w)
+diffResp.stereo <- apply(stage2.Stereo.Diff**w, 3, base::sum)**(1/w)
+
+sumResp.anti <- apply(stage2.Anti.Sum**w, 3, base::sum)**(1/w)
+diffResp.anti <- apply(stage2.Anti.Diff**w, 3, base::sum)**(1/w)
 ```
 
 ```{r}
-plot(sumResp)
-plot(diffResp)
+save(sumResp,diffResp,sumResp.stereo,diffResp.stereo,sumResp.anti,diffResp.anti, file=paste0(currentDirectory,"/", "baseModelResponses.RData"))
+```
 
-plot(abs(fft(sumResp[2:20])))
-plot(abs(fft(diffResp[2:20])))
+
+```{r}
+plot(sumResp)
+plot(sumResp+diffResp, type = "l")
+lines(1:60,sumResp, col = "blue")
+lines(1:60,diffResp, col = "red")
+```
+
+```{r}
+plot(abs(fft(sumResp+diffResp)[2:30]))
+plot(abs(fft(sumResp.stereo+diffResp.stereo)[2:30]))
+plot(abs(fft(sumResp.anti+diffResp.anti)[2:30]))
 
 ```
 

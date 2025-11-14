@@ -49,10 +49,8 @@ format:
         \newcommand{\printkeywords}[1]{\noindent\textbf{Keywords:} #1\par}
 
 abstract: >
-  Binocular vision fuses monocular inputs into a single percept. To integrate the input from the eyes, the visual system is thought to encode the monocular signals with summation and differencing channels. Here, we investigate the ability of Steady-State Visually Evoked Potentials (SSVEPs) to record neural responses associated with summation and differencing mechanisms. We measured responses to binocular noise stimuli with differing degrees of interocular correlation. Across the eyes, stimuli could oscillate from (i) no correlation to perfect interocular correlation (i.e., the same image in both eyes), (ii) no correlation to perfect interocular correlation with a disparity cue, (iii) from no correlation to perfect interocular anticorrelation (i.e., opposite interocular contrast), and (iv) a control condition with no interocular correlation. A total of XX observers participated in the study. Responses to correlated stimuli showed a peak at the fundamental frequency (3Hz), while adding a disparity cue led to a response at the fundamental and its second harmonic (6Hz). Surprisingly, no steady-state responses were found for interocular anticorrelation; signal-to-noise ratios at 3Hz were no different from those of the control condition. We modelled our data using an image-based variant of the two-stage contrast gain control model of binocular summation. To generate SSVEPs dependent on interocular correlation, the noise images were filtered with a bank of log-Gabors that had preferred orientations ranging from 0° to 165°, in increments of 15°, and preferred spatial frequencies of 0.5, 1, 2, 4, 8, and 16 cycles/°. The monocular filter responses underwent an early non-linearity and contrast gain control before binocular summation and binocular difference. The sum and difference responses were fed through a second non-linear and contrast gain control. The resulting output was Fourier transformed to generate model SSVEPs. 
+  Binocular vision fuses monocular inputs into a single percept. To integrate the input from the eyes, the visual system is thought to encode the monocular signals with summation and differencing channels. Here, we investigate the ability of Steady-State Visually Evoked Potentials (SSVEPs) to record neural responses associated with summation and differencing mechanisms. We measured responses to binocular noise stimuli with differing degrees of interocular correlation. Across the eyes, stimuli could oscillate from (i) no correlation to perfect interocular correlation (i.e., the same image in both eyes), (ii) no correlation to perfect interocular correlation with a disparity cue, (iii) from no correlation to perfect interocular anticorrelation (i.e., opposite interocular contrast), and (iv) a control condition with no interocular correlation. A total of XX observers participated in the study. Responses to correlated stimuli showed a peak at the fundamental frequency (3Hz), while adding a disparity cue led to a response at the fundamental and its second harmonic (6Hz). The amplitude of the fundamental frequency in the stereocue condition was strongly correlated with the stereoacuity of observers. Surprisingly, no steady-state responses were found for interocular anticorrelation; signal-to-noise ratios at 3Hz were no different from those of the control condition. We modelled our data using an image-based variant of the two-stage contrast gain control model of binocular summation. To generate SSVEPs dependent on interocular correlation, the noise images were filtered with a bank of log-Gabors that had preferred orientations ranging from 0° to 165°, in increments of 15°, and preferred spatial frequencies of 0.5, 1, 2, 4, 8, and 16 cycles/°. The monocular filter responses underwent an early non-linearity and contrast gain control before binocular summation and binocular difference. The sum and difference responses were fed through a second non-linear and contrast gain control. The resulting output was Fourier transformed to generate model SSVEPs. 
 ---
-
-## Figures
 
 ```{r, preliminaries, echo = FALSE, warning=FALSE, message=FALSE }
 packagelist <- c('R.matlab','pracma','EnvStats', "matlab")
@@ -207,3 +205,63 @@ mtext(paste0("1F Median Difference = ", round(realMedianDiff, 2), ", p = ", roun
 mtext("Anticorrelated Noise VS Control", 3, line = 1, font = 2)
 
 ```
+
+### "Model" Responses
+
+```{r,echo = FALSE, fig.width=10}
+load(paste0(currentDirectory,"/", "baseModelResponses.RData"))
+par(mfcol = c(1,3), mai = c(.1,.3,.1,.25), omi = c(.4,.3,.4,.1))
+
+fft.Correlated <- abs(fft(sumResp+diffResp)[2:31])/1000
+
+yLimit <- range(pretty(range(fft.Correlated)))
+plot(x = NULL, y = NULL, xlim = c(0,30), ylim = yLimit, axes = FALSE, ann = FALSE)
+axis(1, at = seq(0,30,3), tck = -.015, lwd = 2, labels = FALSE)
+axis(2, at = pretty(yLimit), tck = -.015, lwd = 2, labels = FALSE)
+mtext(seq(0,30,3), 1, at=seq(0,30,3), line = .5)
+mtext(pretty(yLimit), 2, las = 1, at = pretty(yLimit), line = .5)
+mtext("Frequency (Hz)", 1, font = 2, line = 2)
+mtext("Response Magnitude",2, font = 2, line = 2.5)
+for (i in 1:30){
+  lines(c(i,i), c(0,fft.Correlated[i]), lwd = 2, col = posterColours[1])
+}
+points(seq(3,30,3),fft.Correlated[seq(3,30,3)], pch = 19, col = posterColours[1], cex = 1.5)
+mtext("Correlated Noise", 3, font = 2)
+####
+
+fft.Stereo <- abs(fft(sumResp.stereo+diffResp.stereo)[2:31])/1000
+
+yLimit <- range(pretty(range(fft.Stereo)))
+plot(x = NULL, y = NULL, xlim = c(0,30), ylim = yLimit, axes = FALSE, ann = FALSE)
+axis(1, at = seq(0,30,3), tck = -.015, lwd = 2, labels = FALSE)
+axis(2, at = pretty(yLimit), tck = -.015, lwd = 2, labels = FALSE)
+mtext(seq(0,30,3), 1, at=seq(0,30,3), line = .5)
+mtext(pretty(yLimit), 2, las = 1, at = pretty(yLimit), line = .5)
+mtext("Frequency (Hz)", 1, font = 2, line = 2)
+mtext("Response Magnitude",2, font = 2, line = 2.5)
+for (i in 1:30){
+  lines(c(i,i), c(0,fft.Stereo[i]), lwd = 2, col = posterColours[1])
+}
+points(seq(3,30,3),fft.Stereo[seq(3,30,3)], pch = 19, col = posterColours[1], cex = 1.5)
+mtext("Correlated Noise + Stereo", 3, font = 2)
+
+###
+
+fft.Anti <- abs(fft(sumResp.anti+diffResp.anti)[2:31])/100000000
+
+yLimit <- range(pretty(range(fft.Anti)))
+plot(x = NULL, y = NULL, xlim = c(0,30), ylim = yLimit, axes = FALSE, ann = FALSE)
+axis(1, at = seq(0,30,3), tck = -.015, lwd = 2, labels = FALSE)
+axis(2, at = pretty(yLimit), tck = -.015, lwd = 2, labels = FALSE)
+mtext(seq(0,30,3), 1, at=seq(0,30,3), line = .5)
+mtext(pretty(yLimit), 2, las = 1, at = pretty(yLimit), line = .5)
+mtext("Frequency (Hz)", 1, font = 2, line = 2)
+mtext("Response Magnitude",2, font = 2, line = 2.5)
+for (i in 1:30){
+  lines(c(i,i), c(0,fft.Anti[i]), lwd = 2, col = posterColours[1])
+}
+points(seq(3,30,3),fft.Anti[seq(3,30,3)], pch = 19, col = posterColours[1], cex = 1.5)
+mtext("Anticorrelated Noise", 3, font = 2)
+
+```
+
