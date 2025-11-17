@@ -1,0 +1,1 @@
+function [perc] = dBtoPercent(dB)%converts from dB to % contrastperc = 10.^(dB/20);return
