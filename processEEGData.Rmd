@@ -1,5 +1,5 @@
 ---
-title: "process EEG"
+title: "process EEG - Experiment 2"
 output: html_document
 date: "2025-11-17"
 ---
@@ -9,6 +9,101 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
+packagelist <- c('R.matlab','pracma','EnvStats', "matlab")
 
+missingpackages <- packagelist[!packagelist %in% installed.packages()[,1]]
+if (length(missingpackages)>0){install.packages(missingpackages)}
+toinstall <- packagelist[which(!packagelist %in% (.packages()))]
+invisible(lapply(toinstall,library,character.only=TRUE))
+
+addalpha <- function(col, alpha=1){apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))}
+
+posterColours <- c("#333E47", "#6a757c", "#e31936")
+posterColoursRamped <- colorRampPalette(posterColours, space = "Lab", interpolate = "spline")(8)
+categoricalPalette <- c("#333E47","#3B5C62","#777079", "#4A6F74","#B94256", "#5E767B", "#955F6D", "#E31835")
 ```
+
+```{r}
+theDataDirectory <- "~/Library/CloudStorage/GoogleDrive-brichard21@gmail.com/My Drive/YORK/binocularitynoise/Experiment2data/EEGdata/"
+theCompleteParticipants <- list.dirs(theDataDirectory, recursive = FALSE, full.names = FALSE)
+
+blankTime <- 1000
+duration <- 10000
+legaltriggers <- c(11:15,21:25,31:35)  # trigger codes we used to indicate stimulus onset
+theBlockData <- list.files(paste0(theDataDirectory,theCompleteParticipants[1]), pattern = "*.mat", full.names = TRUE)
+
+stimulusConditions <- matrix(NA, nrow= 30, ncol = length(theBlockData))
+theEEGData <- array(NA, dim = c(64,10000,30,length(theBlockData)))
+theFFTData <- array(NA, dim = c(64,10000,30,length(theBlockData)))
+
+for (BLOCK in 1:length(theBlockData)){
+  theDataFile <- readMat(theBlockData[BLOCK])
+  
+  stimulusConditionsTemp <- as.numeric(unlist(theDataFile$EEG[,,1]$event["type",1,]))
+  stimulusConditionsTemp[1] <- 1
+  triggerTimes <- unlist(theDataFile$EEG[,,1]$event["latency",1,])*1000
+  
+  electrodes <- unlist(theDataFile$EEG["label",,1]$label)
+  
+  triggerTimes <- triggerTimes[(stimulusConditionsTemp %in% legaltriggers)] 
+  stimulusConditions[, BLOCK] <- stimulusConditionsTemp[(stimulusConditionsTemp %in% legaltriggers)]
+  
+  for (event in 1:length(stimulusConditions[, BLOCK])){
+    for (channel in 1:(length(electrodes)-2)){
+      theEEGData[channel,,event,BLOCK] <- theDataFile$EEG[,,1]$data[channel, (triggerTimes[event]+blankTime):(triggerTimes[event]+duration+blankTime-1)]
+      theFFTData[channel,,event,BLOCK] <- fft(theDataFile$EEG[,,1]$data[channel, (triggerTimes[event]+blankTime):(triggerTimes[event]+duration+blankTime-1)])/10000
+    }
+  }
+}
+```
+
+```{r}
+theChannels <- c("Oz", "POz", "O1", "O2")
+eData <- theEEGData[electrodes[1:64] %in% theChannels,,,]
+eFFTData <- theFFTData[electrodes[1:64] %in% theChannels,,,]
+```
+
+```{r}
+eAvgFFTData <- apply(eFFTData,c(2,3,4),mean)
+eAvgEEGData <- apply(eData, c(2,3,4), mean)
+avgSNRCondition <- array(NA, dim = c(200,length(legaltriggers)))
+counter <- 0
+for (condition in legaltriggers){
+  counter <- counter + 1
+  theIDX <- which(stimulusConditions == condition, arr.ind = TRUE)
+  
+  conditionEEGTemp <- matrix(NA,nrow=10000,ncol =10)
+  conditionFFTTemp <- matrix(NA,nrow=10000,ncol =10)
+  
+  for (rep in 1:10){
+    conditionEEGTemp[,rep] <- eAvgEEGData[,theIDX[rep,1], theIDX[rep,2]]
+    conditionFFTTemp[,rep] <- eAvgFFTData[,theIDX[rep,1], theIDX[rep,2]]
+  }
+  
+  tempxy <- data.frame(Re(conditionFFTTemp[31,]),Im(conditionFFTTemp[31,]))
+  D <- sqrt(mahalanobis(tempxy,colMeans(tempxy),cov(tempxy)))
+  outIDX <- which(D < 3)
+  conditionFFT <- conditionFFTTemp[ ,outIDX]
+  conditionEEG <- conditionEEGTemp[ ,outIDX]
+  
+  SNRData <- matrix(0, nrow = 200, ncol = dim(conditionFFT)[2])
+  SNRData2 <- matrix(0, nrow = 200, ncol = dim(conditionFFT)[2])
+  
+  for (trial in 1:dim(conditionFFT)[2]){
+    for (f in 5:200){
+      SNRData[f,trial] <- abs(conditionFFT[f, trial])/mean(abs(conditionFFT[c((f-5),(f+5)), trial]))
+      
+    }
+  }
+  
+  avgSNRCondition[,counter] <- apply(SNRData, 1, mean)
+}
+
+# if (saveData){
+#   save(avgSNRCondition, file = paste0("YOUR SAVE DIRECTORY", theParticipants[P], ".RData"))
+# } 
+```
+
+
+
 
