@@ -1,0 +1,1 @@
+function p = M_DprimeToProb(d)% Syntax: p = M_DprimeToProb(d)% returns p(correct) for 2afc task, assumed unbiased, given a d-prime value as argumentp = M_normsdist(d/sqrt(2));  % FOR 2AFC, from Macmillan & Creelman, p.126return

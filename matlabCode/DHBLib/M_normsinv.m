@@ -1,0 +1,1 @@
+function z = M_normsinv(p)% Syntax: z = M_normsinv(p)% inverse function of normsdist% returns z-score for given p-value% SEE also the integral function M_normsdistz = sqrt(2)*erfinv(2*p-1);return

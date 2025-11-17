@@ -1,0 +1,1 @@
+function dB = percentTodB(perc)%converts from % contrast to contrast in dB	dB = 20 * log10(perc);return

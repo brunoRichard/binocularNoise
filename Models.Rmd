@@ -140,7 +140,7 @@ categoricalPalette <- c("#333E47","#3B5C62","#777079", "#4A6F74","#B94256", "#5E
 theCompleteParticipants <- c("001", "002", "003", "004", "007", "008", "009", "010", "011", "012", "013", "014", "015")
 
 currentDirectory <- getwd()
-processedEEGdir <- paste0(currentDirectory, "/Processed Data/")
+processedEEGdir <- paste0(currentDirectory, "/Processed Data/Experiment 1/")
 
 theParticipantFiles <- list.files(processedEEGdir, pattern = paste0(theCompleteParticipants, collapse = "|"))
 allPConditionData <- array(NA, dim = c(200,13,length(theParticipantFiles)))

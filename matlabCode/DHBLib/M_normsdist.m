@@ -1,0 +1,1 @@
+function p = M_normsdist(z)% Syntax: p = M_normsdist(z)% standard normal integral (function name 'normsdist' taken from Excel)% returns a probability value corresponding to the input z-score (standardised score)% SEE also the inverse function: z = M_normsinv(p)p = 0.5*(1+erf(z/sqrt(2)));return
