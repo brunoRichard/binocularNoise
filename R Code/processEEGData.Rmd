@@ -27,10 +27,10 @@ categoricalPalette <- c("#333E47","#3B5C62","#777079", "#4A6F74","#B94256", "#5E
 theDataDirectory <- "~/Library/CloudStorage/GoogleDrive-brichard21@gmail.com/My Drive/YORK/binocularitynoise/Experiment2data/EEGdata/"
 theCompleteParticipants <- list.dirs(theDataDirectory, recursive = FALSE, full.names = FALSE)
 
-blankTime <- 4000
+blankTime <- 1000
 duration <- 10000
 legaltriggers <- c(11:15,21:25,31:35)  # trigger codes we used to indicate stimulus onset
-theBlockData <- list.files(paste0(theDataDirectory,theCompleteParticipants[2]), pattern = "*.mat", full.names = TRUE)
+theBlockData <- list.files(paste0(theDataDirectory,theCompleteParticipants[4]), pattern = "*.mat", full.names = TRUE)
 
 stimulusConditions <- matrix(NA, nrow= 30, ncol = length(theBlockData))
 theEEGData <- array(NA, dim = c(64,10000,30,length(theBlockData)))
@@ -56,6 +56,18 @@ for (BLOCK in 1:length(theBlockData)){
   }
 }
 ```
+
+```{r}
+for (i in 1:64){
+  plot(abs(theFFTData[i, 2:200, 9,1]), type = "l")
+  abline(v = 31)
+}
+plot(abs(theFFTData[29, 2:200, 9,1]), type = "l")
+plot(abs(theFFTData[30, 2:200, 9,1]), type = "l")
+plot(abs(theFFTData[31, 2:200, 9,1]), type = "l")
+plot(abs(theFFTData[32, 2:200, 9,1]), type = "l")
+```
+
 
 ```{r}
 theChannels <- c("Oz", "POz", "O1", "O2")
@@ -104,10 +116,5 @@ for (condition in legaltriggers){
 ```
 
 
-```{r}
-for (i in 1:dim(avgSNRCondition)[2]){
-  plot(avgSNRCondition[,i], type = "l")
-}
-```
 
 

@@ -48,9 +48,22 @@ format:
         % Define a keywords command for inline keywords
         \newcommand{\printkeywords}[1]{\noindent\textbf{Keywords:} #1\par}
 
-abstract: >
-  Binocular vision fuses monocular inputs into a single percept. To integrate the input from the eyes, the visual system is thought to encode the monocular signals with summation and differencing channels. Here, we investigate the ability of Steady-State Visually Evoked Potentials (SSVEPs) to record neural responses associated with summation and differencing mechanisms. We measured responses to binocular noise stimuli with differing degrees of interocular correlation. Across the eyes, stimuli could oscillate from (i) no correlation to perfect interocular correlation (i.e., the same image in both eyes), (ii) no correlation to perfect interocular correlation with a disparity cue, (iii) from no correlation to perfect interocular anticorrelation (i.e., opposite interocular contrast), and (iv) a control condition with no interocular correlation. A total of XX observers participated in the study. Responses to correlated stimuli showed a peak at the fundamental frequency (3Hz), while adding a disparity cue led to a response at the fundamental and its second harmonic (6Hz). The amplitude of the fundamental frequency in the stereocue condition was strongly correlated with the stereoacuity of observers. Surprisingly, no steady-state responses were found for interocular anticorrelation; signal-to-noise ratios at 3Hz were no different from those of the control condition. We modelled our data using an image-based variant of the two-stage contrast gain control model of binocular summation. To generate SSVEPs dependent on interocular correlation, the noise images were filtered with a bank of log-Gabors that had preferred orientations ranging from 0° to 165°, in increments of 15°, and preferred spatial frequencies of 0.5, 1, 2, 4, 8, and 16 cycles/°. The monocular filter responses underwent an early non-linearity and contrast gain control before binocular summation and binocular difference. The sum and difference responses were fed through a second non-linear and contrast gain control. The resulting output was Fourier transformed to generate model SSVEPs. 
 ---
+
+# Draft Abstract
+*Introduction*
+To integrate the inputs from the eyes into a single percept, the visual system is thought to encode monocular signals through summation and differencing channels. Here, we use 
+Steady-State Visually Evoked Potentials (SSVEPs) to investigate the neural responses associated with summation and differencing mechanisms. 
+
+*Description and results from experiment 1*
+We measured responses to binocular noise stimuli with differing degrees of interocular correlation. Across the eyes, stimuli could oscillate at a frequency of 3Hz from (i) no correlation to perfect interocular correlation, (ii) no correlation to perfect interocular correlation with a disparity cue, (iii) from no correlation to perfect interocular anticorrelation (i.e., opposite interocular contrast), and (iv) a control condition with no interocular correlation. A total of 15 observers participated in the study. Responses to correlated stimuli showed a peak at the fundamental frequency (3Hz), while adding a disparity cue led to a response at the fundamental and its second harmonic (6Hz). We measured stereoacuity in our observers and found that thresholds correlated strongly with the SNRs of the fundamental frequency, but not with its second harmonic. Surprisingly, no steady-state responses were found for interocular anticorrelation; signal-to-noise ratios at 3Hz were no different from those of the control condition. 
+
+*Description of a generic model*
+We modelled our data using an image-based variant of the two-stage contrast gain control model of binocular summation. In this model, interocular correlation-dependent SSVEPs were generated from the responses of a bank of disparity-selective log-Gabor filters. The monocular filter responses were fed through a nonlinearity and contrast gain control, followed by binocular summation and binocular difference. The binocular sum and difference responses were fed through a second nonlinearity and binocular contrast gain control, with the output Fourier-transformed to generate model SSVEPs. 
+
+*Conclusion*
+Neural responses to interocular correlation were measurable using SSVEP methods, yet responses to anticorrelation (differences) were not. 
+
 
 ```{r, preliminaries, echo = FALSE, warning=FALSE, message=FALSE }
 packagelist <- c('R.matlab','pracma','EnvStats', "matlab")
@@ -79,7 +92,7 @@ theParticipantFiles <- list.files(processedEEGdir, pattern = paste0(theCompleteP
 allPConditionData <- array(NA, dim = c(200,13,length(theParticipantFiles)))
 
 for (P in 1:length(theParticipantFiles)){
-  load(paste0(currentDirectory, "/Processed Data/", theParticipantFiles[P]))
+  load(paste0(currentDirectory, "/Processed Data/Experiment 1/", theParticipantFiles[P]))
   allPConditionData[,,P] <- avgSNRCondition2
 }
 
@@ -204,6 +217,89 @@ mtext("Median Difference", 1, font = 2, line = 2)
 mtext(paste0("1F Median Difference = ", round(realMedianDiff, 2), ", p = ", round(pValue,3)), 3, font = 1, adj = 0, cex = .8, line = -0.5)
 mtext("Anticorrelated Noise VS Control", 3, line = 1, font = 2)
 
+```
+
+```{r, get behaviour data, echo = FALSE}
+behaviourDatadir <- paste0(currentDirectory, "/Behaviour Data/")
+
+correct <- NULL
+levels <- NULL
+reversals <- NULL
+
+threshold <- matrix(NA, nrow = 6, ncol = length(theCompleteParticipants))
+
+for (p in 1:length(theCompleteParticipants)){
+  dataTemp <- readMat(paste0(behaviourDatadir,theCompleteParticipants[p],'/',paste0(theCompleteParticipants[p], "Final.mat")))
+  
+  correct <- NULL
+  levels <- NULL
+  reversals <- NULL
+  block <- NULL
+  
+  for (i in 1:6){
+    correct <- c(correct, dataTemp$Exp[,,1]$Staircase[,,i]$response)
+    levels <- c(levels, round(dataTemp$Exp[,,1]$Staircase[,,i]$x,2))
+    reversals <- c(reversals, dataTemp$Exp[,,1]$Staircase[,,i]$reversal)
+    block <- c(block, rep(i, length(dataTemp$Exp[,,1]$Staircase[,,i]$reversal)))
+  }
+  
+  theVariableName <- paste0("allStaircases", p)
+  assign(theVariableName, data.frame(participant=theCompleteParticipants[p], block = block, correct = correct, levels = levels, reversals = reversals))
+  
+  threshold[,p] <- dataTemp$Exp[,,1]$MeanReversalThreshold
+}
+
+allStaircases <- rbind(allStaircases1, allStaircases2,allStaircases3,allStaircases4,allStaircases5,allStaircases6,allStaircases7,allStaircases8,allStaircases9,allStaircases10,allStaircases11,allStaircases12,allStaircases13)
+remove(allStaircases1,allStaircases2,allStaircases3,allStaircases4,allStaircases5,allStaircases6,allStaircases7,allStaircases8,allStaircases9,allStaircases10,allStaircases11,allStaircases12,allStaircases13)
+```
+
+```{r, echo = FALSE}
+psychometricData <- aggregate(correct ~ levels + participant, data = allStaircases, FUN = mean)
+psychometricData.SD <- aggregate(correct ~ levels + participant, data = allStaircases, FUN = sd)
+staircaseThresholds <- aggregate(levels ~ participant, data = allStaircases, FUN = geomean, subset = reversals %in% c(12,11,10,9,8))
+```
+
+### Correlation between SNRs and Stereothresholds
+
+```{r, fig.width=10,fig.height=5, echo = FALSE}
+pixperdeg <- 36.73247
+theConditions <- 1:3
+thers <- matrix(NA, nrow = length(theFs), ncol = 3)
+therps <- thers
+par(mfcol = c(2,3), mai = c(0.25,0.25,0.1,0.1), omi = c(.25,.4,.25,0))
+
+xRange <- range(pretty(range(noiseConditionsIndv[theFs,theConditions,])))
+yRange <- range(pretty(range(pretty(range(staircaseThresholds$levels/pixperdeg*3600)))))
+for (C in theConditions){
+  count <- 0
+  for (F in theFs[1:2]){
+    count <- count+1
+    plot(x = NULL, y = NULL, xlim = xRange, ylim = yRange, axes=FALSE, ann = FALSE)
+    axis(1, at = pretty(xRange), lwd = 2, tck = -.015, labels = FALSE)
+    axis(2, at = pretty(yRange), lwd = 2, tck = -.015, labels = FALSE)
+    if (F == 61){
+      mtext(pretty(xRange),1, at =pretty(xRange), line = .5)
+      mtext("SNR", 1, font = 2, line = 2)
+    }
+    if (C == 1){
+      mtext(pretty(yRange),2, at =pretty(yRange), line = .5, las = 2)
+      mtext("Stereo Threshold\n(arc sec)", 2, font = 2, line = 2)
+    }
+    
+    mod <- lm(staircaseThresholds$levels/pixperdeg*3600 ~ noiseConditionsIndv[F,C,])
+    abline(mod, col = posterColours[2], lwd = 2)
+    points(noiseConditionsIndv[F,C,],staircaseThresholds$levels/pixperdeg*3600, pch = 19, col = posterColours[1], cex = 1.5)
+    out <- cor.test(noiseConditionsIndv[F,C,],staircaseThresholds$levels/pixperdeg*3600)
+    thers[count,C] <- out$estimate
+    therps[count,C] <- out$p.value
+    
+    legend("topright", legend = paste0("r = ", round(thers[count,C],3), ", p = ", round(therps[count,C],3)), bty = "n", inset = c(0,.05))
+    if (F == theFs[1]){
+        mtext(conditions[C], 3, font = 2, padj = 0.5, line = 1)
+    }
+    mtext(paste0((F-1)/10, "Hz"), 1, line = -1, font = 2, adj = 0, at = 0)
+  }
+}
 ```
 
 ### "Model" Responses
