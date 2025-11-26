@@ -1,0 +1,64 @@
+---
+title: "Experiment 2 Analysis"
+output: html_document
+date: "2025-11-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+packagelist <- c('R.matlab','pracma','EnvStats', "matlab")
+
+missingpackages <- packagelist[!packagelist %in% installed.packages()[,1]]
+if (length(missingpackages)>0){install.packages(missingpackages)}
+toinstall <- packagelist[which(!packagelist %in% (.packages()))]
+invisible(lapply(toinstall,library,character.only=TRUE))
+
+addalpha <- function(col, alpha=1){apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))}
+
+posterColours <- c("#333E47", "#6a757c", "#e31936")
+posterColoursRamped <- colorRampPalette(posterColours, space = "Lab", interpolate = "spline")(8)
+categoricalPalette <- c("#333E47","#3B5C62","#777079", "#4A6F74","#B94256", "#5E767B", "#955F6D", "#E31835")
+```
+
+```{r}
+thePData <- list.files("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/Experiment 2/")
+allParticipantsSNRData <- array(NA, dim = c(200, 15, length(thePData)))
+
+for (P in 1:length(thePData)){
+  load(paste0("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/Experiment 2/", thePData[P]))
+  allParticipantsSNRData[,,P] <- avgSNRCondition
+}
+
+medianSNRs <- apply(allParticipantsSNRData,c(1,2), median)
+```
+
+```{r, fig.width=10}
+par(mfrow = c(1,5), pty = "s")
+for (i in 1:5){
+  plot(medianSNRs[,i], type = "l", ylim = c(1,2))
+  abline(v = 31, col = "red")
+}
+par(mfrow = c(1,5))
+for (i in 6:10){
+  plot(medianSNRs[,i], type = "l", ylim = c(1,2))
+  abline(v = 31, col = "red")
+}
+par(mfrow = c(1,5))
+for (i in 11:15){
+  plot(medianSNRs[,i], type = "l", ylim = c(1,2))
+  abline(v = 31, col = "red")
+  abline(v = 61, col = "red")
+}
+```
+
+
+
+```{r}
+plot(medianSNRs[31,1:5], type= "l")
+plot(medianSNRs[31,6:10], type= "l")
+plot(medianSNRs[31,11:15], type= "l")
+```
+
