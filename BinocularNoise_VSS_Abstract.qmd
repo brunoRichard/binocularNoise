@@ -51,19 +51,7 @@ format:
 ---
 
 # Draft Abstract
-*Introduction*
-To integrate the inputs from the eyes into a single percept, the visual system is thought to encode monocular signals through summation and differencing channels. Here, we use 
-Steady-State Visually Evoked Potentials (SSVEPs) to investigate the neural responses associated with summation and differencing mechanisms. 
-
-*Description and results from experiment 1*
-We measured responses to binocular noise stimuli with differing degrees of interocular correlation. Across the eyes, stimuli could oscillate at a frequency of 3Hz from (i) no correlation to perfect interocular correlation, (ii) no correlation to perfect interocular correlation with a disparity cue, (iii) from no correlation to perfect interocular anticorrelation (i.e., opposite interocular contrast), and (iv) a control condition with no interocular correlation. A total of 15 observers participated in the study. Responses to correlated stimuli showed a peak at the fundamental frequency (3Hz), while adding a disparity cue led to a response at the fundamental and its second harmonic (6Hz). We measured stereoacuity in our observers and found that thresholds correlated strongly with the SNRs of the fundamental frequency, but not with its second harmonic. Surprisingly, no steady-state responses were found for interocular anticorrelation; signal-to-noise ratios at 3Hz were no different from those of the control condition. 
-
-*Description of a generic model*
-We modelled our data using an image-based variant of the two-stage contrast gain control model of binocular summation. In this model, interocular correlation-dependent SSVEPs were generated from the responses of a bank of disparity-selective log-Gabor filters. The monocular filter responses were fed through a nonlinearity and contrast gain control, followed by binocular summation and binocular difference. The binocular sum and difference responses were fed through a second nonlinearity and binocular contrast gain control, with the output Fourier-transformed to generate model SSVEPs. 
-
-*Conclusion*
-Neural responses to interocular correlation were measurable using SSVEP methods, yet responses to anticorrelation (differences) were not. 
-
+The visual system encodes binocular signals via summation and differencing channels, yet the relative weighting of these inputs remains unclear. Here, we use Steady-State Visually Evoked Potentials (SSVEPs) to investigate the neural responses associated with summation and differencing mechanisms. In Experiment 1, we measured responses to binocular noise stimuli in 15 observers. Across the eyes, stimuli could oscillate (at 3Hz) from no correlation to perfect interocular correlation, from no correlation to perfect interocular anticorrelation (i.e., opposite interocular contrast), or no interocular correlation (i.e., the control condition). Responses to correlated stimuli showed a peak at the fundamental frequency (3Hz); however, we found no evidence of measurable responses to anticorrelation. In Experiment 2, we increased the sample size to 48 observers and measured SSVEPs in response to interocular correlation and anticorrelation while manipulating the degree of interocular correlation. The correlation between the left and right eye images could be 0, 0.12, 0.24, 0.48, or 0.96. We found SSVEP responses at the fundamental frequency in both interocular correlation and anticorrelation conditions. Interocular correlation generated SSVEPs with a correlation of 0.48, while anticorrelation SSVEPs were only measurable at a correlation of 0.96. To determine the influence of individual differences on SSVEPs to interocular correlation, we collected psychophysical measures of ocularity and correlated them with neural responses. Two measures of ocularity were used: stereoacuity and binocular balance, which refers to the ratio of dominance duration in each eye during rivalry. We found only small associations between SSVEP magnitudes and psychophysical measures of ocularity (stereoacuity and binocular balance). We conclude that while neural responses to both correlation and anticorrelation can be recorded via SSVEPs, the latter requires high signal coherence and a large sample size.
 
 ```{r, preliminaries, echo = FALSE, warning=FALSE, message=FALSE }
 packagelist <- c('R.matlab','pracma','EnvStats', "matlab")
@@ -163,32 +151,6 @@ mtext("Median Difference", 1, font = 2, line = 2)
 mtext("Proportion of Scores", 2, font = 2, line = 3)
 mtext(paste0("1F Median Difference = ", round(realMedianDiff, 2), ", p = ", round(pValue,3)), 3, font = 1, adj = 0, cex = .8, line = -0.5)
 mtext("Correlated Noise VS Control", 3, line = 1, font = 2)
-
-# Stereo to control
-
-realMedianDiff <- noiseConditionsAvg[31,2] - noiseConditionsAvg[31,4]
-nPerm <- 1000
-
-subset <- c(noiseConditionsIndv[31,c(2,4),])
-medianDiff <- NULL
-for (i in 1:nPerm){
-  IDX1 <- sample(1:length(subset), length(subset)/2, replace = FALSE)
-  IDX2 <- setdiff(1:length(subset), IDX1)
-  medianDiff[i] <- median(subset[IDX1]) - median(subset[IDX2])
-}
-pValue <- mean(abs(medianDiff) > realMedianDiff)
-
-axisValues <- hist(medianDiff, plot = FALSE)
-xLimit <- range(axisValues$breaks)
-
-hist(medianDiff, axes = FALSE, ann = FALSE, xlim =xLimit, ylim = yLimit, col = posterColours[1], border = "white")
-abline(v = c(-realMedianDiff, realMedianDiff), lwd = 2,col = posterColours[3], lty = 2)
-axis(1, at = axisValues$breaks, tck = -.015, labels = FALSE, lwd = 2)
-axis(2, at = pretty(yLimit), tck = -.015, labels = FALSE, lwd = 2)
-mtext(axisValues$breaks,1, at = axisValues$breaks, line = .5, cex = .8)
-mtext("Median Difference", 1, font = 2, line = 2)
-mtext(paste0("1F Median Difference = ", round(realMedianDiff, 2), ", p = ", round(pValue,3)), 3, font = 1, adj = 0, cex = .8, line = -0.5)
-mtext("Stereo VS Control", 3, line = 1, font = 2)
 
 # Anti-correlated to control
 
@@ -302,62 +264,5 @@ for (C in theConditions){
 }
 ```
 
-### "Model" Responses
 
-```{r,echo = FALSE, fig.width=10}
-load(paste0(currentDirectory,"/", "baseModelResponses.RData"))
-par(mfcol = c(1,3), mai = c(.1,.3,.1,.25), omi = c(.4,.3,.4,.1))
-
-fft.Correlated <- abs(fft(sumResp+diffResp)[2:31])/1000
-
-yLimit <- range(pretty(range(fft.Correlated)))
-plot(x = NULL, y = NULL, xlim = c(0,30), ylim = yLimit, axes = FALSE, ann = FALSE)
-axis(1, at = seq(0,30,3), tck = -.015, lwd = 2, labels = FALSE)
-axis(2, at = pretty(yLimit), tck = -.015, lwd = 2, labels = FALSE)
-mtext(seq(0,30,3), 1, at=seq(0,30,3), line = .5)
-mtext(pretty(yLimit), 2, las = 1, at = pretty(yLimit), line = .5)
-mtext("Frequency (Hz)", 1, font = 2, line = 2)
-mtext("Response Magnitude",2, font = 2, line = 2.5)
-for (i in 1:30){
-  lines(c(i,i), c(0,fft.Correlated[i]), lwd = 2, col = posterColours[1])
-}
-points(seq(3,30,3),fft.Correlated[seq(3,30,3)], pch = 19, col = posterColours[1], cex = 1.5)
-mtext("Correlated Noise", 3, font = 2)
-####
-
-fft.Stereo <- abs(fft(sumResp.stereo+diffResp.stereo)[2:31])/1000
-
-yLimit <- range(pretty(range(fft.Stereo)))
-plot(x = NULL, y = NULL, xlim = c(0,30), ylim = yLimit, axes = FALSE, ann = FALSE)
-axis(1, at = seq(0,30,3), tck = -.015, lwd = 2, labels = FALSE)
-axis(2, at = pretty(yLimit), tck = -.015, lwd = 2, labels = FALSE)
-mtext(seq(0,30,3), 1, at=seq(0,30,3), line = .5)
-mtext(pretty(yLimit), 2, las = 1, at = pretty(yLimit), line = .5)
-mtext("Frequency (Hz)", 1, font = 2, line = 2)
-mtext("Response Magnitude",2, font = 2, line = 2.5)
-for (i in 1:30){
-  lines(c(i,i), c(0,fft.Stereo[i]), lwd = 2, col = posterColours[1])
-}
-points(seq(3,30,3),fft.Stereo[seq(3,30,3)], pch = 19, col = posterColours[1], cex = 1.5)
-mtext("Correlated Noise + Stereo", 3, font = 2)
-
-###
-
-fft.Anti <- abs(fft(sumResp.anti+diffResp.anti)[2:31])/100000000
-
-yLimit <- range(pretty(range(fft.Anti)))
-plot(x = NULL, y = NULL, xlim = c(0,30), ylim = yLimit, axes = FALSE, ann = FALSE)
-axis(1, at = seq(0,30,3), tck = -.015, lwd = 2, labels = FALSE)
-axis(2, at = pretty(yLimit), tck = -.015, lwd = 2, labels = FALSE)
-mtext(seq(0,30,3), 1, at=seq(0,30,3), line = .5)
-mtext(pretty(yLimit), 2, las = 1, at = pretty(yLimit), line = .5)
-mtext("Frequency (Hz)", 1, font = 2, line = 2)
-mtext("Response Magnitude",2, font = 2, line = 2.5)
-for (i in 1:30){
-  lines(c(i,i), c(0,fft.Anti[i]), lwd = 2, col = posterColours[1])
-}
-points(seq(3,30,3),fft.Anti[seq(3,30,3)], pch = 19, col = posterColours[1], cex = 1.5)
-mtext("Anticorrelated Noise", 3, font = 2)
-
-```
 

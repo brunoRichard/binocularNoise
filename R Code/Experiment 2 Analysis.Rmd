@@ -25,40 +25,216 @@ categoricalPalette <- c("#333E47","#3B5C62","#777079", "#4A6F74","#B94256", "#5E
 
 ```{r}
 thePData <- list.files("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/Experiment 2/")
-allParticipantsSNRData <- array(NA, dim = c(200, 15, length(thePData)))
 
-for (P in 1:length(thePData)){
-  load(paste0("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/Experiment 2/", thePData[P]))
+# Remove "bad participants. These are participants that don't have SNRs larger than 1 in the strongest SSVEP conditions and those who don't have reasonable psychometric functions in the stereo condition, or did not complete the rivalry task. My hope is to clean up the EEG data a little more and brind some participants back. 
+badPs <- c("P102", "P120", "P121","P122", "P127", "P131", "P141", "P143", "P149")
+participantsGood <- thePData[!c(substr(thePData,1,4) %in% badPs)]
+
+allParticipantsSNRData <- array(NA, dim = c(200, 15, length(participantsGood)))
+theDataFrame <- data.frame(pID = substr(participantsGood, 1,4), FAmplitude5C = NA, FAmplitude5A = NA, StereoThreshold = NA, RivalryBalance = NA)
+
+for (P in 1:length(participantsGood)){
+  load(paste0("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/Experiment 2/", participantsGood[P]))
   allParticipantsSNRData[,,P] <- avgSNRCondition
+  
+  theDataFrame$FAmplitude5C[theDataFrame$pID == substr(participantsGood[P],1,4)] <- avgSNRCondition[31,5]
+  theDataFrame$FAmplitude5A[theDataFrame$pID == substr(participantsGood[P],1,4)] <- avgSNRCondition[31,10]
 }
+```
 
+```{r, eval = FALSE}
+pVector <- 1:length(thePData)
+badPs <- pVector[allParticipantsSNRData[31,5,] < 1 & allParticipantsSNRData[31,10,] < 1]
+thePData[badPs]
+```
+
+```{r}
 medianSNRs <- apply(allParticipantsSNRData,c(1,2), median)
+meanSNRs <- apply(allParticipantsSNRData,c(1,2), mean)
 ```
 
-```{r, fig.width=10}
-par(mfrow = c(1,5), pty = "s")
-for (i in 1:5){
-  plot(medianSNRs[,i], type = "l", ylim = c(1,2))
-  abline(v = 31, col = "red")
-}
-par(mfrow = c(1,5))
-for (i in 6:10){
-  plot(medianSNRs[,i], type = "l", ylim = c(1,2))
-  abline(v = 31, col = "red")
-}
-par(mfrow = c(1,5))
-for (i in 11:15){
-  plot(medianSNRs[,i], type = "l", ylim = c(1,2))
-  abline(v = 31, col = "red")
-  abline(v = 61, col = "red")
+```{r, fig.width=15}
+par(mfrow = c(2,5), pty = "s", mai = c(.1,.2,.1,.1), omi = c(.25,.4,.1,.1))
+medianSNRs[1:10,] <- 1
+theFs <- c(31, 61, 91, 121, 151, 181)
+conditions <- c(0,0.12, 0.24, 0.48, 0.96)
+for (i in 1:10){
+  plot(x = NULL, y = NULL, ylim = c(1,2), xlim = c(0,210), axes = FALSE, ann = FALSE)
+  axis(1,  at = c(0,3,6,9,12,15,18,21)*10+1, tck = -.015, lwd = 2, labels = FALSE)
+  axis(2,  at = seq(1, 2, .5), tck = -.015, lwd = 2, labels = FALSE)
+  
+  if (i > 10){
+    mtext(c(0,3,6,9,12,15,18,21), 1, at = c(0,3,6,9,12,15,18,21)*10+1, line = .6)
+    mtext("Frequency (Hz)", 1, font = 2, line = 2)
+  }
+  
+  if (i == 1 | i == 6 | i == 11) {
+    mtext(seq(1, 2, .5), 2, at = seq(1, 2, .5), line = .6, las = 1)
+    mtext("SNR", 2, font = 2, line = 3)
+  }
+  
+  if (i < 6){
+    mtext(conditions[i], 3, font = 2)
+  }
+  
+  abline(v = theFs, lty = 2, col = posterColours[2])
+  
+  lines(1:200, meanSNRs[,i], lwd = 3, col = posterColours[1])
 }
 ```
-
 
 
 ```{r}
-plot(medianSNRs[31,1:5], type= "l")
-plot(medianSNRs[31,6:10], type= "l")
-plot(medianSNRs[31,11:15], type= "l")
+xLimit <- c(1,5)
+yLimit <- c(1,1.5)
+
+plot(x = NULL, y = NULL, xlim = xLimit, ylim = yLimit, axes = FALSE, ann = FALSE)
+axis(1, at = pretty(xLimit), tck = -.015, lwd = 2, labels = FALSE)
+axis(2, at = seq(1, 1.5, .25), tck = -.015, lwd = 2, labels = FALSE)
+mtext(conditions, 1, at = pretty(xLimit), line = .4)
+mtext(seq(1, 1.5, .25), 2, at = seq(1, 1.5, .25), las = 1, line = .4)
+
+lines(1:5,meanSNRs[31, 1:5], lwd = 2, col = posterColours[1])
+lines(1:5,meanSNRs[31, 6:10], lwd = 2, col = posterColours[2])
+# lines(1:5,meanSNRs[31, 11:15], lwd = 2, col = posterColours[3])
+
+legend("topleft", legend = c("Correlated", "Anti"), bty = "n", col = posterColours[1:3], lwd = 2)
 ```
+
+Stereo
+
+```{r}
+fitCumWeibull <- function(params,X, data){
+  shape <- params[1]
+  scale <- params[2]
+  guessRate <- .5
+  lapse <- params[3]
+  Y <- 1-exp(-(X/shape)**scale)
+  YY <- guessRate + (1-guessRate-lapse) * Y
+  err <- sum((YY - data)**2)
+  return(err)
+}
+
+fitCumGauss <- function(params,X, data){
+  mean <- params[1]
+  sd <- params[2]
+  gamma <- .5 #Guess Rate
+  lambda <- .001 #Lapse Rate
+  
+  YY <- gamma + (1 - gamma - lambda)*.5*pracma::erfc(-sd*(X-mean)/sqrt(2))
+  err <- sum((YY - data)**2)
+  return(err)
+}
+
+fitGumbell <- function(params, X, data){
+  alpha <- params[1]
+  beta <- params[2]
+  gamma <- .5 #Guess Rate
+  lambda <- params[3] #Lapse Rate
+  
+  YY <- gamma + (1 - gamma - lambda)*(1-exp(-1*10**(beta*(X-alpha))))
+  err <- sum((YY - data)**2)
+  return(err)
+}
+```
+
+```{r, fig,.width = 15}
+stereoPath <- "~/Library/CloudStorage/GoogleDrive-brichard21@gmail.com/My Drive/YORK/binocularitynoise/Experiment2data/"
+participants <- substr(participantsGood, 1, 4)
+missing <- "P136"
+participants <- participants[participants != missing]
+stereoThreshold <- NULL
+par(mfcol = c(4,10), mai = c(0,0,0,0))
+
+for (P in 1:length(participants)){
+  alltrials <- 0*(1:9)
+  allcorrect <- alltrials
+  for (block in 1:3){
+    data <- readMat(paste0(stereoPath,'Results/',participants[P], "/", participants[P], "SC_", block, ".mat"))
+    alltrials <- alltrials + colSums(data$R[,,1]$ntrials)
+    allcorrect <- allcorrect + colSums(data$R[,,1]$ncorrect)
+  }
+  propcorr <- allcorrect/alltrials
+  
+  disparities <- c(0.00375, 0.0075, 0.015, 0.03, 0.06, 0.12, 0.24, 0.48, 0.96)*0.5*60
+  disparitiesdB <- 20*log10(disparities)
+  
+  i <- which(alltrials>0)
+  disparitiesC <- disparities[i]
+  CdB <- disparitiesdB[i]
+  Ncorrect <- allcorrect[i]
+  Ntrials <- alltrials[i]
+  datatofit <- data.frame(CdB,Ncorrect,Ntrials)
+  datatofit$propCorrect <- datatofit$Ncorrect/datatofit$Ntrials
+  
+  params <- c(-3,.5, .001)
+  out <- optim(params,fn = fitGumbell, X = datatofit$CdB, data = datatofit$propCorrect)
+  
+  alpha <- out$par[1]
+  beta <- out$par[2]
+  gamma <- .5
+  lambda <- out$par[3]
+  
+  xLimit <- range(pretty(range(disparitiesdB)))
+  plot(x = NULL, y = NULL, xlim = xLimit, ylim = c(0.5,1), axes = FALSE, ann = FALSE)
+  axis(1, at = pretty(xLimit), tck = -.015, lwd = 2, labels = FALSE)
+  axis(2, at = pretty(c(0.5,1)), tck = -.015, lwd = 2, labels = FALSE)
+  
+  XX <- seq(min(datatofit$CdB), max(datatofit$CdB), length.out = 100)
+  YY <- gamma + (1 - gamma - lambda)*(1-exp(-1*10**(beta*(XX-alpha))))
+  lines(XX, YY, lwd = 2, col = "gray75")
+  points(datatofit$CdB, datatofit$propCorrect, pch = 19, col = posterColours[1], cex = 1)
+  legend("bottomright", legend = participants[P] ,bty = "n", cex = 1.2)
+  # paste0("Threshold = ", round(alpha,3)),
+  stereoThreshold[P] <- alpha
+  
+  theDataFrame$StereoThreshold[theDataFrame$pID == participants[P]] <- alpha
+}
+```
+
+```{r}
+stereoPath <- "~/Library/CloudStorage/GoogleDrive-brichard21@gmail.com/My Drive/YORK/binocularitynoise/Experiment2data/"
+participants <- substr(thePData, 1, 4)
+
+binocularbalance <- NULL
+averageDominanceDuration <- NULL
+sdDominanceDuration <- NULL
+
+for (P in 1:length(participants)){
+  ndurs <- c(0,0)
+  results <- matrix(0,nrow=2,ncol=10000)
+  for (block in 1:5){
+    data <- readMat(paste(stereoPath,'Results/',participants[P],'/',participants[P],'rivalry_',block,'.mat',sep=''))
+    
+    laststate <- 0
+    for (t in 1:length(data$R[,,1]$resps)){
+      state <- data$R[,,1]$resps[t]
+      if (state>0){
+        if (state!=laststate){
+          if (laststate>0){
+            ndurs[laststate] <- ndurs[laststate] + 1
+            results[laststate,ndurs[laststate]] <- 60*((t-1) - starttimeindex)
+          }
+          starttimeindex <- t
+          laststate <- state
+        }}}
+  } 
+  binocularbalance[P] <- sum(results[1,1:ndurs[1]])/sum(results[2,1:ndurs[2]])
+  averageDominanceDuration[P] <- mean(results[,1:ndurs[1]])
+  sdDominanceDuration[P] <- sd(results[,1:ndurs[1]])
+  
+  theDataFrame$RivalryBalance[theDataFrame$pID == participants[P]] <- binocularbalance[P]
+}
+```
+
+```{r}
+plot(theDataFrame$FAmplitude5C, theDataFrame$StereoThreshold)
+plot(theDataFrame$FAmplitude5A, theDataFrame$StereoThreshold)
+plot(theDataFrame$FAmplitude5C, theDataFrame$RivalryBalance)
+plot(theDataFrame$FAmplitude5A, theDataFrame$RivalryBalance)
+
+cor(theDataFrame[,c("FAmplitude5C", "FAmplitude5A", "StereoThreshold", "RivalryBalance")], use = "pairwise.complete.obs")
+```
+
+
 
