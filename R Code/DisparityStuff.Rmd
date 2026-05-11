@@ -1,0 +1,73 @@
+---
+title: "Extra Code"
+output: html_document
+date: "2025-12-15"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, disparity stuff}
+peakPosition <- stim.Size/2
+disparitySF <- .3
+disparityCPI <- disparitySF * (stim.Size/pixperdeg)
+nPixelsPerCycle <- (1/(disparityCPI/stim.Size))
+maxDisparity <- 5
+Xdisparity <- maxDisparity * -cos(2*(pi/pixperdeg)*disparitySF * seq(0, nPixelsPerCycle, length.out = nPixelsPerCycle))
+Ydisparity <- 0 
+sigma <- 1
+X <- -(stim.Size/2):(stim.Size/2-1)
+Y <- X
+
+stim.GaussianL <- array(NA, dim = c(stim.Size, stim.Size, length(Xdisparity)))
+stim.GaussianR <- array(NA, dim = c(stim.Size, stim.Size, length(Xdisparity)))
+
+grid <- matlab::meshgrid(X,Y)
+for (xD in 1:length(Xdisparity)){
+  xGaussL <- ((grid$x - Xdisparity[xD])**2)/(2*sigma**2)
+  yGaussL <- ((grid$y - Ydisparity)**2)/(2*sigma**2)
+  stim.GaussianL[,,xD] <- exp(-(xGaussL + yGaussL))
+  
+  xGaussR <- ((grid$x + Xdisparity[xD])**2)/(2*sigma**2)
+  yGaussR <- ((grid$y + Ydisparity)**2)/(2*sigma**2)
+  stim.GaussianR[,,xD] <- exp(-(xGaussR + yGaussR))
+}
+```
+
+
+```{r}
+ ## Add disparity
+  currentRow <- 0
+  for (D in 1:stim.Size){
+    currentRow <- currentRow + 1
+    rowIDX = ((currentRow-1) %% dim(stim.GaussianL)[3]) + 1 
+    
+    leftDImageFFT <- lowPassIM * fft(stim.GaussianL[,,rowIDX])
+    rightDImageFFT <- lowPassIM * fft(stim.GaussianR[,,rowIDX])
+    DnewImageL <- Real(fft(leftDImageFFT * exp(1i * phaseL), inverse = TRUE))
+    DnewImageL = DnewImageL / max(abs(DnewImageL)) / 2 
+    DnewImageR <- Real(fft(rightDImageFFT * exp(1i * phaseR), inverse = TRUE))
+    DnewImageR = DnewImageR / max(abs(DnewImageR)) / 2 
+    
+    disparityTempL[currentRow, ] <- DnewImageL[currentRow,]
+    disparityTempR[currentRow, ] <- DnewImageR[currentRow,]
+  }
+  
+  disparityTempL <- disparityTempL / max(abs(disparityTempL)) /2
+  RMSAltered <- sd(disparityTempL+.5)/mean(disparityTempL+.5)
+  rmsAlteredScale <- stim.RMS*3/RMSAltered
+  disparityTempL <- (disparityTempL*rmsAlteredScale * windowTaper)*.5 +.5
+  disparityTempL <- normalizeBR(disparityTempL)
+  
+  disparityTempR <- disparityTempR / max(abs(disparityTempR)) /2
+  RMSAltered <- sd(disparityTempR+.5)/mean(disparityTempR+.5)
+  rmsAlteredScale <- stim.RMS*3/RMSAltered
+  disparityTempR <- (disparityTempR*rmsAlteredScale * windowTaper)*.5 +.5
+  disparityTempR <- normalizeBR(disparityTempR)
+  
+  theImagesLeftDisparity[,,i] <- disparityTempL
+  theImagesRightDisparity[,,i] <- disparityTempR
+  
+```
+

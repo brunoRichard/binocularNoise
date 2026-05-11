@@ -1,0 +1,907 @@
+---
+title: "posterFigures"
+output: html_document
+date: "2026-04-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Prelims
+
+```{r}
+library(R.matlab)
+library(mgcv)
+addalpha <- function(col, alpha=.5){apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))}
+```
+
+## Load the Experiment 1 Data
+
+```{r}
+load("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/AllElectrodes_Experiment1/allPallElectrodes.RData")
+load("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/AllElectrodes_Experiment1/plotAHead.RData")
+load("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/AllElectrodes_Experiment1/channelMapping.RData")
+```
+
+Calculate the median SNRs
+
+## Change how you average SNRs, over electrodes first and then over Ps (or just get the participant averages you already have...)
+
+```{r}
+medianSNRCondition <- apply(avgSNRCondition, c(1,2,3), mean, na.rm = TRUE)
+medianScaled <- (medianSNRCondition - min(medianSNRCondition,na.rm = TRUE))/(max(medianSNRCondition,na.rm = TRUE)-min(medianSNRCondition,na.rm = TRUE))*(3.5-.5)+.5
+
+dim(avgSNRCondition)
+```
+
+```{r}
+posterColours <- c("#404040", "#F9F9F9", "#CC0033")
+colourRampFunction <- colorRampPalette(posterColours, interpolate = "spline")
+out <- hist(c(medianSNRCondition[,31,]), breaks = 10, plot = FALSE)
+theColours <- colourRampFunction(length(out$mids))
+colourMapping <- matrix(NA, nrow = dim(medianSNRCondition)[1], ncol = dim(medianSNRCondition)[3])
+for (cond in 1:3){
+  for (i in 1:length(out$mids)){
+    colourMapping[medianSNRCondition[,31,cond] >= out$breaks[i] & medianSNRCondition[,31,cond] < out$breaks[i+1], cond] <- theColours[i]
+  }
+}
+
+plot(x = NULL, y = NULL, ann = FALSE, axes = FALSE, xlim = c(0, length(out$mids)), ylim = c(0,.5))
+for (i in 1:length(out$mids)){
+  rect(i-1, 0, i, .5, col = theColours[i], border = theColours[i])
+}
+
+completePosterColours <- colourRampFunction(10)
+```
+
+```{r, fig.width=10}
+conditions <- c("Correlated Noise", "Anticorrelated Noise", "Control")
+
+layout(matrix(c(1,2,3,4,4,4), nrow = 2, ncol = 3, byrow = TRUE), heights = c(.90, .1), widths = c(1,1,1))
+par(pty = "s",  mai = c(.1,.1,.1,.1))
+xLim <- range(pretty(range(electrodePositions[,1], headX, noseX, rightEarX, leftEarX)))
+yLim <- range(pretty(range(electrodePositions[,2], headY, noseY, rightEarY, leftEarY)))
+for (i in 1:3){
+  plot(x = NULL, y = NULL, xlim = xLim, ylim = yLim, axes = FALSE, ann = FALSE)
+  lines(headX, headY, col = "gray75", lwd = 2)
+  lines(rightEarX, rightEarY, col = "gray75", lwd = 2)
+  lines(leftEarX, leftEarY, col = "gray75", lwd = 2)
+  lines(noseX, noseY, col = "gray75", lwd = 2)
+  points(electrodePositions[,1], electrodePositions[,2], cex = medianScaled[channelmapping,31,i], pch = 21, col = colourMapping[channelmapping,i], bg = addalpha(colourMapping[channelmapping,i], .5), lwd = 1.5)
+  
+  mtext(conditions[i], 3, font = 2, adj = 0.5)
+}
+
+par(pty = "m",mai = c(0,0,.3,0))
+plot(x = NULL, y = NULL, ann = FALSE, axes = FALSE, xlim = c(0, length(out$mids)), ylim = c(0,.5))
+for (i in 1:length(out$mids)){
+  rect(i-1, 0, i, .5, col = theColours[i], border = theColours[i])
+}
+mtext(sprintf("%.2f",out$breaks), 3, at = 0:length(out$mids))
+mtext("Signal-to-Noise Ratio", 3, font = 2, line = 1.5, adj = 0, at = 0)
+```
+
+```{r}
+eAveraged <- apply(avgSNRCondition[channelmapping[electrodeLayout %in% c("OZ","POZ", "O1","O2")],,,],c(2,3,4), median) 
+pAveraged <- apply(eAveraged,c(1,2), median) 
+
+eAveraged[1:9,,] <- 1
+pAveraged[1:9,] <- 1
+
+pAvgCIS <- array(NA, dim = c(200,3,1000))
+for (i in 1:1000){
+  pIDX <- sample(1:15, 15, replace = TRUE)
+  eAvgCIS <- apply(avgSNRCondition[channelmapping[electrodeLayout %in% c("OZ","POZ", "O1","O2")],,,pIDX],c(2,3,4), median)
+  pAvgCIS[,,i] <- apply(eAvgCIS,c(1,2), median)
+}
+
+pAvgCI <-  apply(pAvgCIS,c(1,2), quantile, probs = c(.025,.975), na.rm = TRUE) 
+pAvgCI[,1:9,] <- 1
+
+hist(eAveraged[31,1,])
+range(pAvgCI)
+```
+
+```{r, fig.width=12}
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/HeadPlotsExp1.png", width = 12, height = 6, res = 300,units = "in", bg = "transparent")
+x <- electrodePositions[,1]
+y <- electrodePositions[,2]
+
+dataTemp <- expand.grid(seq(-.6, .6,.001),seq(yLim[1],yLim[2],.001))
+dataToInterp <- data.frame(X = dataTemp[,1], Y = dataTemp[,2])
+dataTemp$Z <- rep(1,length(dataTemp[,1]))
+catGrid <- pracma::cart2pol(as.matrix(dataTemp))
+Rmap <- catGrid[, "r"]
+
+layout(matrix(c(1,2,3,4,5,6,7,8), nrow = 2, ncol = 4, byrow = TRUE), heights = c(.5, .5), widths = c(.3,.3,.3,.1))
+par(pty = "s",  mai = c(.1,.1,.1,.1), omi = c(.3,.5,.1,0))
+
+# Segment 1: 0.5 to 1.0 (5 points)
+# Uses p = 1.5 for a slight deceleration into the midpoint
+x_lower <- seq(0, 1, length.out = 10)
+y_lower <- 0.7 + (1.0 - 0.7) * (x_lower ^ 1.5)
+
+# Segment 2: 1.0 to 3.0 (5 points, then remove the first to avoid duplicating 1.0)
+# Uses p = 0.7 to compress the larger range (1.0-3.0) for visual balance
+x_upper <- seq(0, 1, length.out = 10)
+y_upper <- 1.0 + (3.0 - 1.0) * (x_upper ^ 0.7)
+
+# Combine segments (removing the first element of y_upper to keep it at 9 numbers)
+breaksTemp <- c(y_lower, y_upper[-1])
+midsTemp <- breaksTemp[1:(length(breaksTemp)-1)] + diff(breaksTemp)/2
+theColours <- colourRampFunction(length(midsTemp))
+
+
+for (C in 1:3){
+  Z <- medianSNRCondition[channelmapping,31,C]
+  dataToFit <- data.frame(Z = Z, X = x, Y = y)
+  model <- gam(Z ~ s(X, Y, bs = "ts", k = 40), data = dataToFit)
+  Zp <- predict.gam(model, newdata = dataToInterp)
+  
+  Zp[Rmap > .5] <- NA
+  
+  par(pty = "s")
+  image(x = seq(-.6,.6,.001), 
+        y = seq(-.6,.6,.001), 
+        z = matrix(Zp, nrow = length(seq(-.6,.6,.001)), byrow = FALSE), 
+        col = theColours, 
+        breaks = breaksTemp, axes = FALSE, ann = FALSE)
+  lines(headX, headY, col = "gray75", lwd = 2)
+  lines(rightEarX, rightEarY, col = "gray75", lwd = 2)
+  lines(leftEarX, leftEarY, col = "gray75", lwd = 2)
+  lines(noseX, noseY, col = "gray75", lwd = 2)
+  points(x,y, pch = 21, col = NA, bg = rgb(.75,.75,.75,.5))
+  mtext(conditions[C], 3, font = 2, adj = 0.5)
+}
+
+par(pty = "m",mai = c(0,0.1,0,.5))
+plot(x = NULL, y = NULL, ann = FALSE, axes = FALSE, ylim = c(0, length(midsTemp)), xlim = c(0,.5))
+for (i in 1:length(midsTemp)){
+  rect(0,i-1, .5, i, col = theColours[i], border = theColours[i])
+}
+
+mtext(sprintf("%.1f",c(.7,.8,.9,1,2,3)), 4, at = c(1,5.314,7.864,10,13.353,19)-1, las = 1)
+mtext("Signal-to-Noise Ratio", 2, font = 2, line = .5, adj = 1, at = length(midsTemp))
+
+xLimit <- c(1,200)
+yLimit <- range(pretty(range(pretty(range(pAvgCI)))))
+
+for (i in 1:3){
+  par(mai = c(.1,.1,.1,.1))
+  plot(x = NULL, y = NULL, xlim = xLimit, ylim = yLimit, axes = FALSE, ann = FALSE)
+  axis(2, at = pretty(yLimit), lwd = 2, tck = -.01, labels = FALSE)
+  mtext(c(0,3,6,9,12,15,18,20), 1, at = c(0,31,61,91,121,151,181,200), line = .5)
+  if (i == 1){
+    mtext("SNR", 2, font = 2, line = 3)
+    mtext(sprintf("%.1f",pretty(yLimit)), 2, at = pretty(yLimit), line = .4, las = 1)
+  }
+  
+  abline(v = c(31,61,91,121,151,181), lty = 2, lwd = 2, col = "gray85")
+  axis(1, at = c(0,31,61,91,121,151,181,200), tck = -.015, labels = FALSE, lwd = 2)
+  mtext("Frequency (Hz)", 1, font = 2, line = 1.75)
+  
+  polygon(c(1:200, 200:1), c(pAvgCI[1,,i], rev(pAvgCI[2,,i])), col = addalpha(completePosterColours[1],.5), border = FALSE)
+  lines(1:200,pAveraged[,i], lwd = 4, col = completePosterColours[3])
+}
+dev.off()
+
+```
+
+
+```{r}
+nSamples <- 2000
+theMedian <- NULL
+pValue <- NULL
+for (ii in 1:3){
+  theMedian[ii] <- median(eAveraged[31,ii,])
+  subset <- eAveraged[31,ii,]
+  randomSignsMedian <- NULL
+  
+  diff <- subset - 1
+  
+  for (i in 1:nSamples){
+    IDX1 <- sample(c(-1,1), length(subset), replace = TRUE)
+    randomSigns <- abs(diff) * IDX1
+    randomSignsMedian[i] <- sum(randomSigns)
+  }
+  
+  # hist(randomSignsMedian)
+  
+  statistic <- abs(sum(diff))
+  pValue[ii] <- mean(randomSignsMedian >= statistic)
+}
+theMedian
+pValue
+```
+
+
+VIOLING PLOT EXP 1
+
+```{r}
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/violingExp1.png", height = 8, width = 4, res = 300, units = "in", bg = "transparent")
+DD.cor <- density(eAveraged[31,1,])
+DD.anti <- density(eAveraged[31,2,])
+DD.control <- density(eAveraged[31,3,])
+DD.cor$y <- DD.cor$y/max(DD.cor$y)
+DD.anti$y <- DD.anti$y/max(DD.anti$y)
+DD.control$y <- DD.control$y/max(DD.control$y)
+
+xLimit <- c(-1,1)
+yLimit <- c(0,max(range(pretty(range(DD.cor$x, DD.anti$x)))))
+plot(x = NULL, y = NULL, xlim = xLimit, ylim = yLimit, axes = FALSE, ann = FALSE)
+abline(h = 1, lwd = 2, col = "gray75", lty = 2)
+
+polygon(-DD.cor$y-.025, DD.cor$x, col = addalpha(completePosterColours[2],.5), border = NA)
+lines(-DD.cor$y-.025, DD.cor$x, col = completePosterColours[2], lwd =3)
+
+polygon(DD.anti$y+.025, DD.anti$x, col = addalpha(completePosterColours[4],.5), border = NA)
+lines(DD.anti$y+.025, DD.anti$x, col = completePosterColours[4], lwd =3)
+
+points(-.25, median(eAveraged[31,1,]), pch = 19,col = completePosterColours[2], cex = 1.5)
+points(.25, median(eAveraged[31,2,]), pch = 19,col = completePosterColours[4], cex = 1.5)
+
+axis(2, at = pretty(yLimit), tck = -.015, lwd = 2, labels = FALSE)
+mtext(sprintf("%.1f",pretty(yLimit)), 2, at = pretty(yLimit), line = .4, las = 1)
+mtext("Signal-to-Noise Ratio", 2, font = 2, line = 2.5)
+
+legend("topleft",legend = c("Correlated Noise", "Anticorrelated Noise"), bty = "n", fill = addalpha(completePosterColours[c(2,4)],.5), border = completePosterColours[c(2,4)])
+dev.off()
+```
+
+
+
+
+Exp 1 - Behaviour
+
+```{r}
+# Remove 5 and 6 for correlation analysis
+theCompleteParticipants <- c("001", "002", "003", "004", "007", "008", "009", "010", "011", "012", "013", "014", "015")
+behaviourDatadir <- paste0("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Behaviour Data/")
+
+correct <- NULL
+levels <- NULL
+reversals <- NULL
+
+threshold <- matrix(NA, nrow = 6, ncol = length(theCompleteParticipants))
+
+for (p in 1:length(theCompleteParticipants)){
+  dataTemp <- readMat(paste0(behaviourDatadir,theCompleteParticipants[p],'/',paste0(theCompleteParticipants[p], "Final.mat")))
+  
+  correct <- NULL
+  levels <- NULL
+  reversals <- NULL
+  block <- NULL
+  
+  for (i in 1:6){
+    correct <- c(correct, dataTemp$Exp[,,1]$Staircase[,,i]$response)
+    levels <- c(levels, round(dataTemp$Exp[,,1]$Staircase[,,i]$x,2))
+    reversals <- c(reversals, dataTemp$Exp[,,1]$Staircase[,,i]$reversal)
+    block <- c(block, rep(i, length(dataTemp$Exp[,,1]$Staircase[,,i]$reversal)))
+  }
+  
+  theVariableName <- paste0("allStaircases", p)
+  assign(theVariableName, data.frame(participant=theCompleteParticipants[p], block = block, correct = correct, levels = levels, reversals = reversals))
+  
+  threshold[,p] <- dataTemp$Exp[,,1]$MeanReversalThreshold
+}
+
+allStaircases <- rbind(allStaircases1, allStaircases2,allStaircases3,allStaircases4,allStaircases5,allStaircases6,allStaircases7,allStaircases8,allStaircases9,allStaircases10,allStaircases11,allStaircases12,allStaircases13)
+remove(allStaircases1,allStaircases2,allStaircases3,allStaircases4,allStaircases5,allStaircases6,allStaircases7,allStaircases8,allStaircases9,allStaircases10,allStaircases11,allStaircases12,allStaircases13)
+```
+
+```{r}
+pixperdeg <- 36.7325
+allStaircases$arcsec <- (allStaircases$levels*2)/pixperdeg*60*60
+
+psychometricData <- aggregate(correct ~ levels + participant, data = allStaircases, FUN = base::mean)
+psychometricData.SD <- aggregate(correct ~ levels + participant, data = allStaircases, FUN = stats::sd)
+staircaseThresholds <- aggregate(arcsec ~ participant, data = allStaircases, FUN = pracma::geomean, subset = reversals %in% c(12,11,10,9,8))
+```
+
+```{r}
+fitCumGauss <- function(params,X, data){
+  mean <- params[1]
+  sd <- params[2]
+  gamma <- .5 #Guess Rate
+  lambda <- params[3] #Lapse Rate
+  
+  YY <- gamma + (1 - gamma - lambda)*.5*pracma::erfc(-sd*(X-mean)/sqrt(2))
+  err <- sum((YY - data)**2)
+  return(err)
+}
+
+cumGauss <- function(params, X){
+  mean <- params[1]
+  sd <- params[2]
+  gamma <- .5 #Guess Rate
+  lambda <- .001 #Lapse Rate
+  
+  YY <- gamma + (1 - gamma - lambda)*.5*pracma::erfc(-sd*(X-mean)/sqrt(2))
+  return(YY)
+}
+
+fitLogistic <- function(params,X, data){
+  alpha <- params[1]
+  beta <- params[2]
+  gamma <- .5 #Guess Rate
+  lambda <- params[3] #Lapse Rate
+  
+  YY <- gamma + (1 - gamma - lambda)*(1/(1+exp(-1*(beta)*(X-alpha))))
+  err <- sum((YY - data)**2)
+  return(err)
+}
+
+logistic <- function(params, X){
+  alpha <- params[1]
+  beta <- params[2]
+  gamma <- .5 #Guess Rate
+  lambda <- params[3] #Lapse Rate
+  
+  YY <- gamma + (1 - gamma - lambda)*(1/(1+exp(-1*(beta)*(X-alpha))))
+  return(YY)
+}
+
+fitWeibull <- function(params, X, data){
+  alpha <- params[1]
+  beta <- params[2]
+  gamma <- .5 #Guess Rate
+  lambda <- params[3] #Lapse Rate
+  
+  YY <- gamma + (1 - gamma - lambda)*(1 - exp(-1*(X/alpha)^beta))
+  err <- sum((YY - data)**2)
+  return(err)
+}
+
+weibull <- function(params, X){
+  alpha <- params[1]
+  beta <- params[2]
+  gamma <- .5 #Guess Rate
+  lambda <- params[3] #Lapse Rate
+  
+  YY <- gamma + (1 - gamma - lambda)*(1 - exp(-1*(X/alpha)^beta))
+  return(YY)
+}
+
+fitGumbell <- function(params, X, data){
+  alpha <- params[1]
+  beta <- params[2]
+  gamma <- .5 #Guess Rate
+  lambda <- params[3] #Lapse Rate
+  
+  YY <- gamma + (1 - gamma - lambda)*(1-exp(-1*10**(beta*(X-alpha))))
+  err <- sum((YY - data)**2)
+  return(err)
+}
+
+gumBell <- function(params, X){
+  alpha <- params[1]
+  beta <- params[2]
+  gamma <- .5 #Guess Rate
+  lambda <- params[3] #Lapse Rate
+  
+  YY <- gamma + (1 - gamma - lambda)*(1-exp(-1*10**(beta*(X-alpha))))
+  return(YY)
+}
+```
+
+```{r, fig.width=6, fig.height=12}
+pixperdeg <- 36.7325
+psychometricData$arcsec <- (psychometricData$levels*2)/pixperdeg*60*60
+psychometricDataSD <- aggregate(correct ~ levels + participant, data = allStaircases, FUN = stats::sd)
+psychometricData$dB <- 20*log10(psychometricData$levels*.5*60)
+parti <- unique(psychometricData$participant)
+
+# png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/participantStereoThresholds.png", width = 7, height = 11, res = 300, units = "in", bg = "transparent")
+par(mfrow = c(5,3), mai = c(.1,.05,.1,.05), omi = c(.3,.5,0,0), pty = "s")
+threshold <- NULL
+nSamples <- 1000
+threshold.CI <- matrix(NA, nrow = nSamples, ncol = length(parti))
+for (i in 1:length(parti)){
+  dataSub <- psychometricData[psychometricData$participant == parti[i], ]
+  theParams <- c(20,1,.001)
+  theParamsBest <- optim(theParams,fn = fitWeibull, X = dataSub$arcsec, data = dataSub$correct)
+  threshold[i] <- theParamsBest$par[1]
+  
+  for (ii in 1:nSamples){
+    rowIDX <- sample(1:dim(dataSub)[1],dim(dataSub)[1], replace = TRUE)
+    sampledData <- dataSub[rowIDX,]
+    theParamsBest.CI <- optim(theParams,fn = fitWeibull, X = sampledData$arcsec, data = sampledData$correct)
+    threshold.CI[ii,i] <- theParamsBest.CI$par[1]
+  }
+  
+  XX <- seq(min(dataSub$arcsec), max(dataSub$arcsec), .01)
+  YY <- weibull(theParamsBest$par, XX)
+  # YY.CI.Low <- cumGauss(c(quantile(threshold.CI[,i],.025), theParamsBest$par[c(2,3)]), XX)
+  # YY.CI.High <- cumGauss(c(quantile(threshold.CI[,i],.975), theParamsBest$par[c(2,3)]), XX)
+  
+  xLimit <- range(pretty(range(psychometricData$arcsec)))
+  yLimit <- c(0.5, 1)
+  
+  plot(x = NULL, y = NULL, xlim = xLimit,ylim = yLimit, axes = FALSE, ann = FALSE)
+  # polygon(c(XX, rev(XX)), c(YY.CI.Low, rev(YY.CI.High)), border = NA, col = "gray75")
+  lines(XX, YY, lwd = 4, col = theColours[3])
+  points(dataSub$arcsec, dataSub$correct, cex = 2, pch = 21, bg = theColours[3], col = "white", lwd = 1.5)
+  points(threshold[i], .5, pch = 25, col = "black", bg = "black", cex = 1.2)
+  
+  axis(1, at = pretty(xLimit), tck = -0.015, lwd = 2, labels = FALSE)
+  axis(2, at = pretty(yLimit), tck = -0.015, lwd = 2, labels = FALSE)
+  if (i >= 11){
+    mtext(pretty(xLimit), 1, at = pretty(xLimit), line = .4)
+    mtext("Total Disparity (arcsec)", 1, font = 2, line = 1.5)
+  }
+  if (i %% 3 == 1){
+    mtext(pretty(yLimit), 2, at = pretty(yLimit), line = .4, las = 1)
+    mtext("Proportion Correct", 2, font = 2, line = 2.25)
+  }
+  
+  
+  if (i == 2){
+    legend("bottomright", legend = "BR", bty = "n")
+  } else if (i == 3){
+    legend("bottomright", legend = "DHB", bty = "n")
+  } else {
+    legend("bottomright", legend = paste0("P", theCompleteParticipants[i]), bty = "n")
+  }
+}
+# dev.off()
+pThreshold.CI <- apply(threshold.CI, 2, quantile, c(.025, .975))
+mean(threshold)
+# sd(threshold)
+
+```
+
+```{r, fig.width=10}
+pixperdeg <- 36.7325
+psychometricData$arcsec <- (psychometricData$levels*2)/pixperdeg*60*60
+psychometricDataSD <- aggregate(correct ~ levels + participant, data = allStaircases, FUN = stats::sd)
+psychometricData$minMax <- 1+(3-1)*(psychometricDataSD$correct-min(psychometricDataSD$correct, na.rm = TRUE))/(max(psychometricDataSD$correct,na.rm = TRUE)-min(psychometricDataSD$correct,na.rm = TRUE))
+parti <- unique(psychometricData$participant)
+
+
+avgData <- aggregate(correct ~ arcsec, data = psychometricData, FUN = mean)
+theArcSecs <- unique(avgData$arcsec)
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/stereoThresholdsExp1.png", width = 7, height = 7, res = 300, units = "in", bg = "transparent")
+par(pty = "s")
+nSamples <- 1000
+threshold.CI <- matrix(NA, nrow = nSamples, ncol = length(parti))
+
+theParams <- c(25,1,.001)
+theParamsBest <- optim(theParams,fn = fitWeibull, X = avgData$arcsec, data = avgData$correct)
+threshol <- theParamsBest$par[1]
+
+XX <- seq(min(dataSub$arcsec), max(dataSub$arcsec), .01)
+YY <- weibull(theParamsBest$par, XX)
+# YY.CI.Low <- cumGauss(c(quantile(threshold.CI[,i],.025), theParamsBest$par[c(2,3)]), XX)
+# YY.CI.High <- cumGauss(c(quantile(threshold.CI[,i],.975), theParamsBest$par[c(2,3)]), XX)
+
+xLimit <- range(pretty(range(psychometricData$arcsec)))
+yLimit <- c(0.5, 1)
+
+plot(x = NULL, y = NULL, xlim = xLimit,ylim = yLimit, axes = FALSE, ann = FALSE)
+# polygon(c(XX, rev(XX)), c(YY.CI.Low, rev(YY.CI.High)), border = NA, col = "gray75")
+
+for (i in 1:length(theArcSecs)){
+  stripchart(psychometricData[psychometricData$arcsec == theArcSecs[i], "correct"], at = theArcSecs[i], add = TRUE, vertical = TRUE, method = "jitter", jitter = 0.1, pch = 19, cex = 1.5, col = addalpha(completePosterColours[3],.3))
+}
+lines(XX, YY, lwd = 4, col = theColours[3])
+points(avgData$arcsec, avgData$correct, cex = 3, pch = 21, bg = completePosterColours[3], col = "white", lwd = 2)
+points(threshol, .5, pch = 25, col = "black", bg = "black", cex = 1.2)
+
+axis(1, at = pretty(xLimit), tck = -0.01, lwd = 2, labels = FALSE)
+axis(2, at = pretty(yLimit), tck = -0.01, lwd = 2, labels = FALSE)
+
+mtext(pretty(xLimit), 1, at = pretty(xLimit), line = .4)
+mtext("Total Disparity (arcsec)", 1, font = 2, line = 1.5)
+
+mtext(sprintf("%.1f",pretty(yLimit)), 2, at = pretty(yLimit), line = .4, las = 1)
+mtext("Proportion Correct", 2, font = 2, line = 2.25)
+dev.off()
+```
+
+```{r}
+nSamples <- 1000
+threshold.CI.Avg <- NULL
+
+for (i in 1:nSamples){
+  pIDX <- sample(unique(psychometricData$participant), length(unique(psychometricData$participant)), replace = TRUE)
+  avgData <- aggregate(correct ~ arcsec, data = psychometricData, FUN = mean, subset = psychometricData$participant %in% pIDX)
+  theArcSecs <- unique(avgData$arcsec)
+  
+  theParams <- c(25,1,.001)
+  theParamsBest <- optim(theParams,fn = fitWeibull, X = avgData$arcsec, data = avgData$correct)
+  threshold.CI.Avg[i] <- theParamsBest$par[1]
+}
+threshold.CI.95 <- quantile(threshold.CI.Avg, c(.025, .975))
+```
+
+
+
+```{r}
+# eAvgParticipant <- apply(avgSNRCondition[channelmapping[electrodeLayout %in% c("OZ","POZ", "O1","O2")],,,],c(2,3,4), mean)
+theCorrData <- eAveraged[31, , c(1:4,7:15)]
+
+theElectrodeCI <- array(NA, dim = c(3,13,nSamples))
+for (i in 1:nSamples){
+  IDX <- sample(c("OZ","POZ", "O1","O2"), 4, replace = TRUE)
+  rowIndex <- channelmapping[electrodeLayout %in% IDX]
+  if (length(rowIndex) < 4){
+    rowIndex <- rep(rowIndex,length.out = 4)
+  }
+  eAvgParticipant.CI <- apply(avgSNRCondition[rowIndex,,,],c(2,3,4), median)
+  theElectrodeCI[,,i] <- eAvgParticipant.CI[31,,c(1:4,7:15)]
+}
+
+theElectrodeCI.P <- apply(theElectrodeCI, c(1,2), quantile, c(0.025, .975))
+```
+
+
+```{r, fig.width=10}
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/corMatrix.png", width = 7, height = 6, res = 300, units = "in", bg = "transparent")
+
+theM <- cor(cbind(t(theCorrData),threshold), method = "spearman")
+showIDX <- matrix(theM, nrow=dim(theM)[1], ncol = dim(theM)[2])
+theM[lower.tri(theM)] <- NA
+
+colnames(theM) <- c("Correlated Noise", "Anticorrelated Noise", "Control", "Stereoacuity")
+rownames(theM) <- c("Correlated Noise", "Anticorrelated Noise", "Control", "Stereoacuity")
+
+layout(matrix(c(1,2), nrow = 1, ncol = 2),widths = c(.9,.1), heights = 1)
+par(pty = "s", mai = c(0,1.3,.7,0.1), xpd = TRUE)
+theMColours <- colourRampFunction(100)
+image(1:4, 1:4, matlab::rot90(theM,3), col = theMColours, zlim = c(-1,1), axes = FALSE, ann = FALSE)
+mtext(c("Correlated\nNoise"), 2, at = 4, las = 1, font = 2, adj=1, line = .4)
+text(c(2,3,4)-.6, rev(c(1,2,3)), c("Anticorrelated\nNoise", "Control", "Stereoacuity"), font = 2, adj = 1)
+mtext(c("Correlated\nNoise", "Anticorrelated\nNoise", "Control", "Stereoacuity"), 3, at = 1:4, las = 1, font = 2, line = .4)
+
+par(pty = "m", mai = c(0,0.2,.7, .3))
+plot(x = NULL, y = NULL, xlim = c(0,1), ylim = c(0, length(theMColours)), axes = FALSE, ann = FALSE)
+for (i in 1:length(theMColours)){
+  rect(0, i-1, 1, i, col = theMColours[i], border = theMColours[i ])
+}
+mtext(pretty(c(-1,1)), 4, at = seq(0,length(theMColours), length.out = length(pretty(c(-1,1)))), las = 1)
+mtext(bquote(bold("Spearman's"~rho)), 2, font = 2, at = length(theMColours), adj = 1)
+dev.off()
+```
+
+```{r}
+theDataMatrix <- cbind(t(theCorrData),threshold)
+theCors <- matrix(NA, nrow = 4, ncol = nSamples)
+for (i in 1:nSamples){
+  IDX <- sample(1:dim(theDataMatrix)[1], dim(theDataMatrix)[1], replace = TRUE)
+  theM.CI <- cor(theDataMatrix[IDX,], method = "spearman")
+  theCors[,i] <- theM.CI[,4]
+}
+
+theCors.CI <- apply(theCors, 1, quantile, c(.025, .975))
+```
+
+```{r, fig.width=10}
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/pCorSNRThreshold1.png", width =5, height = 5, res = 300, units = "in", bg = "transparent")
+
+yLimit <- range(pretty(range(theElectrodeCI.P)))
+xLimit <- range(pretty(range(pretty(range(pThreshold.CI)))))
+
+theMatrix <- matrix(c(2,4,1,3), nrow = 2, ncol = 2, byrow = TRUE)
+layout(theMatrix, widths = c(.9,.1), heights = c(.1,.9))
+
+par(mai = c(.2,.2,.2,.2), omi = c(.4,.4,.3,.2))
+plot(x = NULL, y = NULL, xlim = xLimit, ylim = yLimit, axes = FALSE, ann = FALSE)
+abline(h = 1, lwd = 3, col = theColours[1], lty = 2)
+
+theColoursToDraw <- rep(theColours[3], length(threshold))
+theColoursToDraw[4] <- theColours[7]
+
+arrows(pThreshold.CI[1,], theCorrData[1,], pThreshold.CI[2,], theCorrData[1,], length = .015, angle = 90, code = 3, col = theColoursToDraw, lwd = 2)
+arrows(threshold, theElectrodeCI.P[1,1,], threshold, theElectrodeCI.P[2,1,], length = .015, angle = 90, code = 3, col =theColoursToDraw, lwd = 2)
+points(threshold, theCorrData[1,],bg = theColoursToDraw, pch = 21, cex = 2, col = "white")
+
+axis(1, at = pretty(xLimit), lwd = 2, tck = -.01, labels = FALSE)
+axis(2, at = pretty(yLimit), lwd = 2, tck = -.01, labels = FALSE)
+axis(3, at = pretty(xLimit), lwd = 2, tck = -.01, labels = FALSE)
+axis(4, at = pretty(yLimit), lwd = 2, tck = -.01, labels = FALSE)
+# mtext(pretty(xLimit), 1, at = pretty(xLimit), line=.5, las = 1)
+mtext(sprintf("%.1f",pretty(yLimit)),2, at = pretty(yLimit), line = .4, las = 1)
+mtext("Signal-to-Noise Ratio", 2, font = 2, line = 2)
+# mtext("Disparity Threshold (arcsec)", 1, font = 2, line = 2)
+mtext("Correlated Noise",3, font = 2, adj = 0, line = -2, at = 0)
+legend("bottomright", 
+       legend = bquote(rho~"="~.(round(theM[1,4],3))*", 95% CI ["*.(round(theCors.CI[1,1],3))*","*.(round(theCors.CI[2,1],3))*"]"), 
+       bty = "n", cex = 1.2)
+# mtext(pretty(xLimit), 1, at = pretty(xLimit), line =.4)
+
+
+dThreshold <- density(threshold)
+dThreshold$y <- dThreshold$y/max(dThreshold$y)
+par(mai = c(0,0.2,0,0.2))
+plot(x = NULL, y = NULL, xlim = xLimit, ylim = c(0,1), axes = FALSE, ann = FALSE)
+# axis(1)
+polygon(dThreshold$x, dThreshold$y,col = addalpha(theColours[3], .5), border = FALSE)
+lines(dThreshold$x, dThreshold$y, lwd = 3, col =theColours[3])
+
+dSNR<- density(theCorrData[1,])
+dSNR$y <- dSNR$y/max(dSNR$y)
+par(mai = c(0.2,0,0.2,0))
+plot(x = NULL, y = NULL, ylim = yLimit, xlim = c(0,1), axes = FALSE, ann = FALSE)
+polygon(dSNR$y, dSNR$x,col = addalpha(theColours[3], .5), border = FALSE)
+lines(dSNR$y, dSNR$x, lwd = 3, col = theColours[3])
+
+dev.off()
+```
+
+```{r}
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/pCorSNRThreshold2.png", width =5, height = 5, res = 300, units = "in", bg = "transparent")
+
+yLimit <- range(pretty(range(theElectrodeCI.P)))
+xLimit <- range(pretty(range(pretty(range(pThreshold.CI)))))
+
+theMatrix <- matrix(c(2,4,1,3), nrow = 2, ncol = 2, byrow = TRUE)
+layout(theMatrix, widths = c(.9,.1), heights = c(.1,.9))
+
+par(mai = c(.2,.2,.2,.2), omi = c(.4,.4,.3,.2))
+plot(x = NULL, y = NULL, xlim = xLimit, ylim = yLimit, axes = FALSE, ann = FALSE)
+abline(h = 1, lwd = 3, col = theColours[1], lty = 2)
+
+theColoursToDraw <- rep(theColours[3], length(threshold))
+theColoursToDraw[4] <- theColours[7]
+
+arrows(pThreshold.CI[1,], theCorrData[2,], pThreshold.CI[2,], theCorrData[2,], length = .015, angle = 90, code = 3, col = theColoursToDraw, lwd = 2)
+arrows(threshold, theElectrodeCI.P[1,2,], threshold, theElectrodeCI.P[2,2,], length = .015, angle = 90, code = 3, col = theColoursToDraw, lwd = 2)
+points(threshold,theCorrData[2,], bg = theColoursToDraw, pch = 21, cex = 2, col = "white")
+
+axis(1, at = pretty(xLimit), lwd = 2, tck = -.01, labels = FALSE)
+axis(2, at = pretty(yLimit), lwd = 2, tck = -.01, labels = FALSE)
+axis(3, at = pretty(xLimit), lwd = 2, tck = -.01, labels = FALSE)
+axis(4, at = pretty(yLimit), lwd = 2, tck = -.01, labels = FALSE)
+mtext(pretty(xLimit),1, at = pretty(xLimit), line = .5)
+# mtext(pretty(yLimit),2, at = pretty(yLimit), line = .4, las = 1)
+
+mtext("Disparity Threshold (arcsec)", 1, font = 2, line = 2)
+# mtext("Signal-to-Noise Ratio", 2, font = 2, line = 2)
+mtext("Anticorrelated Noise",3, font = 2, adj = 0, line = -2, at =0)
+legend("bottomright",
+       legend = bquote(rho~"="~.(round(theM[2,4],3))*", 95% CI ["*.(round(theCors.CI[1,2],3))*","*.(round(theCors.CI[2,2],3))*"]"), 
+       bty = "n", cex = 1.2)
+
+
+dThreshold <- density(threshold)
+dThreshold$y <- dThreshold$y/max(dThreshold$y)
+par(mai = c(0,0.2,0,0.2))
+plot(x = NULL, y = NULL, xlim = xLimit, ylim = c(0,1), axes = FALSE, ann = FALSE)
+# axis(1)
+polygon(dThreshold$x, dThreshold$y,col = addalpha(theColours[3], .5), border = FALSE)
+lines(dThreshold$x, dThreshold$y, lwd = 3, col =theColours[3])
+
+dSNR<- density(theCorrData[2,])
+dSNR$y <- dSNR$y/max(dSNR$y)
+par(mai = c(0.2,0,0.2,0))
+plot(x = NULL, y = NULL, ylim = yLimit, xlim = c(0,1), axes = FALSE, ann = FALSE)
+polygon(dSNR$y, dSNR$x,col = addalpha(theColours[3], .5), border = FALSE)
+lines(dSNR$y, dSNR$x, lwd = 3, col = theColours[3])
+
+dev.off()
+```
+
+
+```{r}
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/pCorSNRThreshold3.png", width =5, height = 5, res = 300, units = "in", bg = "transparent")
+
+yLimit <- range(pretty(range(theElectrodeCI.P)))
+xLimit <- range(pretty(range(pretty(range(pThreshold.CI)))))
+
+theMatrix <- matrix(c(2,4,1,3), nrow = 2, ncol = 2, byrow = TRUE)
+layout(theMatrix, widths = c(.9,.1), heights = c(.1,.9))
+
+par(mai = c(.2,.2,.2,.2), omi = c(.4,.4,.3,.2))
+plot(x = NULL, y = NULL, xlim = xLimit, ylim = yLimit, axes = FALSE, ann = FALSE)
+abline(h = 1, lwd = 3, col = theColours[1], lty = 2)
+
+theColoursToDraw <- rep(theColours[3], length(threshold))
+theColoursToDraw[4] <- theColours[7]
+
+arrows(pThreshold.CI[1,], theCorrData[3,], pThreshold.CI[2,], theCorrData[3,], length = .015, angle = 90, code = 3, col = theColoursToDraw, lwd = 2)
+arrows(threshold, theElectrodeCI.P[1,3,], threshold, theElectrodeCI.P[2,3,], length = .015, angle = 90, code = 3, col = theColoursToDraw, lwd = 2)
+points(threshold,theCorrData[3,], bg = theColoursToDraw, pch = 21, cex = 2, col = "white")
+
+axis(1, at = pretty(xLimit), lwd = 2, tck = -.01, labels = FALSE)
+axis(2, at = pretty(yLimit), lwd = 2, tck = -.01, labels = FALSE)
+axis(3, at = pretty(xLimit), lwd = 2, tck = -.01, labels = FALSE)
+axis(4, at = pretty(yLimit), lwd = 2, tck = -.01, labels = FALSE)
+mtext(pretty(xLimit),1, at = pretty(xLimit), line = .5)
+mtext(sprintf("%.1f",pretty(yLimit)),2, at = pretty(yLimit), line = .4, las = 1)
+
+mtext("Disparity Threshold (arcsec)", 1, font = 2, line = 2)
+mtext("Signal-to-Noise Ratio", 2, font = 2, line = 2)
+
+mtext("Control",3, font = 2, adj = 0, line = -2, at = 0)
+legend("bottomright",
+       legend = bquote(rho~"="~.(round(theM[3,4],3))*", 95% CI ["*.(round(theCors.CI[1,3],3))*","*.(round(theCors.CI[2,3],3))*"]"), 
+       bty = "n", cex = 1.2)
+
+
+dThreshold <- density(threshold)
+dThreshold$y <- dThreshold$y/max(dThreshold$y)
+par(mai = c(0,0.2,0,0.2))
+plot(x = NULL, y = NULL, xlim = xLimit, ylim = c(0,1), axes = FALSE, ann = FALSE)
+# axis(1)
+polygon(dThreshold$x, dThreshold$y,col = addalpha(theColours[3], .5), border = FALSE)
+lines(dThreshold$x, dThreshold$y, lwd = 3, col =theColours[3])
+
+dSNR<- density(theCorrData[3,])
+dSNR$y <- dSNR$y/max(dSNR$y)
+par(mai = c(0.2,0,0.2,0))
+plot(x = NULL, y = NULL, ylim = yLimit, xlim = c(0,1), axes = FALSE, ann = FALSE)
+polygon(dSNR$y, dSNR$x,col = addalpha(theColours[3], .5), border = FALSE)
+lines(dSNR$y, dSNR$x, lwd = 3, col = theColours[3])
+
+dev.off()
+```
+
+
+# Stimuli
+
+```{r}
+theNoiseIMs <- R.matlab::readMat("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/noiseImages2.mat")
+```
+
+```{r}
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/interocularCorrelation.png", width = 6, height = 5, res = 300, units = "in",bg = "transparent")
+par(mfcol = c(2,1), mai = c(.2,.1,.2,.1), omi = c(.4,.6,0,0))
+xLimit = c(0,1)
+yLimit = c(0,1)
+
+theSine <- (-cos(2*pi*3*seq(0,1,length.out = 120))+1)/2
+plot(x = NULL, y = NULL, xlim = xLimit, ylim = yLimit, axes = FALSE, ann = FALSE)
+lines(seq(0,1,length.out = 120),theSine, lwd = 2, lty = 2, col = "gray75")
+lines(seq(0,1,length.out = 120), rep(theNoiseIMs$noiseIMs[,,1]$ImageCorrelation,3), col = theColours[3], lwd = 3)
+
+axis(1, at = pretty(c(0,1)), tck = -0.015, lwd = 2, labels = FALSE)
+axis(2, at = pretty(yLimit), tck = -0.015, lwd = 2, labels = FALSE)
+# mtext(pretty(c(0,1))*1000, 1, at = pretty(c(0,1)), line = .4)
+mtext(sprintf("%.1f",pretty(yLimit)), 2, at = pretty(yLimit), line = .4, las = 1)
+# mtext("Time (ms)", 1, line = 1.5, font = 2)
+mtext("Interocular Correlation", 2, font = 2, line = 2.5)
+mtext("Correlated Noise", 3, font = 2, adj = 0, at = 0, line = 0)
+
+yLimit = c(-1,0)
+theSine <- -(-cos(2*pi*3*seq(0,1,length.out = 120))+1)/2
+plot(x = NULL, y = NULL, xlim = xLimit, ylim = yLimit, axes = FALSE, ann = FALSE)
+lines(seq(0,1,length.out = 120),theSine, lwd = 2, lty = 2, col = "gray75")
+lines(seq(0,1,length.out = 120), rep(theNoiseIMs$noiseIMs[,,2]$ImageCorrelation,3), col = theColours[4], lwd = 3)
+
+axis(1, at = pretty(c(0,1)), tck = -0.015, lwd = 2, labels = FALSE)
+axis(2, at = pretty(yLimit), tck = -0.015, lwd = 2, labels = FALSE)
+mtext(pretty(c(0,1))*1000, 1, at = pretty(c(0,1)), line = .4)
+mtext(sprintf("%.1f",pretty(yLimit)), 2, at = pretty(yLimit), line = .4, las = 1)
+mtext("Time (ms)", 1, line = 1.5, font = 2)
+mtext("Interocular Correlation", 2, font = 2, line = 2.5)
+mtext("Anticorrelated Noise", 3, font = 2, adj = 0, at = 0, line = 0)
+dev.off()
+```
+
+
+```{r}
+for (i in 1:dim(theNoiseIMs$noiseIMs[,,1]$IM1)[3]){
+  png(paste0("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/exampleStimuli/interocularCor_",round(theNoiseIMs$noiseIMs[,,1]$ImageCorrelation[i],3),".png"), width = 8, height = 4, res = 300, units = "in", bg = "transparent")
+  
+  im1 <- theNoiseIMs$noiseIMs[,,1]$IM1[,,i]
+  im2 <- theNoiseIMs$noiseIMs[,,1]$IM2[,,i]
+  im1[im1 > 1] <- 1
+  im2[im2 > 1] <- 1
+  im1[im1 < 0] <- 0
+  im2[im2 < 0] <- 0
+  par(mfcol = c(1,2), pty = "s", mai = c(0,0.05,0,0), omi = c(0,0,0,0))
+  grayColours <- gray.colors(256, start = 0, end = 1, gamma = 1)
+  image(im1, col = grayColours, zlim = c(0,1), axes = FALSE, ann = FALSE)
+  text(0,.97, "Left Eye", font = 2, col = "white", adj = 0)
+  image(im2, col = grayColours, zlim = c(0,1), axes = FALSE, ann = FALSE)
+  text(1,.97, "Right Eye", font = 2, col = "white", adj = 1)
+  dev.off()
+}
+
+for (i in 1:dim(theNoiseIMs$noiseIMs[,,1]$IM1)[3]){
+  png(paste0("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/exampleStimuli/NEGinterocularCor_",round(theNoiseIMs$noiseIMs[,,1]$ImageCorrelation[i],3),".png"), width = 8, height = 4, res = 300, units = "in", bg = "transparent")
+  
+  im1 <- theNoiseIMs$noiseIMs[,,2]$IM1[,,i]
+  im2 <- theNoiseIMs$noiseIMs[,,2]$IM2[,,i]
+  im1[im1 > 1] <- 1
+  im2[im2 > 1] <- 1
+  im1[im1 < 0] <- 0
+  im2[im2 < 0] <- 0
+  par(mfcol = c(1,2), pty = "s", mai = c(0,0.05,0,0), omi = c(0,0,0,0))
+  grayColours <- gray.colors(256, start = 0, end = 1, gamma = 1)
+  image(im1, col = grayColours, zlim = c(0,1), axes = FALSE, ann = FALSE)
+  text(0,.97, "Left Eye", font = 2, col = "white", adj = 0)
+  image(im2, col = grayColours, zlim = c(0,1), axes = FALSE, ann = FALSE)
+  text(1,.97, "Right Eye", font = 2, col = "white", adj = 1)
+  dev.off()
+}
+```
+
+
+# Sinusoidal Gratings
+
+comp = grating.*E.contrastlist;
+comp = (1+comp)/2;
+comp = doimagegamma(comp);
+gratingtexture = Screen('MakeTexture', w, comp, [], [], 2);
+
+comp = grating.*0;
+comp = (1+comp)/2;
+
+
+
+u = f .* cos(o) * 2 * pi;
+v = f .* sin(o) * 2 * pi;
+
+imag1 = zeros(Regionsize, Regionsize);
+[xx, yy] = meshgrid(1:Regionsize, 1:Regionsize);
+
+imag1(:,:) = (c .* sin(u .*(xx-x0) + v.*(yy-y0) + p));
+
+
+```{r}
+mkGrating <- function(Regionsize, f, o, p, c){
+  p <- p*pi/180
+  o <- o*2*pi/360		
+  f <- f/Regionsize
+  x0 <- ((Regionsize+1)/2)
+  y0 <- x0
+  
+  u <- f * cos(o) * 2 * pi
+  v <- f * sin(o) * 2 * pi
+  
+  xx <- pracma::meshgrid(1:Regionsize, 1:Regionsize);
+  
+  imag1 <- (c * sin(u *(xx$X-x0) + v*(xx$Y-y0) + p))
+  return(imag1)
+}
+
+doimagegamma <- function(i){
+  k <- 0.5344
+  Lmax <- 101.8721
+  j0 <- 0.1292
+  gamma <- 1.9252
+  
+  i0 <- 0
+  imax <- 1                                            
+  imean <- (i0+imax)/2
+  jmax <- 1
+  
+  Lmin <- k + (Lmax-k)*(max(-j0,0)/(jmax-j0) )^gamma     
+  Lmin <- max(Lmin,0)                                   
+  Lmean <- (Lmin+Lmax)/2
+  L <- Lmean + (Lmax-Lmean)*(i-imean)/(imax-imean)        
+  j <- ((L - k)/(Lmax-k))^(1/gamma)*(jmax - j0) + j0    
+  return(j)
+}
+
+
+```
+
+
+```{r}
+E.contrastlist <- 48/100
+
+ST.gratingsize <- 36*5
+ST.npixelsperdegree <- 36
+ST.SF <- 1
+ST.ncycles <- ST.SF*ST.gratingsize/ST.npixelsperdegree
+
+grating <- mkGrating(ST.gratingsize, ST.ncycles, 90, 0, 1)
+comp = (grating*E.contrastlist)
+comp = ((1+comp)/2)
+comF <- doimagegamma(comp)
+
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/grating.png", width = 6, height = 6, res = 300, units = "in", bg = "transparent")
+par(pty = "s", mai = c(0,0,0,0), omi = c(0,0,0,0))
+image(comF, col = gray.colors(256, start = 0, end = 1, gamma = 1), zlim = c(0,1), axes = FALSE, ann = FALSE)
+dev.off()
+
+# image(grating,col = gray.colors(256, start = 0, end = 1, gamma = 1), zlim = c(0,1), axes = FALSE, ann = FALSE)
+```
+
+```{r}
+
+```
+

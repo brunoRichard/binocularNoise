@@ -1,0 +1,430 @@
+---
+title: "HeadPlots"
+output: html_document
+date: "2026-04-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(R.matlab)
+library(mgcv)
+addalpha <- function(col, alpha=.5){apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))}
+```
+
+
+# For Head Plots
+
+```{r}
+theParticipants <- c("001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015")
+```
+
+```{r, importData}
+theBlockDirectory <- "~/Library/CloudStorage/Box-Box/Binocularity Noise/Matlab Block Data/"
+```
+
+```{r, eval = FALSE}
+avgSNRCondition <- array(NA, c(64,200, 3, length(theParticipants)))
+
+for (P in 1:length(theParticipants)){
+  
+  stimulusConditions <- matrix(NA, nrow= 39, ncol = 4)
+  theEEGData <- array(NA, dim = c(64,10000,39,4))
+  theFFTData <- array(NA, dim = c(64,10000,39,4))
+  
+  blankTime <- 4000
+  duration <- 10000
+  
+  for (BLOCK in 1:4){
+    theFile <- readMat(paste0(theBlockDirectory, theParticipants[P], "/EEG_", theParticipants[P], "BLOCK", BLOCK, ".mat"))
+    
+    if (P == 15 | P == 16){
+      stimulusConditionsTemp <- as.numeric(unlist(theFile$EEG[,,1]$event["type",1,]))
+      stimulusConditionsTemp[1] <- 0
+      triggerTimes <- unlist(theFile$EEG[,,1]$event["latency",1,])*1000
+    } else {
+      stimulusConditionsTemp <- unlist(theFile$EEG[,,1]$triggers["type",1,])
+      triggerTimes <- unlist(theFile$EEG[,,1]$triggers["offset",1,])
+      if (P == 10 & BLOCK == 2){
+        stimulusConditionsTemp <- stimulusConditionsTemp[-35]
+        triggerTimes <- triggerTimes[-35]
+      }
+    }
+    
+    electrodes <- unlist(theFile$EEG["label",,1]$label)
+    
+    triggerTimes <- triggerTimes[!(stimulusConditionsTemp %in% c(0, 99))] 
+    stimulusConditions[, BLOCK] <- stimulusConditionsTemp[!(stimulusConditionsTemp %in% c(0, 99))]
+    for (event in 1:length(stimulusConditions[, BLOCK])){
+      for (channel in 1:(length(electrodes)-2)){
+        theEEGData[channel,,event,BLOCK] <- theFile$EEG[,,1]$data[channel, (triggerTimes[event]+blankTime):(triggerTimes[event]+duration+blankTime-1)]
+        theFFTData[channel,,event,BLOCK] <- fft(theFile$EEG[,,1]$data[channel, (triggerTimes[event]+blankTime):(triggerTimes[event]+duration+blankTime-1)])/10000
+      }
+    }
+  }
+  
+  electrodeLayout <- unlist(theFile$EEG[,,1]$lay[,,1]$label[,1])
+  eIDX <- 1:64
+  channelmapping <- NULL
+  for (e in 1:(length(electrodes)-2)){
+    channelmapping[e] <- eIDX[toupper(electrodes) == toupper(electrodeLayout[e])]
+  }
+  electrodePositions <- theFile$EEG[,,1]$lay[,,1]$pos[1:64,]
+  
+  headX <- theFile$EEG[,,1]$lay[,,1]$outline[[1]][[1]][,1]
+  headY <- theFile$EEG[,,1]$lay[,,1]$outline[[1]][[1]][,2]
+  noseX <- theFile$EEG[,,1]$lay[,,1]$outline[[2]][[1]][,1]
+  noseY <- theFile$EEG[,,1]$lay[,,1]$outline[[2]][[1]][,2]
+  rightEarX <- theFile$EEG[,,1]$lay[,,1]$outline[[3]][[1]][,1]
+  rightEarY <- theFile$EEG[,,1]$lay[,,1]$outline[[3]][[1]][,2]
+  leftEarX <- theFile$EEG[,,1]$lay[,,1]$outline[[4]][[1]][,1]
+  leftEarY <- theFile$EEG[,,1]$lay[,,1]$outline[[4]][[1]][,2]
+  
+  
+  cIDX <- 0
+  for (condition in c(1,3,13)){
+    theIDX <- which(stimulusConditions == condition, arr.ind = TRUE)
+    
+    conditionFFTTemp <- array(NA,c(64,10000,12))
+    for (rep in 1:12){
+      conditionFFTTemp[,,rep] <- theFFTData[,,theIDX[rep,1], theIDX[rep,2]]
+    }
+    
+    tempxy <- data.frame(Re(conditionFFTTemp[29,31,]),Im(conditionFFTTemp[29,31,]))
+    D <- sqrt(mahalanobis(tempxy,colMeans(tempxy),cov(tempxy)))
+    outIDX <- which(D < 3)
+    conditionFFT <- conditionFFTTemp[ ,,outIDX]
+    
+    SNRData <- array(NA, c(64,200,dim(conditionFFT)[3]))
+    
+    for (trial in 1:dim(conditionFFT)[3]){
+      for (eTrode in 1:64){
+        for (f in 5:200){
+          fNoise <- c((f-5):(f+5))
+          fNoise <- fNoise[fNoise != f]
+          SNRData[eTrode, f, trial] <- abs(conditionFFT[eTrode, f, trial])/mean(abs(conditionFFT[eTrode, fNoise, trial]))
+        }
+      }
+    }
+    
+    cIDX <- cIDX +1
+    avgSNRCondition[,,cIDX, P] <- apply(SNRData, c(1,2), median)
+  }
+}
+
+save(avgSNRCondition, file = "~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/AllElectrodes_Experiment1/allPallElectrodes.RData")
+save(headX,headY,noseX,noseY,rightEarX,rightEarY,leftEarX,leftEarY, file = "~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/AllElectrodes_Experiment1/plotAHead.RData")
+save(channelmapping,electrodeLayout, electrodePositions, file = "~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/AllElectrodes_Experiment1/channelMapping.RData")
+```
+
+
+```{r}
+load("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/AllElectrodes_Experiment1/allPallElectrodes.RData")
+medianSNRCondition <- apply(avgSNRCondition, c(1,2,3), median, na.rm = TRUE)
+
+medianScaled <- (medianSNRCondition - min(medianSNRCondition,na.rm = TRUE))/(max(medianSNRCondition,na.rm = TRUE)-min(medianSNRCondition,na.rm = TRUE))*(3.5-.5)+.5
+
+meanSNRCondition <- apply(avgSNRCondition, c(1,2,3), mean, na.rm = TRUE)
+```
+
+```{r}
+posterColours <- c("#404040", "#F9F9F9", "#CC0033")
+colourRampFunction <- colorRampPalette(posterColours, interpolate = "spline")
+out <- hist(c(medianSNRCondition[,31,]), breaks = 10, plot = FALSE)
+theColours <- colourRampFunction(length(out$mids))
+colourMapping <- matrix(NA, nrow = dim(medianSNRCondition)[1], ncol = dim(medianSNRCondition)[3])
+for (cond in 1:3){
+  for (i in 1:length(out$mids)){
+    colourMapping[medianSNRCondition[,31,cond] >= out$breaks[i] & medianSNRCondition[,31,cond] < out$breaks[i+1], cond] <- theColours[i]
+  }
+}
+
+plot(x = NULL, y = NULL, ann = FALSE, axes = FALSE, xlim = c(0, length(out$mids)), ylim = c(0,.5))
+for (i in 1:length(out$mids)){
+  rect(i-1, 0, i, .5, col = theColours[i], border = theColours[i])
+}
+```
+
+
+```{r, fig.width=10}
+conditions <- c("Correlated Noise", "Anticorrelated Noise", "Control")
+
+layout(matrix(c(1,2,3,4,4,4), nrow = 2, ncol = 3, byrow = TRUE), heights = c(.90, .1), widths = c(1,1,1))
+par(pty = "s",  mai = c(.1,.1,.1,.1))
+xLim <- range(pretty(range(electrodePositions[,1], headX, noseX, rightEarX, leftEarX)))
+yLim <- range(pretty(range(electrodePositions[,2], headY, noseY, rightEarY, leftEarY)))
+for (i in 1:3){
+  plot(x = NULL, y = NULL, xlim = xLim, ylim = yLim, axes = FALSE, ann = FALSE)
+  lines(headX, headY, col = "gray75", lwd = 2)
+  lines(rightEarX, rightEarY, col = "gray75", lwd = 2)
+  lines(leftEarX, leftEarY, col = "gray75", lwd = 2)
+  lines(noseX, noseY, col = "gray75", lwd = 2)
+  points(electrodePositions[,1], electrodePositions[,2], cex = medianScaled[channelmapping,31,i], pch = 21, col = colourMapping[channelmapping,i], bg = addalpha(colourMapping[channelmapping,i], .5), lwd = 1.5)
+  
+  mtext(conditions[i], 3, font = 2, adj = 0.5)
+}
+
+par(pty = "m",mai = c(0,0,.6,0))
+plot(x = NULL, y = NULL, ann = FALSE, axes = FALSE, xlim = c(0, length(out$mids)), ylim = c(0,.5))
+for (i in 1:length(out$mids)){
+  rect(i-1, 0, i, .5, col = theColours[i], border = theColours[i])
+}
+mtext(sprintf("%.2f",out$breaks), 3, at = 0:length(out$mids))
+mtext("Signal-to-Noise Ratio", 3, font = 2, line = 1.5, adj = 0, at = 0)
+```
+
+```{r, fig.width=10}
+x <- electrodePositions[,1]
+y <- electrodePositions[,2]
+
+dataTemp <- expand.grid(seq(-.6, .6,.001),seq(yLim[1],yLim[2],.001))
+dataToInterp <- data.frame(X = dataTemp[,1], Y = dataTemp[,2])
+dataTemp$Z <- rep(1,length(dataTemp[,1]))
+catGrid <- cart2pol(as.matrix(dataTemp))
+Rmap <- catGrid[, "r"]
+
+layout(matrix(c(1,2,3,4,4,4), nrow = 2, ncol = 3, byrow = TRUE), heights = c(.90, .1), widths = c(1,1,1))
+par(pty = "s",  mai = c(.1,.1,.1,.1))
+for (C in 1:3){
+  Z <- medianSNRCondition[channelmapping,31,C]
+  dataToFit <- data.frame(Z = Z, X = x, Y = y)
+  model <- gam(Z ~ s(X, Y, bs = "ts", k = 40), data = dataToFit)
+  Zp <- predict.gam(model, newdata = dataToInterp)
+  
+  Zp[Rmap > .5] <- NA
+  
+  theColours <- colourRampFunction(length(out$mids))
+  par(pty = "s")
+  image(x = seq(-.6,.6,.001), 
+        y = seq(-.6,.6,.001), 
+        z = matrix(Zp, nrow = length(seq(-.6,.6,.001)), byrow = FALSE), 
+        col = theColours, 
+        breaks = out$breaks, axes = FALSE, ann = FALSE)
+  lines(headX, headY, col = "gray75", lwd = 2)
+  lines(rightEarX, rightEarY, col = "gray75", lwd = 2)
+  lines(leftEarX, leftEarY, col = "gray75", lwd = 2)
+  lines(noseX, noseY, col = "gray75", lwd = 2)
+  points(x,y, pch = 21, col = NA, bg = rgb(.75,.75,.75,.5))
+  mtext(conditions[C], 3, font = 2, adj = 0.5)
+}
+
+par(pty = "m",mai = c(0,0,.6,0))
+plot(x = NULL, y = NULL, ann = FALSE, axes = FALSE, xlim = c(0, length(out$mids)), ylim = c(0,.5))
+for (i in 1:length(out$mids)){
+  rect(i-1, 0, i, .5, col = theColours[i], border = theColours[i])
+}
+mtext(sprintf("%.2f",out$breaks), 3, at = 0:length(out$mids))
+mtext("Signal-to-Noise Ratio", 3, font = 2, line = 1.5, adj = 0, at = 0)
+```
+
+```{r}
+theParticipantsTemp <- list.dirs(theDataDirectory, recursive = FALSE, full.names = FALSE)
+theParticipants <- theParticipantsTemp[!c(theParticipantsTemp %in% c("P116","P138"))]
+# theParticipants <- paste0("P",theParticipantsTemp)
+```
+
+```{r}
+theDataDirectory <- "~/Library/CloudStorage/GoogleDrive-brichard21@gmail.com/My Drive/YORK/binocularitynoise/Experiment2data/EEGdata/"
+```
+
+```{r}
+avgSNRCondition <- array(NA, c(64,200, 15, length(theParticipants)))
+
+for (P in 1:length(theParticipants)){
+  
+  blankTime <- 1000
+  duration <- 10000
+  legaltriggers <- c(11:15,21:25,31:35)  # trigger codes we used to indicate stimulus onset
+  theBlockData <- list.files(paste0(theDataDirectory,theParticipants[P]), pattern = "*.mat", full.names = TRUE)
+  
+  stimulusConditions <- matrix(NA, nrow= 30, ncol = length(theBlockData))
+  theEEGData <- array(NA, dim = c(64,10000,30,length(theBlockData)))
+  theFFTData <- array(NA, dim = c(64,10000,30,length(theBlockData)))
+  
+  for (BLOCK in 1:length(theBlockData)){
+    theDataFile <- readMat(theBlockData[BLOCK])
+    
+    stimulusConditionsTemp <- as.numeric(unlist(theDataFile$EEG[,,1]$event["type",1,]))
+    stimulusConditionsTemp[1] <- 1
+    triggerTimes <- unlist(theDataFile$EEG[,,1]$event["latency",1,])
+    
+    electrodes <- unlist(theDataFile$EEG[,,1]$chanlocs["labels",,])
+    
+    triggerTimes <- triggerTimes[(stimulusConditionsTemp %in% legaltriggers)] 
+    stimulusConditions[, BLOCK] <- stimulusConditionsTemp[(stimulusConditionsTemp %in% legaltriggers)]
+    
+    for (event in 1:length(stimulusConditions[, BLOCK])){
+      for (channel in 1:(length(electrodes)-2)){
+        theEEGData[channel,,event,BLOCK] <- theDataFile$EEG[,,1]$data[channel, (triggerTimes[event]+blankTime):(triggerTimes[event]+duration+blankTime-1)]
+        theFFTData[channel,,event,BLOCK] <- fft(theDataFile$EEG[,,1]$data[channel, (triggerTimes[event]+blankTime):(triggerTimes[event]+duration+blankTime-1)])/10000
+      }
+    }
+  }
+  
+  counter <- 0
+  for (condition in legaltriggers){
+    counter <- counter + 1
+    theIDX <- which(stimulusConditions == condition, arr.ind = TRUE)
+    
+    conditionFFTTemp <- array(NA, c(64, 10000, 10))
+    
+    for (rep in 1:10){
+      conditionFFTTemp[,,rep] <- theFFTData[,,theIDX[rep,1], theIDX[rep,2]]
+    }
+    
+    tempxy <- data.frame(Re(conditionFFTTemp[29,31,]),Im(conditionFFTTemp[29,31,]))
+    D <- sqrt(mahalanobis(tempxy,colMeans(tempxy),cov(tempxy)))
+    outIDX <- which(D < 3)
+    conditionFFT <- conditionFFTTemp[ , ,outIDX]
+    
+    SNRData <- array(NA, c(64, 200, dim(conditionFFT)[3]))
+    
+    for (trial in 1:dim(conditionFFT)[3]){
+      for (eTrode in 1:64){
+        for (f in 5:200){
+          theFstoAverage <- (f-5):(f+5)
+          SNRData[eTrode,f,trial] <- abs(conditionFFT[eTrode,f, trial])/mean(abs(conditionFFT[eTrode,theFstoAverage[!(theFstoAverage == f)], trial]))
+        }
+      }
+    }
+    avgSNRCondition[,,counter,P] <- apply(SNRData, c(1,2), median)
+  }
+}
+
+electrodeLayout <- unlist(theDataFile$EEG[,,1]$lay[,,1]$label[,1])
+eIDX <- 1:64
+channelmapping <- NULL
+for (e in 1:(length(electrodes)-2)){
+  channelmapping[e] <- eIDX[toupper(electrodes) == toupper(electrodeLayout[e])]
+}
+electrodePositions <- theDataFile$EEG[,,1]$lay[,,1]$pos[1:64,]
+
+headX <- theDataFile$EEG[,,1]$lay[,,1]$outline[[1]][[1]][,1]
+headY <- theDataFile$EEG[,,1]$lay[,,1]$outline[[1]][[1]][,2]
+noseX <- theDataFile$EEG[,,1]$lay[,,1]$outline[[2]][[1]][,1]
+noseY <- theDataFile$EEG[,,1]$lay[,,1]$outline[[2]][[1]][,2]
+rightEarX <- theDataFile$EEG[,,1]$lay[,,1]$outline[[3]][[1]][,1]
+rightEarY <- theDataFile$EEG[,,1]$lay[,,1]$outline[[3]][[1]][,2]
+leftEarX <- theDataFile$EEG[,,1]$lay[,,1]$outline[[4]][[1]][,1]
+leftEarY <- theDataFile$EEG[,,1]$lay[,,1]$outline[[4]][[1]][,2]
+
+save(avgSNRCondition, file = "~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/AllElectrodes_Experiment2/allPallElectrodes.RData")
+
+dim(avgSNRCondition)
+```
+
+```{r}
+medianSNRCondition <- apply(avgSNRCondition, c(1,2,3), median, na.rm = TRUE)
+
+medianScaled <- (medianSNRCondition - min(medianSNRCondition,na.rm = TRUE))/(max(medianSNRCondition,na.rm = TRUE)-min(medianSNRCondition,na.rm = TRUE))*(3.5-.5)+.5
+```
+
+```{r}
+posterColours <- c("#404040", "#F9F9F9", "#CC0033")
+colourRampFunction <- colorRampPalette(posterColours, interpolate = "spline")
+out <- hist(c(medianSNRCondition[,31,]), breaks = 10, plot = FALSE)
+theColours <- colourRampFunction(length(out$mids))
+colourMapping <- matrix(NA, nrow = dim(medianSNRCondition)[1], ncol = dim(medianSNRCondition)[3])
+for (cond in 1:dim(medianSNRCondition)[3]){
+  for (i in 1:length(out$mids)){
+    colourMapping[medianSNRCondition[,31,cond] >= out$breaks[i] & medianSNRCondition[,31,cond] < out$breaks[i+1], cond] <- theColours[i]
+  }
+}
+```
+
+```{r, fig.width=15}
+conditions <- c("Correlated Noise", "Anticorrelated Noise", "Stereo?")
+corCond <- c(0,0.12, 0.24, 0.48, 0.96)
+layout(matrix(c(1,2,3,4,5,6,7,8,9,10,11,11,11,11,11), nrow = 3, ncol = 5, byrow = TRUE), heights = c(.45,.45, .1), widths = c(1,1,1))
+par(pty = "s", mai = c(.1,.1,.1,.1), omi = c(.1,.1,.1,.1))
+xLim <- range(pretty(range(electrodePositions[,1], headX, noseX, rightEarX, leftEarX)))
+yLim <- range(pretty(range(electrodePositions[,2], headY, noseY, rightEarY, leftEarY)))
+counter <- 0
+for (i in 1:10){
+  plot(x = NULL, y = NULL, xlim = xLim, ylim = yLim, axes = FALSE, ann = FALSE)
+  lines(headX, headY, col = "gray75", lwd = 2)
+  lines(rightEarX, rightEarY, col = "gray75", lwd = 2)
+  lines(leftEarX, leftEarY, col = "gray75", lwd = 2)
+  lines(noseX, noseY, col = "gray75", lwd = 2)
+  points(electrodePositions[,1], electrodePositions[,2], cex = medianScaled[channelmapping,31,i], pch = 21, col = colourMapping[channelmapping,i], bg = addalpha(colourMapping[channelmapping,i], .5), lwd = 1.5)
+  
+  if (i == 3 | i == 8){
+    counter <- counter+1
+    mtext(conditions[counter], 3, font = 2, adj = 0.5, cex = 1.5, line = 2)
+  }
+  if (i == 1 | i == 6){
+    mtext("Interocular Correlation", 1, line = -1, adj = 0, font = 1, cex = 1.2)
+  }
+  mtext(corCond[c((i-1) %% 5)+1], 1, line = 1.5, cex = 1.1)
+}
+
+par(pty = "m", mai = c(0,0,.6,0))
+plot(x = NULL, y = NULL, ann = FALSE, axes = FALSE, xlim = c(0, length(out$mids)), ylim = c(0,.5))
+for (i in 1:length(out$mids)){
+  rect(i-1, 0, i, .5, col = theColours[i], border = theColours[i])
+}
+mtext(sprintf("%.2f",out$breaks), 3, at = 0:length(out$mids))
+mtext("Signal-to-Noise Ratio", 3, font = 2, line = 1.5, adj = 0, at = 0)
+```
+
+
+```{r, fig.width=15}
+x <- electrodePositions[,1]
+y <- electrodePositions[,2]
+
+dataTemp <- expand.grid(seq(-.6, .6,.001),seq(yLim[1],yLim[2],.001))
+dataToInterp <- data.frame(X = dataTemp[,1], Y = dataTemp[,2])
+dataTemp$Z <- rep(1,length(dataTemp[,1]))
+catGrid <- cart2pol(as.matrix(dataTemp))
+Rmap <- catGrid[, "r"]
+
+layout(matrix(c(1,2,3,4,5,6,7,8,9,10,11,11,11,11,11), nrow = 3, ncol = 5, byrow = TRUE), heights = c(.45,.45, .1), widths = c(1,1,1))
+par(pty = "s",  mai = c(.1,.1,.1,.1))
+counter <- 0
+for (C in 1:10){
+  Z <- medianSNRCondition[channelmapping,31,C]
+  dataToFit <- data.frame(Z = Z, X = x, Y = y)
+  model <- gam(Z ~ s(X, Y, bs = "ts", k = 40), data = dataToFit)
+  Zp <- predict.gam(model, newdata = dataToInterp)
+  
+  Zp[Rmap > .5] <- NA
+  
+  theColours <- colourRampFunction(length(out$mids))
+  par(pty = "s")
+  image(x = seq(-.6,.6,.001), 
+        y = seq(-.6,.6,.001), 
+        z = matrix(Zp, nrow = length(seq(-.6,.6,.001)), byrow = FALSE), 
+        col = theColours, 
+        breaks = out$breaks, axes = FALSE, ann = FALSE)
+  lines(headX, headY, col = "gray75", lwd = 2)
+  lines(rightEarX, rightEarY, col = "gray75", lwd = 2)
+  lines(leftEarX, leftEarY, col = "gray75", lwd = 2)
+  lines(noseX, noseY, col = "gray75", lwd = 2)
+  points(x,y, pch = 21, col = NA, bg = rgb(.75,.75,.75,.5))
+  
+  
+  if (C == 3 | C == 8){
+    counter <- counter+1
+    mtext(conditions[counter], 3, font = 2, adj = 0.5, cex = 1.5, line = 2)
+  }
+  if (C == 1 | C == 6){
+    mtext("Interocular Correlation", 1, line = -1, adj = 0, font = 1, cex = 1.2)
+  }
+  mtext(corCond[c((C-1) %% 5)+1], 1, line = 1.5, cex = 1.1)
+}
+
+par(pty = "m",mai = c(0,0,.6,0))
+plot(x = NULL, y = NULL, ann = FALSE, axes = FALSE, xlim = c(0, length(out$mids)), ylim = c(0,.5))
+for (i in 1:length(out$mids)){
+  rect(i-1, 0, i, .5, col = theColours[i], border = theColours[i])
+}
+mtext(sprintf("%.2f",out$breaks), 3, at = 0:length(out$mids))
+mtext("Signal-to-Noise Ratio", 3, font = 2, line = 1.5, adj = 0, at = 0)
+```
+
+```{r}
+plot(medianSNRCondition[32,,5], ylim = c(1,2))
+```
+

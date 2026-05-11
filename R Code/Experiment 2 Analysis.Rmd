@@ -51,6 +51,8 @@ thePData[badPs]
 ```{r}
 medianSNRs <- apply(allParticipantsSNRData,c(1,2), median)
 meanSNRs <- apply(allParticipantsSNRData,c(1,2), mean)
+sdSNRs <- apply(allParticipantsSNRData,c(1,2), sd)
+seSNRs <- sdSNRs / sqrt(length(participantsGood))
 ```
 
 ```{r, fig.width=15}
@@ -94,11 +96,15 @@ axis(2, at = seq(1, 1.5, .25), tck = -.015, lwd = 2, labels = FALSE)
 mtext(conditions, 1, at = pretty(xLimit), line = .4)
 mtext(seq(1, 1.5, .25), 2, at = seq(1, 1.5, .25), las = 1, line = .4)
 
-lines(1:5,meanSNRs[31, 1:5], lwd = 2, col = posterColours[1])
-lines(1:5,meanSNRs[31, 6:10], lwd = 2, col = posterColours[2])
-# lines(1:5,meanSNRs[31, 11:15], lwd = 2, col = posterColours[3])
+lines(1:5,meanSNRs[31, 1:5], lwd = 3, col = posterColours[1])
+arrows(1:5, meanSNRs[31, 1:5] - seSNRs[31, 1:5], 1:5, meanSNRs[31, 1:5] + seSNRs[31, 1:5], lwd = 3, col = posterColours[1], length = .05, angle = 90, code = 3)
+points(1:5,meanSNRs[31, 1:5], pch = 21, bg = posterColours[1], col = "white", cex = 2, lwd = 2)
 
-legend("topleft", legend = c("Correlated", "Anti"), bty = "n", col = posterColours[1:3], lwd = 2)
+lines(1:5,meanSNRs[31, 6:10], lwd = 3, col = posterColours[2])
+arrows(1:5, meanSNRs[31, 6:10] - seSNRs[31, 6:10], 1:5, meanSNRs[31, 6:10] + seSNRs[31, 6:10], lwd = 3, col = posterColours[2], length = .05, angle = 90, code = 3)
+points(1:5,meanSNRs[31, 6:10], pch = 21, bg = posterColours[2], col = "white", cex = 2, lwd = 2)
+
+legend("topleft", legend = c("Correlated", "Anti"), bty = "n", col = posterColours[1:2], lwd = 2, pch = 21, pt.bg = posterColours[1:2], pt.lwd = 2)
 ```
 
 Stereo

@@ -1,0 +1,200 @@
+---
+title: "HeadPlots"
+output: html_document
+date: "2026-01-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+packagelist <- c('R.matlab','pracma','EnvStats', "matlab")
+
+missingpackages <- packagelist[!packagelist %in% installed.packages()[,1]]
+if (length(missingpackages)>0){install.packages(missingpackages)}
+toinstall <- packagelist[which(!packagelist %in% (.packages()))]
+invisible(lapply(toinstall,library,character.only=TRUE))
+
+addalpha <- function(col, alpha=1){apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))}
+
+theColours <- c("#56B4E9", "#E69F00", "#999999", "#009E73", "#F0E442", "#0072B2", "#D55E00","#CC79A7")
+```
+
+```{r}
+theParticipants <- c("001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015")
+theBlockDirectory <- "~/Library/CloudStorage/Box-Box/Binocularity Noise/Matlab Block Data/"
+```
+
+```{r}
+P <- 3
+stimulusConditions <- matrix(NA, nrow= 39, ncol = 4)
+theEEGData <- array(NA, dim = c(64,10000,39,4))
+theFFTData <- array(NA, dim = c(64,10000,39,4))
+
+blankTime <- 4000
+duration <- 10000
+
+for (BLOCK in 1:4){
+  theFile <- readMat(paste0(theBlockDirectory, theParticipants[P], "/EEG_", theParticipants[P], "BLOCK", BLOCK, ".mat"))
+  
+  if (P == 15 | P == 16){
+    stimulusConditionsTemp <- as.numeric(unlist(theFile$EEG[,,1]$event["type",1,]))
+    stimulusConditionsTemp[1] <- 0
+    triggerTimes <- unlist(theFile$EEG[,,1]$event["latency",1,])*1000
+  } else {
+    stimulusConditionsTemp <- unlist(theFile$EEG[,,1]$triggers["type",1,])
+    triggerTimes <- unlist(theFile$EEG[,,1]$triggers["offset",1,])
+    if (P == 10 & BLOCK == 2){
+      stimulusConditionsTemp <- stimulusConditionsTemp[-35]
+      triggerTimes <- triggerTimes[-35]
+    }
+  }
+  
+  electrodes <- unlist(theFile$EEG["label",,1]$label)
+  
+  triggerTimes <- triggerTimes[!(stimulusConditionsTemp %in% c(0, 99))] 
+  stimulusConditions[, BLOCK] <- stimulusConditionsTemp[!(stimulusConditionsTemp %in% c(0, 99))]
+  for (event in 1:length(stimulusConditions[, BLOCK])){
+    for (channel in 1:(length(electrodes)-2)){
+      theEEGData[channel,,event,BLOCK] <- theFile$EEG[,,1]$data[channel, (triggerTimes[event]+blankTime):(triggerTimes[event]+duration+blankTime-1)]
+      theFFTData[channel,,event,BLOCK] <- fft(theFile$EEG[,,1]$data[channel, (triggerTimes[event]+blankTime):(triggerTimes[event]+duration+blankTime-1)])/10000
+    }
+  }
+}
+```
+
+```{r}
+theChannels <- c("Oz", "POz", "O1", "O2")
+conditions <- c(1:3, 13)
+```
+
+```{r}
+eData <- theEEGData[electrodes[1:64] %in% theChannels,,,]
+eFFTData <- theFFTData[electrodes[1:64] %in% theChannels,,,]
+```
+
+```{r}
+eAvgFFTData <- apply(eFFTData,c(2,3,4),mean)
+avgSNRCondition <- array(NA, dim = c(200,13))
+condition <- 1
+# for (condition in 1:13){
+theIDX <- which(stimulusConditions == condition, arr.ind = TRUE)
+conditionFFTTemp <- matrix(NA,nrow=10000,ncol =12)
+
+for (rep in 1:12){
+  conditionFFTTemp[,rep] <- eAvgFFTData[,theIDX[rep,1], theIDX[rep,2]]
+}
+
+tempxy <- data.frame(Re(conditionFFTTemp[31,]),Im(conditionFFTTemp[31,]))
+D <- sqrt(mahalanobis(tempxy,colMeans(tempxy),cov(tempxy)))
+outIDX <- which(D < 3)
+conditionFFT <- conditionFFTTemp[ ,outIDX]
+
+SNRData <- matrix(0, nrow = 200, ncol = dim(conditionFFT)[2])
+
+for (trial in 1:dim(conditionFFT)[2]){
+  for (f in 5:200){
+    theFstoAverage <- (f-5):(f+5)
+    noiseAmplitudes <- abs(conditionFFT[theFstoAverage[!(theFstoAverage == f)], trial])
+    SNRData[f,trial] <- abs(conditionFFT[f, trial])/mean(noiseAmplitudes)
+  }
+}
+
+avgSNRCondition[,condition] <- apply(SNRData, 1, mean)
+# }
+
+dim(conditionFFT)
+```
+
+```{r, fig.width=8}
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/SSVEPAmps.png", width = 8, height = 3, res = 300, units = "in", bg = "transparent")
+theConditions <- c("Correlated", "Anticorrelated", "Control")
+par(mfcol = c(1,3), mai = c(.25,.25,.25,.1), omi = c(.2,.2,.2,.2))
+CC <- 0
+for (condition in c(1,3,13)){
+  CC <- CC + 1
+  theIDX <- which(stimulusConditions == condition, arr.ind = TRUE)
+  conditionFFTTemp <- matrix(NA,nrow=10000,ncol =12)
+  
+  for (rep in 1:12){
+    conditionFFTTemp[,rep] <- eAvgFFTData[,theIDX[rep,1], theIDX[rep,2]]
+  }
+  
+  tempxy <- data.frame(Re(conditionFFTTemp[31,]),Im(conditionFFTTemp[31,]))
+  D <- sqrt(mahalanobis(tempxy,colMeans(tempxy),cov(tempxy)))
+  outIDX <- which(D < 3)
+  conditionFFT <- conditionFFTTemp[ ,outIDX]
+  
+  YData <- apply(abs(conditionFFT[2:100,]),1,mean)
+  sdData <- apply(abs(conditionFFT[2:100,]),1,sd)
+  
+  plot(x=NULL, y = NULL, xlim = c(0,100), ylim = c(0,3), axes = FALSE, ann = FALSE)
+  axis(1, at = pretty(c(0,100)), lwd = 2, tck = -.015, labels = FALSE)
+  axis(2, at = pretty(c(0,3)), lwd = 2, tck = -.015, labels = FALSE)
+  
+  mtext(pretty(c(0,100))/10, 1, at = pretty(c(0,100)), line = .6)
+  mtext("Frequency (Hz)", 1, font = 2, line = 2)
+  
+  mtext(theConditions[CC], 3, font = 2)
+  if (condition == 1){
+    mtext(pretty(c(0,3)), 2, at = pretty(c(0,3)), line = .4, las = 1)
+    mtext(bquote(bold("Amplitude ("*mu*"V)")), 2, line = 2)
+  }
+  
+  abline(v = 30, col= "gray75", lty = 2, lwd = 2)
+  polygon(c(1:99, rev(1:99)), c(YData + sdData, rev(YData - sdData)), col = addalpha(theColours[CC], .3), border = NA)
+  lines(1:99, YData, lwd = 3, col = theColours[CC])
+}
+dev.off()
+```
+
+```{r}
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/Heads.png", width = 8, height = 3, res = 300, units = "in", bg = "transparent")
+nColours <- 50
+par(pty = "s", mfcol = c(1,3), mai = c(0,0.1,0,0.1))
+CC <- 0
+for (condition in c(1,3,13)){
+  CC <- CC +1
+  colorRamp <- colorRampPalette(colors = c("gray15", theColours[CC]))(nColours)
+  # condition <- 1
+  theIDX <- which(stimulusConditions == condition, arr.ind = TRUE)
+  conditionFFTTemp <- array(dim = c(64, 10000,12))
+  
+  for (rep in 1:12){
+    conditionFFTTemp[,,rep] <- theFFTData[,,theIDX[rep,1], theIDX[rep,2]]
+  }
+  
+  tempxy <- data.frame(Re(conditionFFTTemp[electrodes[1:64] == "Oz",31,]),Im(conditionFFTTemp[electrodes[1:64] == "Oz",31,]))
+  D <- sqrt(mahalanobis(tempxy,colMeans(tempxy),cov(tempxy)))
+  outIDX <- which(D < 3)
+  
+  theAMPElectrode <- apply(abs(conditionFFTTemp[,31,outIDX]), 1, mean)
+  theBins <- seq(0,1.5,length.out = nColours)
+  theColourVector <- NULL
+  for (c in 1:length(colorRamp)){
+    theColourVector[theAMPElectrode >= theBins[c] & theAMPElectrode < theBins[c+1]] <- colorRamp[c]
+  }
+  
+  electrodeXY <- theFile$EEG[,,1]$lay[,,1]$pos
+  eLabel <- unlist(theFile$EEG[,,1]$lay[,,1]$label)
+  
+  ampEOrder <- order(tolower(electrodes[1:64]))
+  elabelOrder <- order(tolower(eLabel[1:64]))
+  
+  
+  xLimit <- range(electrodeXY[elabelOrder,1])
+  yLimit <- range(electrodeXY[elabelOrder,2])
+  plot(x = NULL, y = NULL, xlim = c(-.6,.6), ylim = c(-.5,.75), axes = FALSE, ann = FALSE)
+  lines(theFile$EEG[,,1]$lay[,,1]$outline[[1]][[1]], lwd = 2)
+  lines(theFile$EEG[,,1]$lay[,,1]$outline[[2]][[1]], lwd = 2)
+  lines(theFile$EEG[,,1]$lay[,,1]$outline[[3]][[1]], lwd = 2)
+  lines(theFile$EEG[,,1]$lay[,,1]$outline[[4]][[1]], lwd = 2)
+  points(electrodeXY[elabelOrder,], cex = theAMPElectrode[ampEOrder]+.8, col = theColourVector[ampEOrder], pch = 19)
+  mtext(theConditions[CC], 3, font = 2, line = -1)
+}
+dev.off()
+```
+
+
+

@@ -115,6 +115,14 @@ normalizeBR <- function(input){
   out <- A / max(A)
   return(out)
 }
+
+rescaleBR <- function(input){
+  xMin <- min(input)
+  xMax <- max(input)
+  
+  rescaled <- ((2*(input-xMin))/(xMax - xMin))-1
+  return(rescaled)
+}
 ```
 
 # preliminaries
@@ -129,9 +137,7 @@ invisible(lapply(toinstall,library,character.only=TRUE))
 
 addalpha <- function(col, alpha=1){apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))}
 
-posterColours <- c("#333E47", "#6a757c", "#e31936")
-posterColoursRamped <- colorRampPalette(posterColours, space = "Lab", interpolate = "spline")(8)
-categoricalPalette <- c("#333E47","#3B5C62","#777079", "#4A6F74","#B94256", "#5E767B", "#955F6D", "#E31835")
+theColours <- c("#56B4E9", "#E69F00", "#999999", "#009E73", "#F0E442", "#0072B2", "#D55E00","#CC79A7")
 ```
 
 # Get Participant Data
@@ -139,14 +145,14 @@ categoricalPalette <- c("#333E47","#3B5C62","#777079", "#4A6F74","#B94256", "#5E
 ```{r, dataload,  echo = FALSE}
 theCompleteParticipants <- c("001", "002", "003", "004", "007", "008", "009", "010", "011", "012", "013", "014", "015")
 
-currentDirectory <- getwd()
+currentDirectory <- "/Users/brunorichard/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study"
 processedEEGdir <- paste0(currentDirectory, "/Processed Data/Experiment 1/")
 
 theParticipantFiles <- list.files(processedEEGdir, pattern = paste0(theCompleteParticipants, collapse = "|"))
 allPConditionData <- array(NA, dim = c(200,13,length(theParticipantFiles)))
 
 for (P in 1:length(theParticipantFiles)){
-  load(paste0(currentDirectory, "/Processed Data/", theParticipantFiles[P]))
+  load(paste0(currentDirectory, "/Processed Data/Experiment 1/", theParticipantFiles[P]))
   allPConditionData[,,P] <- avgSNRCondition2
 }
 
@@ -260,7 +266,7 @@ radiusMap <- mkRadiusMap(stim.Size)
 radius.i <- round(radiusMap)
 lowPassFilter <-(radius.i/max(radius.i))*pixperdeg/2 < stim.grating.sf
 
-windowTaper <- .5/(.5+exp(1*(radius.i-(stim.Size/2))))
+windowTaper <- .5/(.5+exp(1*(radius.i-(226))))
 windowTaper[windowTaper < .001] <- 0
 ```
 
@@ -271,50 +277,22 @@ stim.cosineProfile <- cos(2 * (pi/1000) * stim.TemporalF * displayTimes)
 stim.cosineProfile <- (stim.cosineProfile + 1) /2
 ```
 
-```{r, disparity stuff}
-peakPosition <- stim.Size/2
-disparitySF <- .3
-disparityCPI <- disparitySF * (stim.Size/pixperdeg)
-nPixelsPerCycle <- (1/(disparityCPI/stim.Size))
-maxDisparity <- 5
-Xdisparity <- maxDisparity * -cos(2*(pi/pixperdeg)*disparitySF * seq(0, nPixelsPerCycle, length.out = nPixelsPerCycle))
-Ydisparity <- 0 
-sigma <- 1
-X <- -(stim.Size/2):(stim.Size/2-1)
-Y <- X
-
-stim.GaussianL <- array(NA, dim = c(stim.Size, stim.Size, length(Xdisparity)))
-stim.GaussianR <- array(NA, dim = c(stim.Size, stim.Size, length(Xdisparity)))
-
-grid <- matlab::meshgrid(X,Y)
-for (xD in 1:length(Xdisparity)){
-  xGaussL <- ((grid$x - Xdisparity[xD])**2)/(2*sigma**2)
-  yGaussL <- ((grid$y - Ydisparity)**2)/(2*sigma**2)
-  stim.GaussianL[,,xD] <- exp(-(xGaussL + yGaussL))
-  
-  xGaussR <- ((grid$x + Xdisparity[xD])**2)/(2*sigma**2)
-  yGaussR <- ((grid$y + Ydisparity)**2)/(2*sigma**2)
-  stim.GaussianR[,,xD] <- exp(-(xGaussR + yGaussR))
-}
-```
-
 ```{r, eval = FALSE}
 noiseIM <- matrix(runif(stim.Size*stim.Size), nrow = stim.Size, ncol = stim.Size)
 fIM.Amplitude <- abs(fft(noiseIM))
 fIM.phase <- pracma::angle(fft(noiseIM))
 theCoef <- NULL
 theCoefAnti <- NULL
+newRMSL <- NULL
+newRMSR <- NULL
 
 # Save arrays
 theImagesLeft <- array(NA, dim = c(stim.Size,stim.Size,length(stim.cosineProfile)))
 theImagesRight <- theImagesLeft
-disparityTempL <- matrix(NA, nrow = stim.Size, ncol =stim.Size)
-disparityTempR <- matrix(NA, nrow = stim.Size, ncol =stim.Size)
-theImagesLeftDisparity <- theImagesLeft
-theImagesRightDisparity <- theImagesLeft
 theAntiImagesLeft <- theImagesLeft
 theAntiImagesRight <- theImagesLeft
-
+desiredRMS <- .15
+i <- 1
 for (i in 1:length(stim.cosineProfile)){
   # Correlated Noise
   
@@ -331,80 +309,172 @@ for (i in 1:length(stim.cosineProfile)){
   newImageR <- Real(fft(lowPassIM * exp(1i*phaseR), inverse = TRUE))
   theCoef[i] <- cor(c(newImageL),c(newImageR))
   
-  newImageL <- newImageL / max(abs(newImageL)) /2
-  RMSAltered <- sd(newImageL+.5)/mean(newImageL+.5)
-  rmsAlteredScale <- stim.RMS*3/RMSAltered
-  newImageL <- (newImageL*rmsAlteredScale * windowTaper)*.5 +.5
-  newImageL <- normalizeBR(newImageL)
+  newImageL <- rescaleBR(newImageL)
+  meanI <- mean(newImageL)
+  RMS <- sqrt((1/(dim(newImageL)[1]*dim(newImageL)[2]))*base::sum((newImageL - meanI)**2))
+  RMSScaled <- desiredRMS/RMS
+  RMSAdjustedImage <- RMSScaled * (newImageL-meanI) + meanI
+  newImageL <- (RMSAdjustedImage*windowTaper)*.5 + .5
+  newRMSL[i] <- sqrt((1/(dim(RMSAdjustedImage)[1]*dim(RMSAdjustedImage)[2]))*base::sum((RMSAdjustedImage - meanI)**2))
   
-  newImageR <- newImageR / max(abs(newImageR)) /2
-  RMSAltered <- sd(newImageR+.5)/mean(newImageR+.5)
-  rmsAlteredScale <- stim.RMS*3/RMSAltered
-  newImageR <- (newImageR*rmsAlteredScale * windowTaper)*.5 +.5
-  newImageR <- normalizeBR(newImageR)
   
+  newImageR <- rescaleBR(newImageR)
+  meanI <- mean(newImageR)
+  RMS <- sqrt((1/(dim(newImageR)[1]*dim(newImageR)[2]))*base::sum((newImageR - meanI)**2))
+  RMSScaled <- desiredRMS/RMS
+  RMSAdjustedImage <- RMSScaled * (newImageR-meanI) + meanI
+  newImageR <- (RMSAdjustedImage*windowTaper)*.5 + .5
+  newRMSR[i] <- sqrt((1/(dim(RMSAdjustedImage)[1]*dim(RMSAdjustedImage)[2]))*base::sum((RMSAdjustedImage - meanI)**2))
+
   theImagesLeft[,,i] <- newImageL
   theImagesRight[,,i] <- newImageR
   
-  ## Add disparity
-  currentRow <- 0
-  for (D in 1:stim.Size){
-    currentRow <- currentRow + 1
-    rowIDX = ((currentRow-1) %% dim(stim.GaussianL)[3]) + 1 
-    
-    leftDImageFFT <- lowPassIM * fft(stim.GaussianL[,,rowIDX])
-    rightDImageFFT <- lowPassIM * fft(stim.GaussianR[,,rowIDX])
-    DnewImageL <- Real(fft(leftDImageFFT * exp(1i * phaseL), inverse = TRUE))
-    DnewImageL = DnewImageL / max(abs(DnewImageL)) / 2 
-    DnewImageR <- Real(fft(rightDImageFFT * exp(1i * phaseR), inverse = TRUE))
-    DnewImageR = DnewImageR / max(abs(DnewImageR)) / 2 
-    
-    disparityTempL[currentRow, ] <- DnewImageL[currentRow,]
-    disparityTempR[currentRow, ] <- DnewImageR[currentRow,]
-  }
-  
-  disparityTempL <- disparityTempL / max(abs(disparityTempL)) /2
-  RMSAltered <- sd(disparityTempL+.5)/mean(disparityTempL+.5)
-  rmsAlteredScale <- stim.RMS*3/RMSAltered
-  disparityTempL <- (disparityTempL*rmsAlteredScale * windowTaper)*.5 +.5
-  disparityTempL <- normalizeBR(disparityTempL)
-  
-  disparityTempR <- disparityTempR / max(abs(disparityTempR)) /2
-  RMSAltered <- sd(disparityTempR+.5)/mean(disparityTempR+.5)
-  rmsAlteredScale <- stim.RMS*3/RMSAltered
-  disparityTempR <- (disparityTempR*rmsAlteredScale * windowTaper)*.5 +.5
-  disparityTempR <- normalizeBR(disparityTempR)
-  
-  theImagesLeftDisparity[,,i] <- disparityTempL
-  theImagesRightDisparity[,,i] <- disparityTempR
   
   # Anticorrelated Noise
   newImageL <- Real(fft(lowPassIM * exp(1i*phaseL), inverse = TRUE))
   newImageR <- Real(fft(lowPassIM * exp(1i*phaseR), inverse = TRUE))*-1
   theCoefAnti[i] <- cor(c(newImageL),c(newImageR))
   
-  newImageL <- newImageL / max(abs(newImageL)) / 2
-  RMSAltered <- sd(newImageL+.5)/mean(newImageL+.5)
-  rmsAlteredScale <- stim.RMS*3/RMSAltered
-  newImageL <- (newImageL*rmsAlteredScale * windowTaper)*.5 +.5
-  newImageL <- normalizeBR(newImageL)
+  newImageL <- rescaleBR(newImageL)
+  meanI <- mean(newImageL)
+  RMS <- sqrt((1/(dim(newImageL)[1]*dim(newImageL)[2]))*base::sum((newImageL - meanI)**2))
+  RMSScaled <- desiredRMS/RMS
+  RMSAdjustedImage <- RMSScaled * (newImageL-meanI) + meanI
+  newImageL <- (RMSAdjustedImage*windowTaper)*.5 + .5
   
-  newImageR <- newImageR / max(abs(newImageR)) /2
-  RMSAltered <- sd(newImageR+.5)/mean(newImageR+.5)
-  rmsAlteredScale <- stim.RMS*3/RMSAltered
-  newImageR <- (newImageR*rmsAlteredScale * windowTaper)*.5 +.5
-  newImageR <- normalizeBR(newImageR)
+  newImageR <- rescaleBR(newImageR)
+  meanI <- mean(newImageR)
+  RMS <- sqrt((1/(dim(newImageR)[1]*dim(newImageR)[2]))*base::sum((newImageR - meanI)**2))
+  RMSScaled <- desiredRMS/RMS
+  RMSAdjustedImage <- RMSScaled * (newImageR-meanI) + meanI
+  newImageR <- (RMSAdjustedImage*windowTaper)*.5 + .5
   
   theAntiImagesLeft[,,i] <- newImageL
   theAntiImagesRight[,,i] <- newImageR
 }
 
-save(theImagesLeft, theImagesRight, theImagesLeftDisparity, theImagesRightDisparity, theAntiImagesLeft,theAntiImagesRight, file = paste0(currentDirectory, "stimulusSet.RData"))
+save(theImagesLeft, theImagesRight, theAntiImagesLeft,theAntiImagesRight, file = paste0(currentDirectory, "stimulusSet.RData"))
 ```
 
 ```{r}
 load(paste0(currentDirectory, "/Binocular Noise StudystimulusSet.RData"))
 ```
+
+```{r}
+# png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/StimOscillation.png", width = 8, height = 5, res = 300, units = "in", bg = "transparent")
+X <- seq(0,1000, 250)
+plot(x = NULL, y = NULL, xlim = c(0,60), ylim = c(0,1), axes = FALSE, ann = FALSE)
+
+sineRef <- (-cos(2*pi*3*seq(0,1, length.out = 60))+1)/2
+lines(1:60, sineRef, lwd = 2, col = "gray75", lty = 2)
+lines(1:60, rep(theCoef,3), lwd = 3, col = theColours[1])
+legend("bottomleft", legend = c("Interocular Correlation", "Sinewave Reference"), col = c(theColours[1], "gray75"), lty = c(1,2), lwd = 2, box.lwd = 0, bg = rgb(1,1,1,.5))
+
+axis(1, at = seq(0,60, length.out = length(X)), tck = -.015, lwd = 2, labels = FALSE)
+axis(2, at = pretty(c(0,1)), tck = -.015, lwd = 2, labels = FALSE)
+mtext(X, 1, at = seq(0,60, length.out = length(X)), line = .4)
+mtext(c("0.0",seq(.2,.8, .2), "1.0"), 2, at = pretty(c(0,1)), las = 1, line = .4)
+mtext("Time (ms)", 1, font = 2, line = 1.5)
+mtext("Correlation Coefficient (r)", 2, font = 2, line = 2)
+
+# dev.off()
+```
+
+```{r}
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/StimOscillationAnti.png", width = 8, height = 5, res = 300, units = "in", bg = "transparent")
+X <- seq(0,1000, 250)
+plot(x = NULL, y = NULL, xlim = c(0,60), ylim = c(-1,0), axes = FALSE, ann = FALSE)
+
+sineRef <- -(-cos(2*pi*3*seq(0,1, length.out = 60))+1)/2
+lines(1:60, sineRef, lwd = 2, col = "gray75", lty = 2)
+lines(1:60, rep(theCoefAnti,3), lwd = 3, col = theColours[2])
+legend("bottomleft", legend = c("Interocular Correlation", "Sinewave Reference"), col = c(theColours[2], "gray75"), lty = c(1,2), lwd = 2, box.lwd = 0, bg = rgb(1,1,1,.5))
+
+axis(1, at = seq(0,60, length.out = length(X)), tck = -.015, lwd = 2, labels = FALSE)
+axis(2, at = pretty(c(-1,0)), tck = -.015, lwd = 2, labels = FALSE)
+mtext(X, 1, at = seq(0,60, length.out = length(X)), line = .4)
+mtext(c("-1.0",seq(-.8,-.2, .2), "0.0"), 2, at = pretty(c(-1,0)), las = 1, line = .4)
+mtext("Time (ms)", 1, font = 2, line = 1.5)
+mtext("Correlation Coefficient (r)", 2, font = 2, line = 2)
+
+dev.off()
+```
+
+```{r}
+theCoef[c(1,5,10,17)]
+```
+
+
+```{r}
+XX <- 1:dim(theAntiImagesLeft)[1]
+YY <- 1:dim(theAntiImagesRight)[2]
+
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/NoCorrStimAnti.png", width = 8, height = 4, res = 300, units = "in", bg = "transparent")
+grayPalette <- gray.colors(256, start = 0, end = 1, gamma = 1)
+par(pty = "s", mfcol = c(1,2), mai = c(0,0,0,0), omi = c(0,0,0,0))
+image(XX, YY, rot90(theAntiImagesLeft[,,1],3),c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+image(XX,YY, rot90(theAntiImagesRight[,,1],3), c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+dev.off()
+
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/MidCorrStimAnti.png", width = 8, height = 4, res = 300, units = "in", bg = "transparent")
+grayPalette <- gray.colors(256, start = 0, end = 1, gamma = 1)
+par(pty = "s", mfcol = c(1,2), mai = c(0,0,0,0), omi = c(0,0,0,0))
+image(XX, YY, rot90(theAntiImagesLeft[,,5],3),c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+image(XX,YY, rot90(theAntiImagesRight[,,5],3), c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+dev.off()
+
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/PerfCorrStimAnti.png", width = 8, height = 4, res = 300, units = "in", bg = "transparent")
+grayPalette <- gray.colors(256, start = 0, end = 1, gamma = 1)
+par(pty = "s", mfcol = c(1,2), mai = c(0,0,0,0), omi = c(0,0,0,0))
+image(XX, YY, rot90(theAntiImagesLeft[,,10],3),c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+image(XX,YY, rot90(theAntiImagesRight[,,10],3), c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+dev.off()
+
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/midDownCorrStimAnti.png", width = 8, height = 4, res = 300, units = "in", bg = "transparent")
+grayPalette <- gray.colors(256, start = 0, end = 1, gamma = 1)
+par(pty = "s", mfcol = c(1,2), mai = c(0,0,0,0), omi = c(0,0,0,0))
+image(XX, YY, rot90(theAntiImagesLeft[,,17],3),c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+image(XX,YY, rot90(theAntiImagesRight[,,17],3), c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+dev.off()
+```
+
+```{r}
+theCoefAnti[c(1,5,10,17)]
+```
+
+```{r}
+XX <- 1:dim(theImagesLeft)[1]
+YY <- 1:dim(theImagesLeft)[2]
+
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/NoCorrStim.png", width = 8, height = 4, res = 300, units = "in", bg = "transparent")
+grayPalette <- gray.colors(256, start = 0, end = 1, gamma = 1)
+par(pty = "s", mfcol = c(1,2), mai = c(0,0,0,0), omi = c(0,0,0,0))
+image(XX, YY, rot90(theImagesLeft[,,1],3),c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+image(XX,YY, rot90(theImagesRight[,,1],3), c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+dev.off()
+
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/MidCorrStim.png", width = 8, height = 4, res = 300, units = "in", bg = "transparent")
+grayPalette <- gray.colors(256, start = 0, end = 1, gamma = 1)
+par(pty = "s", mfcol = c(1,2), mai = c(0,0,0,0), omi = c(0,0,0,0))
+image(XX, YY, rot90(theImagesLeft[,,5],3),c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+image(XX,YY, rot90(theImagesRight[,,5],3), c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+dev.off()
+
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/PerfCorrStim.png", width = 8, height = 4, res = 300, units = "in", bg = "transparent")
+grayPalette <- gray.colors(256, start = 0, end = 1, gamma = 1)
+par(pty = "s", mfcol = c(1,2), mai = c(0,0,0,0), omi = c(0,0,0,0))
+image(XX, YY, rot90(theImagesLeft[,,10],3),c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+image(XX,YY, rot90(theImagesRight[,,10],3), c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+dev.off()
+
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/midDownCorrStim.png", width = 8, height = 4, res = 300, units = "in", bg = "transparent")
+grayPalette <- gray.colors(256, start = 0, end = 1, gamma = 1)
+par(pty = "s", mfcol = c(1,2), mai = c(0,0,0,0), omi = c(0,0,0,0))
+image(XX, YY, rot90(theImagesLeft[,,17],3),c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+image(XX,YY, rot90(theImagesRight[,,17],3), c(0,1), col = grayPalette, axes = FALSE, ann = FALSE)
+dev.off()
+```
+
 
 ## Make Filters
 
@@ -723,3 +793,11 @@ for (C in theConditions){
   }
 }
 ```
+
+
+```{r}
+1478 - 300 - 38.79 - 44.29
+tax <- 3.09/49.62
+8.54+(8.54*tax)+21.31+8.41
+```
+
