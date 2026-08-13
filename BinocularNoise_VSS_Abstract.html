@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Bruno Richard">
+<meta name="author" content="Robert F. Hess">
+<meta name="author" content="Sing Ip Lee">
+<meta name="author" content="Daniela Marinova">
+<meta name="author" content="Daniel H. Baker">
+
+<title>Neural responses to binocular correlated and anticorrelated noise stimuli</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="BinocularNoise_VSS_Abstract_files/libs/clipboard/clipboard.min.js"></script>
+<script src="BinocularNoise_VSS_Abstract_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="BinocularNoise_VSS_Abstract_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="BinocularNoise_VSS_Abstract_files/libs/quarto-html/popper.min.js"></script>
+<script src="BinocularNoise_VSS_Abstract_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="BinocularNoise_VSS_Abstract_files/libs/quarto-html/anchor.min.js"></script>
+<link href="BinocularNoise_VSS_Abstract_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="BinocularNoise_VSS_Abstract_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="BinocularNoise_VSS_Abstract_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="BinocularNoise_VSS_Abstract_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="BinocularNoise_VSS_Abstract_files/libs/bootstrap/bootstrap-138a6193a3bd40baf1e627da441a4734.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#experiment-1" id="toc-experiment-1" class="nav-link" data-scroll-target="#experiment-1"><span class="header-section-number">2</span> Experiment 1</a>
+  <ul class="collapse">
+  <li><a href="#methods" id="toc-methods" class="nav-link" data-scroll-target="#methods"><span class="header-section-number">2.1</span> Methods</a>
+  <ul class="collapse">
+  <li><a href="#participants" id="toc-participants" class="nav-link" data-scroll-target="#participants"><span class="header-section-number">2.1.1</span> Participants</a></li>
+  <li><a href="#apparatus" id="toc-apparatus" class="nav-link" data-scroll-target="#apparatus"><span class="header-section-number">2.1.2</span> Apparatus</a></li>
+  <li><a href="#stimuli" id="toc-stimuli" class="nav-link" data-scroll-target="#stimuli"><span class="header-section-number">2.1.3</span> Stimuli</a></li>
+  <li><a href="#procedures-and-analysis" id="toc-procedures-and-analysis" class="nav-link" data-scroll-target="#procedures-and-analysis"><span class="header-section-number">2.1.4</span> Procedures and Analysis</a></li>
+  </ul></li>
+  <li><a href="#results-discussion" id="toc-results-discussion" class="nav-link" data-scroll-target="#results-discussion"><span class="header-section-number">2.2</span> Results &amp; Discussion</a>
+  <ul class="collapse">
+  <li><a href="#representational-similarity-analysis-rsa" id="toc-representational-similarity-analysis-rsa" class="nav-link" data-scroll-target="#representational-similarity-analysis-rsa"><span class="header-section-number">2.2.1</span> Representational Similarity Analysis (RSA)</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#experiment-2" id="toc-experiment-2" class="nav-link" data-scroll-target="#experiment-2"><span class="header-section-number">3</span> Experiment 2</a>
+  <ul class="collapse">
+  <li><a href="#methods-1" id="toc-methods-1" class="nav-link" data-scroll-target="#methods-1"><span class="header-section-number">3.1</span> Methods</a>
+  <ul class="collapse">
+  <li><a href="#participants-1" id="toc-participants-1" class="nav-link" data-scroll-target="#participants-1"><span class="header-section-number">3.1.1</span> Participants</a></li>
+  <li><a href="#stimulus-procedures-and-analysis" id="toc-stimulus-procedures-and-analysis" class="nav-link" data-scroll-target="#stimulus-procedures-and-analysis"><span class="header-section-number">3.1.2</span> Stimulus, Procedures, and Analysis</a></li>
+  </ul></li>
+  <li><a href="#results-and-discussion" id="toc-results-and-discussion" class="nav-link" data-scroll-target="#results-and-discussion"><span class="header-section-number">3.2</span> Results and Discussion</a>
+  <ul class="collapse">
+  <li><a href="#representational-similarity-analysis-rsa-1" id="toc-representational-similarity-analysis-rsa-1" class="nav-link" data-scroll-target="#representational-similarity-analysis-rsa-1"><span class="header-section-number">3.2.1</span> Representational Similarity Analysis (RSA)</a></li>
+  </ul></li>
+  <li><a href="#time-analysis" id="toc-time-analysis" class="nav-link" data-scroll-target="#time-analysis"><span class="header-section-number">3.3</span> Time Analysis</a></li>
+  </ul></li>
+  <li><a href="#general-discussion" id="toc-general-discussion" class="nav-link" data-scroll-target="#general-discussion"><span class="header-section-number">4</span> General Discussion</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">5</span> References</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="BinocularNoise_VSS_Abstract.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Neural responses to binocular correlated and anticorrelated noise stimuli</h1>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Authors</div>
+  <div class="quarto-title-meta-heading">Affiliations</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Bruno Richard <a href="mailto:br379@newark.rutgers.edu" class="quarto-title-author-email"><i class="bi bi-envelope"></i></a> </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+      </div>
+    <div class="quarto-title-meta-contents">
+    <p class="author">Robert F. Hess </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+      </div>
+    <div class="quarto-title-meta-contents">
+    <p class="author">Sing Ip Lee </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+      </div>
+    <div class="quarto-title-meta-contents">
+    <p class="author">Daniela Marinova </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+      </div>
+    <div class="quarto-title-meta-contents">
+    <p class="author">Daniel H. Baker </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>The visual system encodes binocular signals via summing and differencing channels, yet the relative weighting of these pathways remains unclear. Here, we use Steady-State Visually Evoked Potentials (SSVEPs) to investigate the neural responses associated with summing and differencing mechanisms. In Experiment 1, we measured responses to binocular noise stimuli in 15 observers. Across the eyes, stimuli could oscillate (at 3Hz) from no correlation to perfect interocular correlation, from no correlation to perfect interocular anticorrelation (i.e., opposite interocular contrast), or no interocular correlation (i.e., the control condition). Responses to correlated stimuli showed a peak at the fundamental frequency (3Hz); however, we found no evidence of measurable responses to anticorrelation. In Experiment 2, we increased the sample size to 48 observers and measured SSVEPs in response to interocular correlation and anticorrelation while manipulating the degree of interocular correlation. The correlation between the left and right eye images could be ±0, 0.12, 0.24, 0.48, or 0.96. We found SSVEP responses at the fundamental frequency in both interocular correlation and anticorrelation conditions. Interocular correlation generated SSVEPs with a correlation of 0.48 or 0.96, while anticorrelation SSVEPs were only measurable at a correlation of -0.96. Signal-to-noise ratios were 1.15 times larger for the correlation condition than the anticorrelation condition. To determine the influence of individual differences on SSVEPs to interocular correlation, we collected psychophysical measures of binocular function and correlated them with neural responses. Two measures of binocularity were used: stereoacuity and binocular balance, which refers to the ratio of dominance duration in each eye during rivalry. We found only small associations between SSVEP magnitudes and psychophysical measures of binocularity (stereoacuity and binocular balance). We conclude that while neural responses to both correlation and anticorrelation can be recorded via SSVEPs, the latter requires high signal coherence and a large sample size.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="introduction" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
+<p>The human visual system is binocular, yet the perceptual experience is cyclopean. The visual system encodes binocular signals via summing and differencing channels <span class="citation" data-cites="May2016">(<a href="#ref-May2016" role="doc-biblioref">May and Zhaoping, 2016</a>)</span> , yet the relative weighting of these pathways remains unclear.</p>
+<p>Previous studies have demonstrated that humans can detect interocular correlation in broadband <span class="citation" data-cites="Cormack1991 Julesz1976">(<a href="#ref-Cormack1991" role="doc-biblioref">Cormack et al., 1991</a>; <a href="#ref-Julesz1976" role="doc-biblioref">Julesz and Tyler, 1976</a>)</span> and bandpass <span class="citation" data-cites="Reynaud2018">(<a href="#ref-Reynaud2018" role="doc-biblioref">Reynaud and Hess, 2018</a>)</span> stimuli, with performance mediated by stimulus contrast. Early studies used random binary dots</p>
+<p>Here, we use Steady-State Visually Evoked Potentials (SSVEPs) to investigate the neural responses associated with summing and differencing mechanisms.</p>
+<p>Why would stereo matter? Or binocularity?</p>
+<p>We present the findings of two studies in this manuscript. The first reports neural responses to interocular correlation in a small set of participants that were collected as part of a larger experiment <span class="citation" data-cites="Richard2026">(<a href="#ref-Richard2026" role="doc-biblioref">Richard and Baker, 2026</a>)</span>. In the second, the sample size was increased</p>
+</section>
+<section id="experiment-1" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Experiment 1</h1>
+<section id="methods" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="methods"><span class="header-section-number">2.1</span> Methods</h2>
+<section id="participants" class="level3" data-number="2.1.1">
+<h3 data-number="2.1.1" class="anchored" data-anchor-id="participants"><span class="header-section-number">2.1.1</span> Participants</h3>
+<p>Fifteen observers (<span class="math inline">\(N_{male} = 4\)</span>; age range [19 34]), including authors BR and DHB, participated in this study. All observers had normal or corrected-to-normal visual acuity, as verified by a Snellen chart, and normal binocular vision, as verified by a Titmus test. Two of the observers (participant 5 and 6) did not complete the behavioural portion of the experiment. Written informed consent was obtained from all participants, and experimental procedures were approved by the ethics committee of the Department of Psychology at the University of York.</p>
+</section>
+<section id="apparatus" class="level3" data-number="2.1.2">
+<h3 data-number="2.1.2" class="anchored" data-anchor-id="apparatus"><span class="header-section-number">2.1.2</span> Apparatus</h3>
+<p>All stimuli were presented using a gamma-corrected ViewPixx 3D display (VPixx Technologies, Canada) driven by a Mac Pro. Binocular separation with minimal crosstalk was achieved by synchronizing the display’s refresh rate with the toggling of a pair of Nvidia stereo shutter goggles using an infrared signal. The monitor refresh rate was set to 120 Hz; each eye updated at 60 Hz (every 16.67 msec). The display resolution was set to <span class="math inline">\(1920 \times 1080\)</span> pixels. A single pixel subtended <span class="math inline">\(0.027^\circ\)</span> of visual angle (1.63 arc min) when viewed from 57 cm. The mean luminance of the display viewed through the shutter goggles was 26 cd/m<span class="math inline">\(^2\)</span>. All stimuli were generated using (MathWorks, Natick, MA) and presented to observers using <span class="citation" data-cites="Brainard1997 Kleiner2007 Pelli1997">(<a href="#ref-Brainard1997" role="doc-biblioref">Brainard, 1997</a>; <a href="#ref-Kleiner2007" role="doc-biblioref">Kleiner et al., 2007</a>; <a href="#ref-Pelli1997" role="doc-biblioref">Pelli, 1997</a>)</span>.</p>
+<p>EEG signals were recorded from 64 electrodes distributed across the scalp according to the 10/20 EEG system <span class="citation" data-cites="Chatrian1985">(<a href="#ref-Chatrian1985" role="doc-biblioref">Chatrian et al., 1985</a>)</span> in a WaveGuard cap (ANT Neuro, Netherlands). We monitored eye blinks with an electrooculogram consisting of bipolar electrodes placed above the eyebrow and the cheek on the left side of the participant’s face. Stimulus-contingent triggers were sent from the ViewPixx display to the amplifier using a parallel cable. Signals were amplified and digitized using a PC with the ASAlab software (ANT Neuro, Netherlands). All EEG data were imported into MATLAB (Mathworks, MA, USA) using components of the toolbox <span class="citation" data-cites="Delorme2004">(<a href="#ref-Delorme2004" role="doc-biblioref">Delorme and Makeig, 2004</a>)</span> and then exported for subsequent offline analysis using R.</p>
+</section>
+<section id="stimuli" class="level3" data-number="2.1.3">
+<h3 data-number="2.1.3" class="anchored" data-anchor-id="stimuli"><span class="header-section-number">2.1.3</span> Stimuli</h3>
+<p>To aid with binocular fusion, all stimuli in this study were surrounded by a static binocular texture presented beyond the central 19<span class="math inline">\(\circ\)</span> stimulus aperture (see <a href="#fig-stimFigure" class="quarto-xref">Figure&nbsp;1</a>C). These textures were constructed by low-pass filtering a white (amplitude <span class="math inline">\(\propto 1/f^0\)</span>) noise image, assigning a DC value of 0, transforming it into a binary image, and taking its phase spectrum. A second flat (amplitude <span class="math inline">\(\propto 1/f^0\)</span>) was adjusted by multiplying each spatial frequency’s amplitude coefficient by <span class="math inline">\(f^{-1}\)</span> to generate a pink amplitude spectrum <span class="citation" data-cites="HansenHess2006 TadmorTolhurst1994">(<a href="#ref-HansenHess2006" role="doc-biblioref">Hansen and Hess, 2006</a>; <a href="#ref-TadmorTolhurst1994" role="doc-biblioref">Tadmor and Tolhurst, 1994</a>)</span>. The pink amplitude spectrum and the phase spectrum of the binary image were combined and rendered in the spatial domain by taking the inverse Fourier transform. The surrounding texture was fixed during a trial, but its phase structure was changed across trials.</p>
+<section id="interocular-correlation" class="level4" data-number="2.1.3.1">
+<h4 data-number="2.1.3.1" class="anchored" data-anchor-id="interocular-correlation"><span class="header-section-number">2.1.3.1</span> Interocular Correlation</h4>
+<p>Observer SSVEPs to interocular correlation and anticorrelation were measured with noise stimuli subtending <span class="math inline">\(15^\circ\)</span> of visual angle on the retina. The visual noise stimuli were low-pass filtered (filter cut-off frequency of 3 cycles/<span class="math inline">\(^o\)</span>) white noise images. The images were created by taking the Fourier transform of a random matrix and assigning a DC value of 0. Interocular correlation and anticorrelation were controlled by manipulating the phase spectrum of the noise image along a rectified sinusoidal temporal function (i.e., ranging between 0 and 1) with a frequency of 3Hz (see <a href="#fig-stimFigure" class="quarto-xref">Figure&nbsp;1</a>A). Specifically, two additional phase matrices, one for the left and the right eye, were constructed by sampling values between -<span class="math inline">\(\pi\)</span> and <span class="math inline">\(\pi\)</span> from a uniform distribution while maintaining an odd-symmetric phase relationship to ensure conjugate symmetry. These matrices were weighted (i.e., multiplied) by the sinusoidal temporal function prior to being added to the original phase matrix of the stimuli. When the sinewave has a value of 0, neither of the added phase matrices contributed to the original phase matrix and an identical image is presented to both eyes (i.e., <span class="math inline">\(r = 1\)</span>). When the sinewave has a value of 1, each of the added phase matrices change the phase structure of the original image and thus the left and right eye see different images (i.e., <span class="math inline">\(r = 0\)</span>). Values between 0 and 1 lead to different degrees of difference between the eyes generating an nearly sinusoidal change in interocular correlation at a rate of 3Hz (<a href="#fig-stimFigure" class="quarto-xref">Figure&nbsp;1</a>D). Note that this approach to modulating interocular correlation resulted in a change that is slightly more square than a sinusoidal function and thus the spectrum of the stimulus oscillation is not exactly that of a sinewave (<a href="#fig-stimFigure" class="quarto-xref">Figure&nbsp;1</a>B). The sign of pixels in one eye was reversed to create the anticorrelation images. The Root-Mean-Square (RMS) contrast of all images was set to 0.15.</p>
+<div id="fig-stimFigure" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-stimFigure-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/stimulusFigureUpdated.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-stimFigure-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: (A). The sinusoidal oscillation of correlation strength between the left and right eye images. The blue line represents the oscillation for correlated images, while the mustard line that of anticorrelated stimuli. The dashed line is a sine (blue) or cosine (mustard) wave at 3Hz to serve as a reference. There are slight deviations between the correlation coefficient modulation and the reference sinewave. (B) Example amplitude spectrum of the sinusoidal oscillation in interocular correlation between the left and right eye stimuli. Note that as the oscillation in interocular correlation is not a perfect sinusoid, its spectrum has large amplitudes at the fundamental frequency and its harmonics. (C) An example of the background texture used to aid with binocular fusion. (D). Example stimuli at three different correlation coefficients (<span class="math inline">\(\pm\)</span> 0.00, 0.42, and 1.00) across the left and right eye. The top row shows stimuli that oscillate from uncorrelated to perfectly correlated while the bottom row shows stimuli that oscillate from uncorrelated to anticorrelated. (E) Example stimuli used to measure stereoacuity in our observers and the general psychophysical performance of observers on the task. While not used in the study, the anaglyph is an example of the stimuli presented to observers that can be viewed without fusing the left and right eye example stimuli.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="disparity-thresholds" class="level4" data-number="2.1.3.2">
+<h4 data-number="2.1.3.2" class="anchored" data-anchor-id="disparity-thresholds"><span class="header-section-number">2.1.3.2</span> Disparity Thresholds</h4>
+<p>We measured observer disparity thresholds with low-pass filtered white noise images (as in the SSVEP portion of this study) that included a sinewave disparity signal. The depth cue was generated in a manner similar to that explained in <span class="citation" data-cites="DingLevi2011">Ding and Levi (<a href="#ref-DingLevi2011" role="doc-biblioref">2011</a>)</span>. Specifically, we built a series of 2D Gaussian filters with horizontal disparity range (<span class="math inline">\(X_{D_i}\)</span>) between 0.01 and .5 pixels (approximately 1 to 50 arcsecs) in steps of .02 pixels and vertical disparity (<span class="math inline">\(Y_D\)</span>) set to 0 (<a href="#eq-stereoNoiseStimuli" class="quarto-xref">Equation&nbsp;1</a>). Filters were built separately for the left (<span class="math inline">\(G_{L_{D_i}}\)</span>) and right (<span class="math inline">\(G_{R_{D_i}}\)</span>) eyes as <span id="eq-stereoNoiseStimuli"><span class="math display">\[
+\begin{aligned}
+G_{L_{D_i}} &amp;= \exp-\Big[\frac{(X-X_{D_i})^2}{2\sigma^2}+\frac{(Y-Y_D)^2}{2\sigma^2}\Big] \\
+G_{R_{D_i}} &amp;= \exp-\Big[\frac{(X+X_{D_i})^2}{2\sigma^2}+\frac{(Y+Y_D)^2}{2\sigma^2}\Big].
+\end{aligned}
+\tag{1}\]</span></span> The standard deviation of the Gaussian filters (<span class="math inline">\(\sigma\)</span>) was set to 0.61 (<span class="math inline">\(1/60\)</span> of the number of pixels per degree of visual angle).</p>
+<p>The depth cue was generated by multiplying, in the Fourier domain, the disparity filters with the amplitude spectrum of the low-pass filtered white noise image. Disparity filters were applied row-by-row in the image and selected according to the amplitude of a horizontal sinewave with a spatial frequency of .3 cycles/<span class="math inline">\(\circ\)</span>. This resulted in a smooth sinusoidal transition from negative to positive disparity over the entire stimulus (see <a href="#fig-stimFigure" class="quarto-xref">Figure&nbsp;1</a>E). The filtered amplitude spectrum was combined with the phase spectrum of the noise image and returned to the spatial domain via inverse Fourier transform and their RMS contrast was adjusted to 0.15.</p>
+</section>
+</section>
+<section id="procedures-and-analysis" class="level3" data-number="2.1.4">
+<h3 data-number="2.1.4" class="anchored" data-anchor-id="procedures-and-analysis"><span class="header-section-number">2.1.4</span> Procedures and Analysis</h3>
+<section id="ssvep" class="level4" data-number="2.1.4.1">
+<h4 data-number="2.1.4.1" class="anchored" data-anchor-id="ssvep"><span class="header-section-number">2.1.4.1</span> SSVEP</h4>
+<p>The data presented here were collected as part of a larger experiment <span class="citation" data-cites="Richard2026">(<a href="#ref-Richard2026" role="doc-biblioref">Richard and Baker, 2026</a>)</span>. We only report procedures relevant to the current data. Steady-State Visually Evoked Potentials (SSVEPs) were recorded to stimuli that oscillated, at a rate of 3Hz, from a correlation coefficient of 0 to 1 (correlated) or from a correlation coefficient of 0 to -1 (anticorrelated). Observers completed 12 trials per experimental conditions. A trial lasted 15 seconds; the stimuli were presented on screen for 11 seconds followed by a screen with the central 19<span class="math inline">\(\circ\)</span> aperture set to mean luminance for 4 seconds. Participants completed all trials of an experimental block in a single sequence and were given breaks between experimental blocks. Trial order was pseudo-randomized within each experimental block. Participants did not receive explicit task instructions other than to fixate the marker in the center of the display and blink only during the blank period between stimulus presentations.</p>
+<p>We used whole-head average referencing to normalize each electrode to the mean signal of all 64 electrodes (for each sample point). The EEG waveforms were Fourier transformed at each electrode for a 10-second window, beginning one second after the stimulus onset to avoid onset transients. The Fourier spectra were coherently averaged (i.e., retaining the phase information) across four occipital electrodes (<em>Oz</em>, <em>POz</em>, <em>O1</em>, and <em>O2</em>) and trial repetitions. We then calculated signal-to-noise ratios (SNRs) by dividing the absolute amplitude in the signal bin (e.g., 3 Hz) by the mean of the absolute value of the ten adjacent bins (<span class="math inline">\(\pm 0.5\)</span> Hz in steps of 0.1 Hz). There were no differences in the amplitude of the adjacent, noise, bins across experimental conditions. Given that distributions of ratios (including SNRs) are inherently skewed, the median SNR was taken across all participants; the median is a more robust descriptor of central tendency in skewed distributions. The statistical significance of median SNRs was assessed via permutation tests, allowing for a non-parametric comparison of statistics across condition and from a baseline SNR value of 1.0 (see <span class="citation" data-cites="Richard2026">Richard and Baker (<a href="#ref-Richard2026" role="doc-biblioref">2026</a>)</span>).</p>
+</section>
+<section id="disparity-thresholds-1" class="level4" data-number="2.1.4.2">
+<h4 data-number="2.1.4.2" class="anchored" data-anchor-id="disparity-thresholds-1"><span class="header-section-number">2.1.4.2</span> Disparity Thresholds</h4>
+<p>A potential behavioural correlate of neural responses to interocular correlation and anticorrelation is the stereoacuity of observers. Observer stereoacuity was measured using a 1-up, 3-down two-interval forced choice procedure (2-IFC) using the <em>PAL_AMUD_setupUD</em> and <em>PAL_AMUD_updateUD</em> functions from the Palamedes toolbox for MATLAB <span class="citation" data-cites="Prins2018">(<a href="#ref-Prins2018" role="doc-biblioref">Prins and Kingdom, 2018</a>)</span>. Participants indicated which, of the two intervals, contained a depth cue. At the beginning of each trial, a black (RGB [0,0,0]) fixation point that subtended .27<span class="math inline">\(\circ\)</span> of visual angle was presented to observers at the center of the 19<span class="math inline">\(\circ\)</span> aperture for 250ms. This was followed by the two stimulus presentations, each lasting 250ms and interlaced by a blank screen (set to mean luminance) for 250ms. One interval, either the first or second contained a low-pass filtered white noise image with the horizontal sinewave depth cue while the other contained a low-pass filtered white noise image. At the end of each trial, the screen was set to mean luminance and participants indicated, via button press, which of the first or second interval contained the depth cue. The duration of the response interval was unlimited.</p>
+<p>The staircase approached threshold from above, with a starting disparity value of 0.5 pixels. The magnitude of the disparity cue was decreased in linear steps of 0.02 pixels towards the possible minimum of 0.01 pixels. The disparity decreased when the observer made three consecutive correct responses and was increased for every incorrect response. Each trial continued until 12 reversals had occurred. Participants repeated the psychophysical procedure 6 times.</p>
+<p>Observer stereothresholds were estimated by fitting a Weibull psychometric function (<span class="math inline">\(\psi\)</span>; <a href="#eq-WeibullFunction" class="quarto-xref">Equation&nbsp;2</a>) to each participant’s proportion correct data in the stereoacuity task (see <a href="#fig-stimFigure" class="quarto-xref">Figure&nbsp;1</a>E): <span id="eq-WeibullFunction"><span class="math display">\[
+\begin{aligned}
+F_W(x|\alpha,\beta) &amp;= (1 - \exp(-(\frac{x}{\alpha})^\beta)) \\
+\psi_W(x|\alpha,\beta,\gamma,\lambda) &amp;= \gamma + (1 - \gamma - \lambda)F_W(x|\alpha,\beta)
+\end{aligned}
+\tag{2}\]</span></span> where the Weibull function (<span class="math inline">\(F_W\)</span>) is defined with two parameters, <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span>, which return the threshold and slope, respectively. To fit the function (<span class="math inline">\(\psi_W\)</span>) to observer data we add a guess rate (<span class="math inline">\(\gamma\)</span> = 0.5) and lapse rate (<span class="math inline">\(\lambda\)</span>) parameter. All parameters except the guess rate were free and their values for individual observers are reported in the <strong>appendix</strong>.</p>
+</section>
+</section>
+</section>
+<section id="results-discussion" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="results-discussion"><span class="header-section-number">2.2</span> Results &amp; Discussion</h2>
+<p><a href="#fig-SSVEPResultsExp1" class="quarto-xref">Figure&nbsp;2</a> shows the cross-participant head plots and median SNRs for both experimental conditions of this study (correlated and anticorrelated). Neural responses to interocular correlation are well-localized on the scalp of observers (see <a href="#fig-SSVEPResultsExp1" class="quarto-xref">Figure&nbsp;2</a>A) and generated signal-to-noise ratios (SNRs) at the fundamental frequency statistically significantly larger than a SNR of 1.0 (<span class="math inline">\(\text{median}_\text{SNR} = 2.28\)</span>, <span class="math inline">\(p\)</span> &lt; .001). Responses to anticorrelated stimuli were smaller than those to correlated stimuli (see <a href="#fig-SSVEPResultsExp1" class="quarto-xref">Figure&nbsp;2</a>B) yet the cross-participant median SNR was still statistically significantly larger than 1.0 (<span class="math inline">\(\text{median}_\text{SNR} = 1.16\)</span>, <span class="math inline">\(p\)</span> = .019). While the SNR to anticorrelated noise may be statistically significantly larger than 1.0, most participants did not show a meaningful response to interocular anticorrelation (see <a href="#fig-SSVEPResultsExp1" class="quarto-xref">Figure&nbsp;2</a>C). This effect appears to be driven by the few that did.</p>
+<div id="fig-SSVEPResultsExp1" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-SSVEPResultsExp1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/SSVEPResultsExp1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-SSVEPResultsExp1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: A) Head plots of the cross-participant average SSVEPs for the two conditions of Experiment 1 (correlated and anticorrelated noise). We observe clear response in the occipital pole to correlated noise but very little to anticorrelated noise. B) Cross-participant median signal-to-noise ratios averaged across the four occipital electrodes. Responses to correlated noise are largest at the fundamental frequency of our stimulus (3Hz). We, additionally, observe a peak at a frequency of 18Hz, likely attributable to the sudo-sinusoidal change in interocular correlation from our stimulus. The spectrum for anticorrelated noise shows a small response at 3Hz that is statistically significantly greater than 1. C) Participant distribution of signal-to-noise ratios for both experimental conditions at 3Hz. Most observers generated large (SNR &gt; 2.0) responses to correlated noise. Few observers generated meaningful responses for anticorrelated noise as a majority have signal-to-noise ratios near 1.0.
+</figcaption>
+</figure>
+</div>
+<section id="representational-similarity-analysis-rsa" class="level3" data-number="2.2.1">
+<h3 data-number="2.2.1" class="anchored" data-anchor-id="representational-similarity-analysis-rsa"><span class="header-section-number">2.2.1</span> Representational Similarity Analysis (RSA)</h3>
+<p>The individual differences in response magnitude to interocular correlation and anticorrelation may be represented by their sensitivity to disparity <span class="citation" data-cites="Reynaud2018">(<a href="#ref-Reynaud2018" role="doc-biblioref">Reynaud and Hess, 2018</a>)</span>. It is plausible that observers more sensitive to disparity could also generate larger SNRs to interocular correlation and anticorrelation. We use to measure the association between the neuroimaging (SSVEP) and behavioural responses of our observers using Representational Similarity Analysis (RSA), which enables the representation of both types of data into a common representational space <span class="citation" data-cites="Popal2019">(<a href="#ref-Popal2019" role="doc-biblioref">Popal et al., 2019</a>)</span>. While RSA is traditionally used to compare the responses to stimuli across multiple sources, here we use it to determine the similarity across observers in our experimental conditions. <a href="#fig-corSSVEPStereo" class="quarto-xref">Figure&nbsp;4</a> shows the Representational Dissimilarity Matrices (RMDs) between the 13 participants that completed both the SSVEP and behavioural portions of the experiment. Distances between participants are Euclidean differences of the standardized (<span class="math inline">\(\sigma\)</span>) response metric for each experimental condition (i.e., SNRs and disparity thresholds).</p>
+<p>Participants are ordered according to the results of a Ward D2 hierarchical clustering algorithm applied to a RDM that compared the participants across all experimental conditions. Participants in experiment 1 clustered according to their neural response magnitude to correlated, <span class="math inline">\(F\)</span>(1, 11) = 13.22, <span class="math inline">\(p=\)</span> 0.004, and anticorrelated noise, <span class="math inline">\(F\)</span>(1, 11) = 25.34, <span class="math inline">\(p &lt; .001\)</span> (see <a href="#fig-clusterBoxplots" class="quarto-xref">Figure&nbsp;3</a>). Observers that generated large responses to both interocular correlation and anticorrelation (<span class="math inline">\(N = 2\)</span>) form cluster 2 while observers with more moderate SSVEPs formed cluster 1. No meaningful difference were observed on disparity thresholds, <span class="math inline">\(F\)</span>(1, 11) = 0.03, <span class="math inline">\(p=\)</span> 0.872.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-clusterBoxplots" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-clusterBoxplots-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="BinocularNoise_VSS_Abstract_files/figure-html/fig-clusterBoxplots-1.png" class="img-fluid figure-img" width="624">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-clusterBoxplots-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Distribution of standardized scores for participants in the two clusters identified in Experiment 1. Participants grouped along the magnitude of neural responses and not behavioural measures.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>We compared the RDMs for each experimental condition by calculating Spearman’s <span class="math inline">\(\rho\)</span> on the lower triangular part of the difference matrix and excluding the diagonal <a href="#fig-corSSVEPStereo" class="quarto-xref">Figure&nbsp;4</a>. Statistical significant was determined with a permutation test, where the labels of the original data were shuffled and a new RDM was calculated. In this way, a particular participant response value was no longer necessarily assigned with its original experimental condition. The correlation coefficient was then calculated on the permuted RMDs 1000 times. We obtain a similar finding to that of the single RDM calculated above: only the RDMs for our SSVEP conditions (interocular correlation and anticorrelation) were correlated in a statistically significant manner (<span class="math inline">\(\rho = .397\)</span>, <span class="math inline">\(p = .025\)</span>). No indication of similarity was observed between SSVEPs for interocular correlation and disparity thresholds (<span class="math inline">\(\rho = -.215\)</span>, <span class="math inline">\(p = .923\)</span>) nor SSVEPs for interocular anticorrelation and disparity thresholds (<span class="math inline">\(\rho = -.053\)</span>, <span class="math inline">\(p = .527\)</span>).</p>
+<div id="fig-corSSVEPStereo" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-corSSVEPStereo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/RSAExp1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-corSSVEPStereo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Representational Dissimilarity Matrices for A) SSVEPs to interocular correlated noise, B) SSVEPs to interocular anticorrelated noise, and C) disparity thresholds. Dissimilarity between observers is defined as the Euclidean distance between scores across observers. Values here are standardized (z-scores) to show distance on a singular axis. The correlation coefficients (<span class="math inline">\(\rho\)</span>) and p values (determined via permutation test) across all RDMS are shown below.
+</figcaption>
+</figure>
+</div>
+<p>In Experiment 1 we measured observer SSVEPs to interocular correlation and anticorrelation and investigated how their response magnitude may be associated with a psychophysical measure of their binocularity - disparity thresholds. We found that neural responses to interocular correlation and anticorrelation can be measured with SSVEPs, a strong indication that summing and differencing channels <span class="citation" data-cites="May2016 Zhaoping2017">(<a href="#ref-May2016" role="doc-biblioref">May and Zhaoping, 2016</a>; <a href="#ref-Zhaoping2017" role="doc-biblioref">Zhaoping, 2017</a>)</span> can be targeted by our experimental procedure. Observers generated moderately large (SNR <span class="math inline">\(\geq\)</span> 2) responses to interocular correlation while responses to interocular anticorrelation were significantly smaller. Of the 15 observers who participated in the experiment, only two showed large responses to interocular anticorrelation while others had much more moderate signal-to-noise ratios. These two observers also generated larger responses to interocular correlation. Responses from differencing channels are expected to be smaller than those of summing channels as observers are biased towards the summing response <span class="citation" data-cites="Zhaoping2017">Zhaoping (<a href="#ref-Zhaoping2017" role="doc-biblioref">2017</a>)</span>. It is therefore not surprising that the response to interocular anticorrelation is most easily measured in individuals that generally have larger SSVEPs.</p>
+<p>Our neuroimaging results demonstrated participant variability in the magnitude of responses to interocular correlation. This variability could be associated with their degree of binocularity or stereoacuity <span class="citation" data-cites="Julesz1976 Poggio1985 Poggio1988 Tyler1976 Cormack1991">(<a href="#ref-Cormack1991" role="doc-biblioref">Cormack et al., 1991</a>; <a href="#ref-Julesz1976" role="doc-biblioref">Julesz and Tyler, 1976</a>; <a href="#ref-Poggio1988" role="doc-biblioref">Poggio et al., 1988</a>; <a href="#ref-Poggio1985" role="doc-biblioref">Poggio et al., 1985</a>; <a href="#ref-Tyler1976" role="doc-biblioref">Tyler and Julesz, 1976</a>)</span>. We measured disparity thresholds in our observers but found no evidence of an association between SSVEPs and thresholds. Neither RDMs for SSVEPs were statistically significantly similar to the RDM for disparity thresholds. Encoding interocular correlation and disparity may, therefore, stem from two related but different processes <span class="citation" data-cites="Livingstone1996 Reynaud2018">(<a href="#ref-Livingstone1996" role="doc-biblioref">Livingstone, 1996</a>; <a href="#ref-Reynaud2018" role="doc-biblioref">Reynaud and Hess, 2018</a>)</span>. They share sensitivity profiles as they are both similarly dependent on stimulus duration <span class="citation" data-cites="Reynaud2018">(<a href="#ref-Reynaud2018" role="doc-biblioref">Reynaud and Hess, 2018</a>)</span> and stimulus contrast <span class="citation" data-cites="Reynaud2018 Cormack1991">(<a href="#ref-Cormack1991" role="doc-biblioref">Cormack et al., 1991</a>; <a href="#ref-Reynaud2018" role="doc-biblioref">Reynaud and Hess, 2018</a>)</span>, yet also differ in important ways. For example, neural responses to depth reversing stimuli decrease at equiluminance, while those to interocular correlation increase <span class="citation" data-cites="Livingstone1996">(<a href="#ref-Livingstone1996" role="doc-biblioref">Livingstone, 1996</a>)</span> and the frequency tuning cutoff of interocular correlation is not as high as that of disparity <span class="citation" data-cites="Reynaud2018">(<a href="#ref-Reynaud2018" role="doc-biblioref">Reynaud and Hess, 2018</a>)</span>. Indeed, <span class="citation" data-cites="Livingstone1996">Livingstone (<a href="#ref-Livingstone1996" role="doc-biblioref">1996</a>)</span> argued that the encoding of interocular correlation would be best completed by a population of binocular cells with no disparity selectivity. Responses to interocular correlation would therefore be more akin to binocular rivalry then disparity thresholds.</p>
+</section>
+</section>
+</section>
+<section id="experiment-2" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Experiment 2</h1>
+<p>In experiment 1, we demonstrated that neural responses to interocular correlation and anticorrelation can be recorded with SSVEPs. While responses to interocular anticorrelation where small in most observers, a small group demonstrate large responses to SSVEPs. While we had anticipated individual differences in response magnitude to interocular correlation to be associated with the observer’s binocularity <span class="citation" data-cites="Julesz1976 Poggio1985 Poggio1988 Tyler1976 Cormack1991">(<a href="#ref-Cormack1991" role="doc-biblioref">Cormack et al., 1991</a>; <a href="#ref-Julesz1976" role="doc-biblioref">Julesz and Tyler, 1976</a>; <a href="#ref-Poggio1988" role="doc-biblioref">Poggio et al., 1988</a>; <a href="#ref-Poggio1985" role="doc-biblioref">Poggio et al., 1985</a>; <a href="#ref-Tyler1976" role="doc-biblioref">Tyler and Julesz, 1976</a>)</span>, we found no such indication. In experiment 2, we replicate our original study, but increase the sample size significantly (<span class="math inline">\(N = 48\)</span>) and record neural responses to multiple levels of interocular correlation to measure response functions in our observers. As the results of experiment 1 indicated little association with disparity thresholds, we updated the behavioural methods of experiment 2 to measure both disparity thresholds and binocular rivalry in our large sample of observers.</p>
+<section id="methods-1" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="methods-1"><span class="header-section-number">3.1</span> Methods</h2>
+<section id="participants-1" class="level3" data-number="3.1.1">
+<h3 data-number="3.1.1" class="anchored" data-anchor-id="participants-1"><span class="header-section-number">3.1.1</span> Participants</h3>
+<p>Forty six observers (<span class="math inline">\(N_{male} = XX\)</span>; age range [XX XX]) participated in this study, of which 44 completed all experimental conditions. All observers had normal or corrected-to-normal visual acuity, as verified by a Snellen chart, and normal binocular vision, as verified by a Titmus test. Written informed consent was obtained from all participants, and experimental procedures were approved by the ethics committee of the Department of Psychology at the University of York.</p>
+</section>
+<section id="stimulus-procedures-and-analysis" class="level3" data-number="3.1.2">
+<h3 data-number="3.1.2" class="anchored" data-anchor-id="stimulus-procedures-and-analysis"><span class="header-section-number">3.1.2</span> Stimulus, Procedures, and Analysis</h3>
+<section id="interocular-correlation-1" class="level4" data-number="3.1.2.1">
+<h4 data-number="3.1.2.1" class="anchored" data-anchor-id="interocular-correlation-1"><span class="header-section-number">3.1.2.1</span> Interocular Correlation</h4>
+<p>The stimuli used to measure SSVEPs to interocular correlation and anticorrelation were identical to those of experiment 1. To measure response functions, the peak of the rectified sinusoidal function that controlled the degree of interocular correlation was adjusted to generate a maximum interocular correlation of .00, .24, .48, or .96. The signs of the correlation coefficients were reversed for the anticorrelation conditions. Observers completed a total of 10 repetitions per stimulus condition over 5 blocks for a total of 100 trials (2 stimulus conditions <span class="math inline">\(\times\)</span> 5 interocular correlation magnitude <span class="math inline">\(\times\)</span> 10 repetitions). All other experiment procedures and data analysis were identical to those of Experiment 1.</p>
+</section>
+<section id="disparity-thresholds-2" class="level4" data-number="3.1.2.2">
+<h4 data-number="3.1.2.2" class="anchored" data-anchor-id="disparity-thresholds-2"><span class="header-section-number">3.1.2.2</span> Disparity Thresholds</h4>
+<p>The stimuli used to measure observer stereothresholds were identical to that of Experiment 1, but the psychophysical procedure differed. Observer stereoacuity was measured using a 1-up, 3-down two-interval forced choice procedure (2-IFC) with the following disparity values: 0.00375, 0.0075, 0.015, 0.03, 0.06, 0.12, 0.24, 0.48, and 0.96 pixels (approximately 0.4 to 94 arcsecs). The staircase approached threshold from above, with a starting disparity value of 0.96 pixels and minimum of 0.00375 pixels (no depth cue). The disparity decreased when the observer made three consecutive correct responses and was increased for every incorrect response. The staircase was terminated when participants completed 30 trials or 8 reversals, which ever came first. Participants repeated the psychophysical procedure 3 times.</p>
+<p>Observer thresholds were estimated by first converting the disparity values into decibels units and fitting the proportion correct data with a Gumbell (i.e., log-Weibull) psychometric function, <span id="eq-GumbellFunction"><span class="math display">\[
+\begin{aligned}
+F_G(x|\alpha,\beta) &amp;= 1 - \exp(-10^{\beta(x-\alpha)}) \\
+\psi_W(x|\alpha,\beta,\gamma,\lambda) &amp;= \gamma + (1 - \gamma - \lambda)F_G(x|\alpha,\beta).
+\end{aligned}
+\tag{3}\]</span></span> The Gumbell function (<span class="math inline">\(F_G\)</span>) is defined with two parameters, <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span>, which return the threshold and slope, respectively. To fit the function (<span class="math inline">\(\psi_W\)</span>) to observer data we add a guess rate (<span class="math inline">\(\gamma\)</span> = 0.5) and lapse rate (<span class="math inline">\(\lambda\)</span>) parameter. All parameters except the guess rate were free. Individual observer fits are reported in the <strong>appendix</strong> while the summary performance of all observers in the task is shown in <a href="#fig-BehaviourResultsExp2" class="quarto-xref">Figure&nbsp;5</a>A.</p>
+</section>
+<section id="binocular-rivalry" class="level4" data-number="3.1.2.3">
+<h4 data-number="3.1.2.3" class="anchored" data-anchor-id="binocular-rivalry"><span class="header-section-number">3.1.2.3</span> Binocular Rivalry</h4>
+<p>Binocular rivalry was measured with two orthogonal (45 <span class="math inline">\(\circ\)</span> and 135 <span class="math inline">\(\circ\)</span>) sinusoidal gratings with a spatial frequency of 1 cycle/<span class="math inline">\(\circ\)</span>. The gratings were windowed by a raised cosine envelope to subtend 5 <span class="math inline">\(\circ\)</span> of visual angle on the retina. The dichoptic presentation of the two sinusoidal gratings was accomplished using the same stereo shutter goggles described in the apparatus of Experiment 1. Stimuli were presented at the center of the display for a duration of 60s, during which observers continuously indicated the orientation of the perceptually dominant grating via button press. Participants repeated the binocular rivalry task 5 times. Average dominance duration was taken as the total duration of dominance events, across all five repetitions and regardless of eye of origin, divided by the total number of events. We also calculated the ratio of dominance durations across eyes as an indicator of binocular balance. The eye with the largest sum was always placed in the denominator. A binocular balance value of 1.0 indicates perfect balance between the eyes while values smaller than 1.0 indicate an imbalance, where one eye dominates in the binocular rivalry task more than the other. The summary results of the binocular rivalry task are shown in <a href="#fig-BehaviourResultsExp2" class="quarto-xref">Figure&nbsp;5</a>B. The median dominance duration across participants was 13.13s and a binocular balance index of 0.73, indicating a mild imbalance in dominance duration across the eyes.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-BehaviourResultsExp2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-BehaviourResultsExp2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="BinocularNoise_VSS_Abstract_files/figure-html/fig-BehaviourResultsExp2-1.png" class="img-fluid figure-img" width="768">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-BehaviourResultsExp2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: A) Summary representation of observer performance on the disparity detection task. B) The distribution of dominance duration and binocular balance of our observers in the binocular rivalry task. Observers had a median dominance duration of 13.13s and a median binocular balance of 0.73.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="results-and-discussion" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="results-and-discussion"><span class="header-section-number">3.2</span> Results and Discussion</h2>
+<div id="fig-SSVEPResultsExp2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-SSVEPResultsExp2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/Experiment2SSVEPResults.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-SSVEPResultsExp2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: A and B) Head plots of the cross-participant average SSVEPs across the five interocular correlation and anticorrelation levels of experiment 2. Responses at the occipital pole appear at an interocular correlation/anticorrelation of <span class="math inline">\(\pm\)</span>.48, but are most easily identifiable at <span class="math inline">\(\pm\)</span>.96. C) The participant distribution of signal-to-noise ratios to interocular correlation and anticorrelation. The circle marker represents the median signal-to-noise value for each condition.
+</figcaption>
+</figure>
+</div>
+<p>Neural responses to interocular correlation and anticorrelation in experiment 2 are shown in <a href="#fig-SSVEPResultsExp2" class="quarto-xref">Figure&nbsp;6</a> As in experiment 1, we only find responses to our stimuli at the fundamental frequency (3Hz). Responses appear at the occipital pole of observers once the degree of interocular correlation reaches <span class="math inline">\(\pm\)</span>.48, but the median SNRs for either interocular correlation (<span class="math inline">\(\text{median}_{\text{SNR}_\text{cor}} = 1.03\)</span>, <span class="math inline">\(p = .146\)</span>) or anticorrelation (<span class="math inline">\(\text{median}_{\text{SNR}_\text{anti}} = 1.05\)</span>, <span class="math inline">\(p = .196\)</span>) were not statistically significantly different from 1. We do, however, find that SNRs to interocular correlation (<span class="math inline">\(\text{median}_{\text{SNR}_\text{cor}} = 1.17\)</span>, <span class="math inline">\(p &lt; .001\)</span>) and interocular anticorrelation (<span class="math inline">\(\text{median}_{\text{SNR}_\text{anti}} = 1.06\)</span>, <span class="math inline">\(p = .002\)</span>) were statistically significantly different from 1 at the highest degree of interocular correlation presented to observers, <span class="math inline">\(\pm\)</span>.96, albeit significantly smaller than SNRs reported in experiment 1. As in experiment 1, we find a large amount of variability in the magnitude of responses to interocular correlation and anticorrelation across our observers, particicularly in the <span class="math inline">\(\pm\)</span>.96 interocular correlation condition (see <a href="#fig-SSVEPResultsExp2" class="quarto-xref">Figure&nbsp;6</a>C).</p>
+<section id="representational-similarity-analysis-rsa-1" class="level3" data-number="3.2.1">
+<h3 data-number="3.2.1" class="anchored" data-anchor-id="representational-similarity-analysis-rsa-1"><span class="header-section-number">3.2.1</span> Representational Similarity Analysis (RSA)</h3>
+<p>As in experiment 1, the 44 participants that completed all experimental conditions were ordered according to the results of a Ward D2 hierarchical clustering algorithm applied to a RDM that measured the euclidean distance across all experimental conditions. In experiment 2, participants separated into three clusters, which captured the participants that responded strongly (<span class="math inline">\(n = 3\)</span>), those with moderate responses (<span class="math inline">\(n = 32\)</span>) and finally, participants that showed no responses (<span class="math inline">\(n = 9\)</span>) to interocular correlation of <span class="math inline">\(\pm\)</span>.48 and greater (see tbl).</p>
+<div id="tbl-ANOVATableExp2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-ANOVATableExp2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Goodness-of-fit metrics for all models compared in this study. Errors in predictions for the linear sum model were too large to calculate <span class="math inline">\(R^2\)</span>. RMSE is the Root Mean Square error and AIC is the Aikaike Information Criterion.
+</figcaption>
+<div aria-describedby="tbl-ANOVATableExp2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Interocular Correlation</th>
+<th style="text-align: center;">F(2,41)</th>
+<th style="text-align: center;"><span class="math inline">\(p\)</span></th>
+<th style="text-align: center;"><span class="math inline">\(\eta^2\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">.12</td>
+<td style="text-align: center;">0.85</td>
+<td style="text-align: center;">0.435</td>
+<td style="text-align: center;">0.04</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">.24</td>
+<td style="text-align: center;">0.81</td>
+<td style="text-align: center;">0.454</td>
+<td style="text-align: center;">0.038</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">.48</td>
+<td style="text-align: center;">4.63</td>
+<td style="text-align: center;">0.015</td>
+<td style="text-align: center;">0.184</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">.96</td>
+<td style="text-align: center;">4.57</td>
+<td style="text-align: center;">0.016</td>
+<td style="text-align: center;">0.182</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">-.12</td>
+<td style="text-align: center;">0.11</td>
+<td style="text-align: center;">0.893</td>
+<td style="text-align: center;">0.006</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">-.24</td>
+<td style="text-align: center;">4.26</td>
+<td style="text-align: center;">0.021</td>
+<td style="text-align: center;">0.172</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">-.48</td>
+<td style="text-align: center;">5.92</td>
+<td style="text-align: center;">0.006</td>
+<td style="text-align: center;">0.224</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">-.96</td>
+<td style="text-align: center;">22.04</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0.518</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p><span class="math inline">\(F_\text{cor}\)</span>(2, 41) = 4.63, <span class="math inline">\(p=\)</span> 0.015, and anticorrelation of <span class="math inline">\(\pm\)</span>.48, <span class="math inline">\(F_\text{anti}\)</span>(2, 41) = 5.92, <span class="math inline">\(p=\)</span> 0.006.</p>
+<p>(see <a href="#fig-RSAClustResultsExp2" class="quarto-xref">Figure&nbsp;7</a>).</p>
+<p>Participants with the largest neural responses had a higher degree of binocular balance (M = 0.93)</p>
+<p>and longest dominance duration (18.93) in the binocular rivalry task, in addition to the lowest disparity thresholds (-28.13).</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-RSAClustResultsExp2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-RSAClustResultsExp2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="BinocularNoise_VSS_Abstract_files/figure-html/fig-RSAClustResultsExp2-1.png" class="img-fluid figure-img" width="1152">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-RSAClustResultsExp2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Big ass figure.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>There will be text</p>
+<div id="fig-SSVEPRSAResultsExp2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-SSVEPRSAResultsExp2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/RSAExp2_RMDCorResults.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-SSVEPRSAResultsExp2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: A)
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="time-analysis" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="time-analysis"><span class="header-section-number">3.3</span> Time Analysis</h2>
+<p>Feedback signals are predominantly targeted at the summation channels <span class="citation" data-cites="Zhaoping2017">(<a href="#ref-Zhaoping2017" role="doc-biblioref">Zhaoping, 2017</a>)</span>, so the response can be greater but should be later than difference channels. We look at the SSVEP signal over small chunks of time to see if the magnitude of differencing channels is mostly found in the first moments of stimulus presentation.</p>
+</section>
+</section>
+<section id="general-discussion" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> General Discussion</h1>
+</section>
+<section id="references" class="level1 unnumbered" data-number="5">
+
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">5 References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Brainard1997" class="csl-entry" role="listitem">
+Brainard, D.H., 1997. The psychophysics toolbox. Spatial Vision 10, 433–436. <a href="https://doi.org/10.1163/156856897X00357">https://doi.org/10.1163/156856897X00357</a>
+</div>
+<div id="ref-Chatrian1985" class="csl-entry" role="listitem">
+Chatrian, G.E., Lettich, E., Nelson, P.L., 1985. Ten percent electrode system for topographic studies of spontaneous and evoked EEG activities. American Journal of EEG Technology 25, 83–92. <a href="https://doi.org/10.1080/00029238.1985.11080163">https://doi.org/10.1080/00029238.1985.11080163</a>
+</div>
+<div id="ref-Cormack1991" class="csl-entry" role="listitem">
+Cormack, L.K., Stevenson, S.B., Schor, C.M., 1991. Interocular correlation, luminance contrast and cyclopean processing. Vision Research 31, 2195–2207. https://doi.org/<a href="https://doi.org/10.1016/0042-6989(91)90172-2">https://doi.org/10.1016/0042-6989(91)90172-2</a>
+</div>
+<div id="ref-Delorme2004" class="csl-entry" role="listitem">
+Delorme, A., Makeig, S., 2004. EEGLAB: An open source toolbox for analysis of single-trial EEG dynamics including independent component analysis. Journal of Neuroscience Methods 134, 9–21. <a href="https://doi.org/10.1016/J.JNEUMETH.2003.10.009">https://doi.org/10.1016/J.JNEUMETH.2003.10.009</a>
+</div>
+<div id="ref-DingLevi2011" class="csl-entry" role="listitem">
+Ding, J., Levi, D.M., 2011. Recovery of stereopsis through perceptual learning in human adults with abnormal binocular vision. Proceedings of the National Academy of Sciences 108, E733–E741. <a href="https://doi.org/10.1073/pnas.1105183108">https://doi.org/10.1073/pnas.1105183108</a>
+</div>
+<div id="ref-HansenHess2006" class="csl-entry" role="listitem">
+Hansen, B.C., Hess, R.F., 2006. Discrimination of amplitude spectrum slope in the fovea and parafovea and the local amplitude distributions of natural scene imagery. J Vis 6, 696–711. <a href="https://doi.org/10.1167/6.7.3">https://doi.org/10.1167/6.7.3</a>
+</div>
+<div id="ref-Julesz1976" class="csl-entry" role="listitem">
+Julesz, B., Tyler, C.W., 1976. Neurontropy, an entropy-like measure of neural correlation, in binocular fusion and rivalry. Biological Cybernetics 23, 25–32. <a href="https://doi.org/10.1007/BF00344148">https://doi.org/10.1007/BF00344148</a>
+</div>
+<div id="ref-Kleiner2007" class="csl-entry" role="listitem">
+Kleiner, M., Brainard, D.H., Pelli, D.G., 2007. What’s new in psychtoolbox-3?, in: Perception.
+</div>
+<div id="ref-Livingstone1996" class="csl-entry" role="listitem">
+Livingstone, M.S., 1996. Differences between stereopsis, interocular correlation and binocularity. Vision Research 36, 1127–1140. <a href="https://doi.org/10.1016/0042-6989(95)00175-1">https://doi.org/10.1016/0042-6989(95)00175-1</a>
+</div>
+<div id="ref-May2016" class="csl-entry" role="listitem">
+May, K.A., Zhaoping, L., 2016. Efficient coding theory predicts a tilt aftereffect from viewing untilted patterns. Curr Biol 26, 1571–1576. <a href="https://doi.org/10.1016/j.cub.2016.04.037">https://doi.org/10.1016/j.cub.2016.04.037</a>
+</div>
+<div id="ref-Pelli1997" class="csl-entry" role="listitem">
+Pelli, D.G., 1997. The VideoToolbox software for visual psychophysics: Transforming numbers into movies. Spatial Vision 10, 437–442. <a href="https://doi.org/10.1163/156856897X00366">https://doi.org/10.1163/156856897X00366</a>
+</div>
+<div id="ref-Poggio1988" class="csl-entry" role="listitem">
+Poggio, G.F., Gonzalez, F., Krauseb, F., 1988. Stereoscopic mechanisms in monkey visual cortex: Binocular correlation and disparity selectivity, The Journal of Neuroscience.
+</div>
+<div id="ref-Poggio1985" class="csl-entry" role="listitem">
+Poggio, G.F., Motter, B.C., Squatrito, S., Trotter, Y., 1985. Responses of neurons in visual cortex (V1 and V2) of the alert macaque to dynamic random-dot stereograms. Vision Research 25, 397–406. <a href="https://doi.org/10.1016/0042-6989(85)90065-3">https://doi.org/10.1016/0042-6989(85)90065-3</a>
+</div>
+<div id="ref-Popal2019" class="csl-entry" role="listitem">
+Popal, H., Wang, Y., Olson, I.R., 2019. A guide to representational similarity analysis for social neuroscience. Social Cognitive and Affective Neuroscience 14, 1243–1253. <a href="https://doi.org/10.1093/scan/nsz099">https://doi.org/10.1093/scan/nsz099</a>
+</div>
+<div id="ref-Prins2018" class="csl-entry" role="listitem">
+Prins, N., Kingdom, F.A., 2018. Applying the model-comparison approach to test specific research hypotheses in psychophysical research using the palamedes toolbox. Frontiers in psychology 9, 1250.
+</div>
+<div id="ref-Reynaud2018" class="csl-entry" role="listitem">
+Reynaud, A., Hess, R.F., 2018. Interocular correlation sensitivity and its relationship with stereopsis. Journal of Vision 18, 11–11. <a href="https://doi.org/10.1167/18.1.11">https://doi.org/10.1167/18.1.11</a>
+</div>
+<div id="ref-Richard2026" class="csl-entry" role="listitem">
+Richard, B., Baker, D.H., 2026. Neural responses to binocular in-phase and anti-phase stimuli. Vision Research 244, 108829. https://doi.org/<a href="https://doi.org/10.1016/j.visres.2026.108829">https://doi.org/10.1016/j.visres.2026.108829</a>
+</div>
+<div id="ref-TadmorTolhurst1994" class="csl-entry" role="listitem">
+Tadmor, Y., Tolhurst, D.J., 1994. Discrimination of changes in the second-order statistics of natural and synthetic images. Vision Research 34, 541–554. <a href="https://doi.org/10.1016/0042-6989(94)90167-8">https://doi.org/10.1016/0042-6989(94)90167-8</a>
+</div>
+<div id="ref-Tyler1976" class="csl-entry" role="listitem">
+Tyler, C.W., Julesz, B., 1976. The neural transfer characteristic (neurontropy) for binocular stochastic stimulation. Biological Cybernetics 23, 33–37. <a href="https://doi.org/10.1007/BF00344149">https://doi.org/10.1007/BF00344149</a>
+</div>
+<div id="ref-Zhaoping2017" class="csl-entry" role="listitem">
+Zhaoping, L., 2017. Feedback from higher to lower visual areas for visual recognition may be weaker in the periphery: Glimpses from the perception of brief dichoptic stimuli. Vision Research 136, 32–49. <a href="https://doi.org/10.1016/j.visres.2017.05.002">https://doi.org/10.1016/j.visres.2017.05.002</a>
+</div>
+</div></section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

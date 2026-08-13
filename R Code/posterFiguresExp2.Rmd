@@ -125,9 +125,6 @@ dim(pAvgCI)
 ```
 
 
-
-
-
 ```{r, fig.width=20}
 png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/HeadPlotsExp2.png", width = 20, height = 12, res = 300, units = "in", bg = "transparent")
 x <- electrodePositions[,1]
@@ -511,6 +508,7 @@ nSamples <- 1000
 
 threshold.CI.Exp2 <- matrix(NA, nrow = 1000, ncol = length(theParticipants))
 par(mfrow = c(7,7), mai = c(.1,.1,.1,.1))
+propCorrectMatrix <- matrix(NA, nrow = , ncol = length(theParticipants))
 for (P in 1:length(theParticipants)){
   alltrials <- 0*(1:9)
   allcorrect <- alltrials
@@ -537,17 +535,17 @@ for (P in 1:length(theParticipants)){
   theParamsBest <- optim(theParams,fn = fitGumbell, X = datatofit$CdB, data = datatofit$propCorrect)
   threshold.Exp2[P] <- theParamsBest$par[1]
   
-  sampleData <- data.frame(disp = rep(CdB, Ntrials))
-  for (iii in 1:length(Ntrials)){
-    sampleData$response[sampleData$disp == CdB[iii]] <- rep(c(0,1),c(Ntrials[iii]-Ncorrect[iii],Ncorrect[iii]))
-  }
+  # sampleData <- data.frame(disp = rep(CdB, Ntrials))
+  # for (iii in 1:length(Ntrials)){
+  #   sampleData$response[sampleData$disp == CdB[iii]] <- rep(c(0,1),c(Ntrials[iii]-Ncorrect[iii],Ncorrect[iii]))
+  # }
   
-  for (ii in 1:1000){
-    rowIDX <- sample(1:dim(sampleData)[1],dim(sampleData)[1], replace = TRUE)
-    tempData <- aggregate(response ~ disp, data = sampleData[rowIDX,], FUN = mean)
-    theParamsBest.CI <- optim(theParams,fn = fitGumbell, X = tempData$disp, data = tempData$response)
-    threshold.CI.Exp2[ii,P] <- theParamsBest.CI$par[1]
-  }
+  # for (ii in 1:1000){
+  #   rowIDX <- sample(1:dim(sampleData)[1],dim(sampleData)[1], replace = TRUE)
+  #   tempData <- aggregate(response ~ disp, data = sampleData[rowIDX,], FUN = mean)
+  #   theParamsBest.CI <- optim(theParams,fn = fitGumbell, X = tempData$disp, data = tempData$response)
+  #   threshold.CI.Exp2[ii,P] <- theParamsBest.CI$par[1]
+  # }
   
   XX <- seq(min(datatofit$CdB), max(datatofit$CdB), .01)
   YY <- gumBell(theParamsBest$par, XX)
@@ -570,19 +568,15 @@ for (P in 1:length(theParticipants)){
     mtext(pretty(yLimit), 2, at = pretty(yLimit), line = .4, las = 1)
     mtext("Proportion Correct", 2, font = 2, line = 2.25)
   }
-  
   legend("bottomright", legend = paste0("P", theParticipants[P]), bty = "n")
+  
+  
+  
+  
+  datatofit$propCorrect
 }
 pThreshold.CI.Exp2 <- apply(threshold.CI.Exp2, 2, quantile, c(.025, .975), na.rm = TRUE)
 ```
-
-```{r}
-mean(10**(threshold.Exp2/20))/2*60
-10**(pThreshold.CI.Exp2[,]/20)/2*60
-
-10**(quantile(threshold.CI.Exp2[,P], c(.025,.975))/20)/2*60
-```
-
 
 ```{r}
 stereoPath <- "~/Library/CloudStorage/GoogleDrive-brichard21@gmail.com/My Drive/YORK/binocularitynoise/Experiment2data/Results/"
@@ -599,7 +593,7 @@ for (P in 1:length(theParticipants)){
     alltrials <- alltrials + colSums(data$R[,,1]$ntrials)
     allcorrect <- allcorrect + colSums(data$R[,,1]$ncorrect)
   }
-  disparities <- c(0.00375, 0.0075, 0.015, 0.03, 0.06, 0.12, 0.24, 0.48, 0.96)/2*60
+  disparities <- (c(0.00375, 0.0075, 0.015, 0.03, 0.06, 0.12, 0.24, 0.48, 0.96)*2)/pixperdeg*60*60
   disparitiesArcSec <- (c(0.00375, 0.0075, 0.015, 0.03, 0.06, 0.12, 0.24, 0.48, 0.96)*.5*60)/2*60
   disparitiesdB <- 20*log10(disparities)
   
@@ -617,6 +611,9 @@ for (P in 1:length(theParticipants)){
 
 datatofit <- na.omit(datatofit)
 datatofit$propCorrect <- datatofit$Ncorrect/datatofit$Ntrials
+
+dataForRSAStereo <- datatofit
+
 allPAveraged <- aggregate(propCorrect ~ disparitydB, data= datatofit, FUN = mean)
 allPSD <- aggregate(propCorrect ~ disparitydB, data= datatofit, FUN = sd)
 
@@ -687,7 +684,7 @@ theCors.CI <- apply(theCors, 1, quantile, c(.025, .975))
 ```
 
 ```{r, fig.width=8, fig.height=7}
-png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/corMatrixExp2.png", width = 8, height = 7, res = 300, units = "in", bg = "transparent")
+# png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/corMatrixExp2.png", width = 8, height = 7, res = 300, units = "in", bg = "transparent")
 theM <- cor(cbind(t(theCorrData[31,,]),threshold.Exp2), method = "spearman")
 theM[lower.tri(theM)] <- NA
 colnames(theM) <- c(paste0("Correlated Noise", corCond*100),paste0("Anticorrelated Noise", corCond*100), "Stereoacuity")
@@ -708,7 +705,7 @@ for (i in 1:length(theMColours)){
 }
 mtext(pretty(c(-1,1)), 4, at = seq(0,length(theMColours), length.out = length(pretty(c(-1,1)))), las = 1)
 mtext(bquote(bold("Spearman's"~rho)), 2, font = 2, at = length(theMColours), adj = 1)
-dev.off()
+# dev.off()
 ```
 
 
@@ -826,6 +823,26 @@ lines(dSNR$y, dSNR$x, lwd = 3, col = theColours[3])
 ```
 
 
+## RSA
+
+```{r}
+allPairwiseComp <- expand.grid(seq(1,length(theParticipantIDX),1)[theParticipantIDX], seq(1,length(theParticipantIDX),1)[theParticipantIDX])
+
+par(pty = "s")
+SNRRSACor <- matrix(eAveraged[31, 5, allPairwiseComp[,1]] - eAveraged [31, 5, allPairwiseComp[,2]], nrow = sum(theParticipantIDX), ncol = sum(theParticipantIDX))
+theMColours <- colourRampFunction(100)
+image(pracma::rot90(SNRRSACor,3), col = theMColours, zlim = range(SNRRSACor), axes = FALSE, ann = FALSE)
+
+par(pty = "s")
+SNRRSAAnti <- matrix(eAveraged[31, 10, allPairwiseComp[,1]] - eAveraged [31, 10, allPairwiseComp[,2]], nrow = sum(theParticipantIDX), ncol = sum(theParticipantIDX))
+image(pracma::rot90(SNRRSAAnti,3), col = theMColours, zlim = range(SNRRSACor), axes = FALSE, ann = FALSE)
+
+allPairwiseCompStereo <- expand.grid(1:sum(theParticipantIDX), 1:sum(theParticipantIDX))
+stereoP <- matrix(threshold.Exp2[allPairwiseCompStereo[,1]]-threshold.Exp2[allPairwiseCompStereo[,2]], nrow = sum(theParticipantIDX), ncol = sum(theParticipantIDX))
+par(pty = "s")
+image(pracma::rot90(stereoP,3), col = theMColours, zlim = range(stereoP), axes = FALSE, ann = FALSE)
+```
+
 ```{r}
 theParticipants <- theParticipantsTemp[!c(theParticipantsTemp %in% c("P116","P138"))]
 rivalParticipants <- theParticipants[theParticipants != "P149"]
@@ -865,7 +882,7 @@ for (P in 1:length(rivalParticipants)){
   
   allPsRivalry[allPsRivalry$participant == rivalParticipants[P], "dominanceDuration"] <- averageDominanceDuration[P]
   allPsRivalry[allPsRivalry$participant == rivalParticipants[P], "binocularBalance"] <- binocularbalance[P]
-
+  
   
   for (ii in 1:nSamples){
     IDX1 <- sample(1:ndurs[1], ndurs[1], replace = TRUE)
@@ -1194,5 +1211,213 @@ lines(dSNR$y, dSNR$x, lwd = 3, col = theColours[3])
 dev.off()
 ```
 
+RSA ALL
 
+```{r}
+
+stereoParticipantsIDX <- seq(1,length(theParticipantIDX),1)[theParticipantIDX]
+rivarlryParticipantsIDX <- seq(1,length(theParticipantsRivalryIDX),1)[theParticipantsRivalryIDX]
+
+allPairwiseCompSNRStereo <- expand.grid(stereoParticipantsIDX, stereoParticipantsIDX)
+allPairwiseCompSNRRivalry <- expand.grid(rivarlryParticipantsIDX, rivarlryParticipantsIDX)
+
+allPairwiseCompStereo <- expand.grid(1:sum(theParticipantIDX), 1:sum(theParticipantIDX))
+stereoP <- matrix(threshold.Exp2[allPairwiseCompStereo[,1]]-threshold.Exp2[allPairwiseCompStereo[,2]], nrow = sum(theParticipantIDX), ncol = sum(theParticipantIDX))
+
+lowerIDXStereo <- lower.tri(stereoP)
+
+allPairwiseCompRivalry <- expand.grid(1:sum(theParticipantsRivalryIDX), 1:sum(theParticipantsRivalryIDX))
+dominanceDurationRSA <- matrix(averageDominanceDuration[allPairwiseCompRivalry[,1]]-averageDominanceDuration[allPairwiseCompRivalry[,2]], nrow = sum(theParticipantsRivalryIDX), ncol = sum(theParticipantsRivalryIDX))
+binocularBalanceRSA <- matrix(binocularbalance[allPairwiseCompRivalry[,1]]-binocularbalance[allPairwiseCompRivalry[,2]], nrow = sum(theParticipantsRivalryIDX), ncol = sum(theParticipantsRivalryIDX))
+
+lowerIDXRivalry <- lower.tri(binocularBalanceRSA)
+
+RSA <- matrix(NA, nrow = 3, ncol = 10)
+for (i in 1:10){
+  SNRRSAStereo <- matrix(eAveraged[31, i, allPairwiseCompSNRStereo[,1]] - eAveraged [31, i, allPairwiseCompSNRStereo[,2]], nrow = sum(theParticipantIDX), ncol = sum(theParticipantIDX))
+  
+  SNRRSARivalry<- matrix(eAveraged[31, i, allPairwiseCompSNRRivalry[,1]] - eAveraged [31, i, allPairwiseCompSNRRivalry[,2]], nrow = sum(theParticipantsRivalryIDX), ncol = sum(theParticipantsRivalryIDX))
+  
+  RSA[1,i] <- cor(SNRRSAStereo[lowerIDXStereo],stereoP[lowerIDXStereo], method = "spearman")
+  RSA[2,i] <- cor(SNRRSARivalry[lowerIDXStereo],dominanceDurationRSA[lowerIDXStereo], method = "spearman")
+  RSA[3,i] <- cor(SNRRSARivalry[lowerIDXStereo],binocularBalanceRSA[lowerIDXStereo], method = "spearman")
+  
+}
+
+RSA
+```
+
+```{r}
+stereoParticipantsIDX <- seq(1,length(theParticipantIDX),1)[theParticipantIDX]
+rivarlryParticipantsIDX <- seq(1,length(theParticipantsRivalryIDX),1)[theParticipantsRivalryIDX]
+RSA <- array(NA,dim = c(3,10,1000))
+for (ii in 1:1000){
+  stereoParticipantsSampled <- sample(stereoParticipantsIDX, length(stereoParticipantsIDX), replace = TRUE)
+  rivalryParticipantsSampled <- sample(rivarlryParticipantsIDX, length(rivarlryParticipantsIDX), replace = TRUE)
+  
+  allPairwiseCompSNRStereo <- expand.grid(stereoParticipantsSampled, stereoParticipantsSampled)
+  allPairwiseCompSNRRivalry <- expand.grid(rivalryParticipantsSampled, rivalryParticipantsSampled)
+  
+  allPairwiseCompStereo <- expand.grid(1:sum(theParticipantIDX), 1:sum(theParticipantIDX))
+  stereoP <- matrix(threshold.Exp2[allPairwiseCompStereo[,1]]-threshold.Exp2[allPairwiseCompStereo[,2]], nrow = sum(theParticipantIDX), ncol = sum(theParticipantIDX))
+  
+  lowerIDXStereo <- lower.tri(stereoP)
+  
+  allPairwiseCompRivalry <- expand.grid(1:sum(theParticipantsRivalryIDX), 1:sum(theParticipantsRivalryIDX))
+  dominanceDurationRSA <- matrix(averageDominanceDuration[allPairwiseCompRivalry[,1]]-averageDominanceDuration[allPairwiseCompRivalry[,2]], nrow = sum(theParticipantsRivalryIDX), ncol = sum(theParticipantsRivalryIDX))
+  binocularBalanceRSA <- matrix(binocularbalance[allPairwiseCompRivalry[,1]]-binocularbalance[allPairwiseCompRivalry[,2]], nrow = sum(theParticipantsRivalryIDX), ncol = sum(theParticipantsRivalryIDX))
+  
+  lowerIDXRivalry <- lower.tri(binocularBalanceRSA)
+  
+  
+  for (i in 1:10){
+    SNRRSAStereo <- matrix(eAveraged[31, i, allPairwiseCompSNRStereo[,1]] - eAveraged [31, i, allPairwiseCompSNRStereo[,2]], nrow = sum(theParticipantIDX), ncol = sum(theParticipantIDX))
+    
+    SNRRSARivalry<- matrix(eAveraged[31, i, allPairwiseCompSNRRivalry[,1]] - eAveraged [31, i, allPairwiseCompSNRRivalry[,2]], nrow = sum(theParticipantsRivalryIDX), ncol = sum(theParticipantsRivalryIDX))
+    
+    RSA[1,i,ii] <- cor(SNRRSAStereo[lowerIDXStereo],stereoP[lowerIDXStereo], method = "spearman")
+    RSA[2,i,ii] <- cor(SNRRSARivalry[lowerIDXStereo],dominanceDurationRSA[lowerIDXStereo], method = "spearman")
+    RSA[3,i,ii] <- cor(SNRRSARivalry[lowerIDXStereo],binocularBalanceRSA[lowerIDXStereo], method = "spearman")
+    
+  }
+}
+
+apply(RSA, c(1,2), quantile, c(0.025, .975))
+```
+
+RSA with correlations instead of distance
+
+```{r}
+stereoParticipantsIDX <- seq(1,length(theParticipantIDX),1)[theParticipantIDX]
+rivarlryParticipantsIDX <- seq(1,length(theParticipantsRivalryIDX),1)[theParticipantsRivalryIDX]
+
+allPairwiseCompSNRStereo <- expand.grid(stereoParticipantsIDX, stereoParticipantsIDX)
+allPairwiseCompSNRRivalry <- expand.grid(rivarlryParticipantsIDX, rivarlryParticipantsIDX)
+```
+
+```{r, fig.width = 20}
+RSASNR_Cor <- cor(eAveraged[31, 1:5,stereoParticipantsIDX])
+RSASNR_Anti <- cor(eAveraged[31, 6:10,stereoParticipantsIDX])
+
+par(pty = "s")
+image(1:length(stereoParticipantsIDX), 1:length(stereoParticipantsIDX), pracma::rot90(RSASNR_Cor),col = theMColours, zlim = range(-1,1),axes = FALSE, ann = FALSE)
+mtext(stereoParticipantsIDX,3,at= 1:length(stereoParticipantsIDX))
+mtext(stereoParticipantsIDX,4,at= rev(1:length(stereoParticipantsIDX)), las = 2)
+
+par(pty = "s")
+theOrder <- order(eAveraged[31, 5,stereoParticipantsIDX])
+image(1:length(stereoParticipantsIDX), 1:length(stereoParticipantsIDX), pracma::rot90(RSASNR_Cor[theOrder,theOrder]),col = theMColours, zlim = range(-1,1),axes = FALSE, ann = FALSE)
+mtext(stereoParticipantsIDX[theOrder],3,at= 1:length(stereoParticipantsIDX))
+mtext(stereoParticipantsIDX[theOrder],4,at= rev(1:length(stereoParticipantsIDX)), las = 2)
+
+# par(pty = "s")
+# image(pracma::rot90(RSASNR_Anti),col = theMColours, zlim = range(-1,1),axes = FALSE, ann = FALSE)
+```
+
+```{r, fig.width = 10}
+theFirstPs <- which(stereoParticipantsIDX %in% c(1,2,4,29,30,31,33,35,37,38,39,40))
+theOtherPs <- which(stereoParticipantsIDX %in% c(23,10,8,9,5,11,16,12))
+
+yLimit <- range(pretty(range(theElectrodeCI.P)))
+xLimit <- c(-20,20) #range(pretty(range(pretty(range(pThreshold.CI.Exp2)))))
+
+theMatrix <- matrix(c(2,4,1,3), nrow = 2, ncol = 2, byrow = TRUE)
+layout(theMatrix, widths = c(.9,.1), heights = c(.1,.9))
+
+theColoursPP <- rep("gray75", sum(theParticipantIDX))
+theColoursPP[theFirstPs] <- theColours[7]
+theColoursPP[theOtherPs] <- theColours[3]
+
+# theColoursPP[responders[theParticipantIDX]] <- theColours[7]
+# theColoursPP[!responders[theParticipantIDX]] <- theColours[3]
+
+par(mai = c(.2,.2,.2,.2), omi = c(.4,.4,.3,.2))
+plot(x = NULL, y = NULL, xlim = xLimit, ylim = yLimit, axes = FALSE, ann = FALSE)
+abline(h = 1, lwd = 2, lty = 2, col = theColours[1])
+arrows(pThreshold.CI.Exp2[1,], theCorrData[31,5,], pThreshold.CI.Exp2[2,], theCorrData[31,5,], length = .015, angle = 90, code = 3, col = theColoursPP, lwd = 2)
+arrows(threshold.Exp2, theElectrodeCI.P[1,5,theParticipantIDX], threshold.Exp2, theElectrodeCI.P[2,5,theParticipantIDX], length = .015, angle = 90, code = 3, col = theColoursPP, lwd = 2)
+points(threshold.Exp2, theCorrData[31,5,],bg = theColoursPP, pch = 21, cex = 2, col = "white")
+
+axis(1, at = pretty(xLimit), lwd = 2, tck = -.01, labels = FALSE)
+axis(2, at = pretty(yLimit), lwd = 2, tck = -.01, labels = FALSE)
+axis(3, at = pretty(xLimit), lwd = 2, tck = -.01, labels = FALSE)
+axis(4, at = pretty(yLimit), lwd = 2, tck = -.01, labels = FALSE)
+mtext(pretty(xLimit), 1, at = pretty(xLimit), line=.6, las = 1)
+mtext("Disparity Threshold (dB)", 1, font = 2, line = 2)
+
+
+mtext(sprintf("%.1f",pretty(yLimit)),2, at = pretty(yLimit), line = .5, las = 1)
+mtext("Signal-to-Noise Ratio", 2, font = 2, line = 2.5)
+
+legend("bottomleft", legend = paste0("Interocular Correlation = ",corCond[5]), bty = "n")
+legend("bottomright", 
+       legend = bquote(rho~"="~.(round(theM[5,11],3))*", 95% CI ["*.(round(theCors.CI[1,5],3))*","*.(round(theCors.CI[2,5],3))*"]"), 
+       bty = "n", cex = 1.2) 
+
+mtext("Correlated Noise", 3, font = 2, line = -2, adj =0, at = -20)
+
+dThreshold <- density(threshold.Exp2)
+dThreshold$y <- dThreshold$y/max(dThreshold$y)
+par(mai = c(0,0.2,0,0.2))
+plot(x = NULL, y = NULL, xlim = xLimit, ylim = c(0,1), axes = FALSE, ann = FALSE)
+# axis(1)
+polygon(dThreshold$x, dThreshold$y,col = addalpha(theColours[3], .5), border = FALSE)
+lines(dThreshold$x, dThreshold$y, lwd = 3, col =theColours[3])
+
+dSNR<- density(theCorrData[31,5,])
+dSNR$y <- dSNR$y/max(dSNR$y)
+par(mai = c(0.2,0,0.2,0))
+plot(x = NULL, y = NULL, ylim = yLimit, xlim = c(0,1), axes = FALSE, ann = FALSE)
+polygon(dSNR$y, dSNR$x,col = addalpha(theColours[3], .5), border = FALSE)
+lines(dSNR$y, dSNR$x, lwd = 3, col = theColours[3])
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+thePs <- unique(dataForRSAStereo$Participant)
+thedBs <- unique(dataForRSAStereo$disparitydB)
+theWideRSAStereoData <- matrix(NA, nrow = length(thedBs), ncol = sum(theParticipantIDX))
+
+for (P in 1:sum(theParticipantIDX)){
+  for (d in 1:length(thedBs)){
+    theValue <- dataForRSAStereo[dataForRSAStereo$Participant == thePs[P] & dataForRSAStereo$disparitydB == thedBs[d], "propCorrect"]
+    if (length(theValue) > 0){
+      theWideRSAStereoData[d,P] <- theValue
+    }
+  }
+}
+
+stereoRSA <- cor(theWideRSAStereoData, use = "complete.obs", method = "spearman")
+
+par(pty = "s")
+image(pracma::rot90(stereoRSA),col = theMColours, zlim = range(-1,1),axes = FALSE, ann = FALSE)
+
+par(pty = "s")
+image(pracma::rot90(stereoP,3), col = theMColours, zlim = range(stereoP), axes = FALSE, ann = FALSE)
+```
+
+```{r}
+theLowerTriag <- lower.tri(RSASNR_Cor)
+RSAEEGStereo_Cor <- cor(RSASNR_Cor[theLowerTriag], stereoRSA[theLowerTriag], method = "spearman")
+RSAEEGStereo_Anti <- cor(RSASNR_Anti[theLowerTriag], stereoRSA[theLowerTriag], method = "spearman")
+```
+
+
+```{r}
+library(igraph)
+```
+```{r}
+igraph::g
+```
 

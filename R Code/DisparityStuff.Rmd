@@ -8,6 +8,55 @@ date: "2025-12-15"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(R.matlab)
+```
+
+### Load experiment data for stimulus parameters
+
+```{r}
+s001Data <- readMat("C:/Users/Bruno/Box/Manuscripts/Binocular Noise Study/Behaviour Data/001/001Final.mat")
+```
+
+### Define stimulus parameters
+
+```{r}
+stim.Size <- s001Data$stim[,,1]$SZE[1]
+stim.Window <- s001Data$stim[,,1]$Window 
+stim.GratingSF <- s001Data$stim[,,1]$GratingSF[1]
+disparitySF <- .3
+pixperdeg <- s001Data$scrn[,,1]$pixperdeg[1]
+gray <- s001Data$scrn[,,1]$gray[1]
+stim.RMS <- .15
+```
+
+### Low Pass Filter
+
+```{r}
+mkRadiusMap <- function(imageSize){
+  theGrid <- matlab::meshgrid(0:(imageSize/2),0:(imageSize/2))
+  theRadius <- sqrt(theGrid$x**2 + theGrid$y**2)
+  theRadius <- cbind(theRadius, pracma::fliplr(theRadius[,2:(imageSize/2)]))
+  theRadius <- rbind(theRadius, pracma::flipud(theRadius[2:(imageSize/2),]))
+  theRadius[1,1] <- 1
+  theRadius <- fftshift.BR(theRadius)
+  return(theRadius)
+}
+
+fftshift.BR <- function(im){
+  imageSize <- max(dim(im))
+  imageShifted <- pracma::fliplr(pracma::flipud(pracma::circshift(im,c(matlab::fix(imageSize/2),matlab::fix(imageSize/2)))))
+  return(imageShifted)
+}
+```
+
+```{r}
+Radius_i <- round(mkRadiusMap(stim.Size))
+LOWPASSFILTER = fftshift.BR(((Radius_i/max(max(Radius_i))*(pixperdeg/2))) <  stim.GratingSF)
+```
+
+### Disparity Filter
+
 ```{r, disparity stuff}
 peakPosition <- stim.Size/2
 disparitySF <- .3
@@ -16,7 +65,7 @@ nPixelsPerCycle <- (1/(disparityCPI/stim.Size))
 maxDisparity <- 5
 Xdisparity <- maxDisparity * -cos(2*(pi/pixperdeg)*disparitySF * seq(0, nPixelsPerCycle, length.out = nPixelsPerCycle))
 Ydisparity <- 0 
-sigma <- 1
+sigma <- (1/60) * pixperdeg
 X <- -(stim.Size/2):(stim.Size/2-1)
 Y <- X
 
@@ -35,39 +84,79 @@ for (xD in 1:length(Xdisparity)){
 }
 ```
 
+### Make Noise Image
 
 ```{r}
- ## Add disparity
-  currentRow <- 0
-  for (D in 1:stim.Size){
-    currentRow <- currentRow + 1
-    rowIDX = ((currentRow-1) %% dim(stim.GaussianL)[3]) + 1 
-    
-    leftDImageFFT <- lowPassIM * fft(stim.GaussianL[,,rowIDX])
-    rightDImageFFT <- lowPassIM * fft(stim.GaussianR[,,rowIDX])
-    DnewImageL <- Real(fft(leftDImageFFT * exp(1i * phaseL), inverse = TRUE))
-    DnewImageL = DnewImageL / max(abs(DnewImageL)) / 2 
-    DnewImageR <- Real(fft(rightDImageFFT * exp(1i * phaseR), inverse = TRUE))
-    DnewImageR = DnewImageR / max(abs(DnewImageR)) / 2 
-    
-    disparityTempL[currentRow, ] <- DnewImageL[currentRow,]
-    disparityTempR[currentRow, ] <- DnewImageR[currentRow,]
-  }
+noiseIM <- matrix(runif(stim.Size*stim.Size), nrow = stim.Size, ncol = stim.Size)
+fIM_AMP <- abs(fft(noiseIM))
+fIM_PHASE <- pracma::angle(fft(noiseIM))
+lowPassIM <- fIM_AMP * LOWPASSFILTER
+```
+
+```{r}
+calculateRMSContrast <- function(theImage){
+  IMMean <- mean(theImage)
+  rowCol <- dim(theImage)
   
-  disparityTempL <- disparityTempL / max(abs(disparityTempL)) /2
-  RMSAltered <- sd(disparityTempL+.5)/mean(disparityTempL+.5)
-  rmsAlteredScale <- stim.RMS*3/RMSAltered
-  disparityTempL <- (disparityTempL*rmsAlteredScale * windowTaper)*.5 +.5
-  disparityTempL <- normalizeBR(disparityTempL)
+  RMS <- sqrt((1/(rowCol[1]*rowCol[2]))*sum((theImage - IMMean)**2))
+  return(RMS)
+}
+
+normalizeBR <- function(input){
+  A <- input - min(input)
+  out <- A / max(A)
+  return(out)
+}
+```
+
+
+```{r}
+## Add disparity
+disparityTempL <- matrix(NA, nrow = stim.Size, ncol = stim.Size)
+disparityTempR <- matrix(NA, nrow = stim.Size, ncol = stim.Size)
+
+currentRow <- 0
+for (D in 1:stim.Size){
+  currentRow <- currentRow + 1
+  rowIDX = ((currentRow-1) %% dim(stim.GaussianL)[3]) + 1 
   
-  disparityTempR <- disparityTempR / max(abs(disparityTempR)) /2
-  RMSAltered <- sd(disparityTempR+.5)/mean(disparityTempR+.5)
-  rmsAlteredScale <- stim.RMS*3/RMSAltered
-  disparityTempR <- (disparityTempR*rmsAlteredScale * windowTaper)*.5 +.5
-  disparityTempR <- normalizeBR(disparityTempR)
+  leftDImageFFT <- lowPassIM * fft(stim.GaussianL[,,rowIDX])
+  rightDImageFFT <- lowPassIM * fft(stim.GaussianR[,,rowIDX])
+  DnewImageL <- pracma::Real(fft(leftDImageFFT * exp(1i * fIM_PHASE), inverse = TRUE))
+  DnewImageL = DnewImageL / max(abs(DnewImageL)) / 2 
+  DnewImageR <- pracma::Real(fft(rightDImageFFT * exp(1i * fIM_PHASE), inverse = TRUE))
+  DnewImageR = DnewImageR / max(abs(DnewImageR)) / 2 
   
-  theImagesLeftDisparity[,,i] <- disparityTempL
-  theImagesRightDisparity[,,i] <- disparityTempR
-  
+  disparityTempL[currentRow, ] <- DnewImageL[currentRow,]
+  disparityTempR[currentRow, ] <- DnewImageR[currentRow,]
+}
+
+normImage <- normalizeBR(disparityTempL)
+currentRMS <- calculateRMSContrast(normImage)
+adjustedImage <- ((normImage-mean(normImage)) * stim.RMS/currentRMS)
+finalImageL <- (adjustedImage * stim.Window)*gray + gray
+finalImageL[finalImageL < 0] <- 0
+finalImageL[finalImageL > 1] <- 1
+range(finalImageL)
+
+normImage <- normalizeBR(disparityTempR)
+currentRMS <- calculateRMSContrast(normImage)
+adjustedImage <- ((normImage-mean(normImage)) * stim.RMS/currentRMS)
+finalImageR <- (adjustedImage * stim.Window)*gray + gray
+finalImageR[finalImageR < 0] <- 0
+finalImageR[finalImageR > 1] <- 1
+```
+
+
+```{r}
+grayColours <- gray.colors(256, start = 0, end = 1, gamma = 1)
+png("C:/Users/Bruno/Box/Manuscripts/Binocular Noise Study/Figures/stereoStimleftEye.png", width = 3, height = 3, res = 300, units = "in", bg = "transparent")
+par(mai = c(0,0,0,0), omi = c(0,0,0,0))
+image(pracma::rot90(finalImageL,3), axes = FALSE, ann = FALSE, zlim = c(0,1), col = grayColours)
+dev.off()
+png("C:/Users/Bruno/Box/Manuscripts/Binocular Noise Study/Figures/stereoStimRightEye.png", width = 3, height = 3, res = 300, units = "in", bg = "transparent")
+par(mai = c(0,0,0,0), omi = c(0,0,0,0))
+image(pracma::rot90(finalImageR,3), axes = FALSE, ann = FALSE, zlim = c(0,1), col = grayColours)
+dev.off()
 ```
 

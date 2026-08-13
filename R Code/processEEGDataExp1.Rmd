@@ -223,6 +223,8 @@ mtext("Signal-to-Noise Ratio", 3, font = 2, line = 1.5, adj = 0, at = 0)
 theParticipantsTemp <- list.dirs(theDataDirectory, recursive = FALSE, full.names = FALSE)
 theParticipants <- theParticipantsTemp[!c(theParticipantsTemp %in% c("P116","P138"))]
 # theParticipants <- paste0("P",theParticipantsTemp)
+
+length(theParticipantsTemp)
 ```
 
 ```{r}
@@ -310,7 +312,7 @@ rightEarY <- theDataFile$EEG[,,1]$lay[,,1]$outline[[3]][[1]][,2]
 leftEarX <- theDataFile$EEG[,,1]$lay[,,1]$outline[[4]][[1]][,1]
 leftEarY <- theDataFile$EEG[,,1]$lay[,,1]$outline[[4]][[1]][,2]
 
-save(avgSNRCondition, file = "~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/AllElectrodes_Experiment2/allPallElectrodes.RData")
+save(avgSNRCondition,theParticipants, file = "~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/AllElectrodes_Experiment2/allPallElectrodes_July212026.RData")
 
 dim(avgSNRCondition)
 ```

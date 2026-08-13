@@ -1,0 +1,378 @@
+---
+title: "timeAnalysis"
+output: html_document
+date: "2026-05-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load useful packages + user functions
+
+```{r}
+library(R.matlab)
+library(signal)
+library(WaveletComp)
+addalpha <- function(col, alpha=.5){apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))}
+```
+
+## Define some colours
+
+Now colourblind friendly
+
+```{r}
+posterColours <- c("#404040", "#5385A6", "#8DB4CC", "#CDE0ED", "#F0F6F9", "#FFF4F0", "#FFCAB9", "#F6987C", "#D65A3D", "#AD1F00")
+completePosterColours <- c("#404040", "#5385A6", "#8DB4CC", "#CDE0ED", "#F0F6F9", "#FFF4F0", "#FFCAB9", "#F6987C", "#D65A3D", "#AD1F00")
+```
+
+Participant list
+
+```{r}
+theParticipants <- c("001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015")
+```
+
+Define the data directory
+
+```{r, importData}
+is_windows <- Sys.info()["sysname"] == "Windows"
+
+if (is_windows){
+  theBlockDirectory <- "C:/Users/Bruno/Box/Binocularity Noise/Matlab Block Data/"
+} else {
+  theBlockDirectory <- "~/Library/CloudStorage/Box-Box/Binocularity Noise/Matlab Block Data/"
+}
+```
+
+```{r}
+timeFFTData3Hz <- array(NA, dim = c(45,2,15))
+timeFFTDataNoise <- timeFFTData3Hz
+zDataParticipants <- array(NA, dim = c(1000,45,2,15))
+
+for (P in 1:length(theParticipants)){
+  
+  blankTime <- 3000
+  duration <- 11000
+  electrodeAveragedEEGData <- array(NA, dim = c(11000,39, 4))
+  trialsBlock <- matrix(NA, nrow = 39, ncol = 4)
+  
+  
+  for (BLOCK in 1:4){
+    theFile <- readMat(paste0(theBlockDirectory, theParticipants[P], "/EEG_", theParticipants[P], "BLOCK", BLOCK, ".mat"))
+    
+    if (P == 15){
+      stimulusConditionsTemp <- as.numeric(unlist(theFile$EEG[,,1]$event["type",1,]))
+      stimulusConditionsTemp[1] <- 0
+      triggerTimes <- unlist(theFile$EEG[,,1]$event["latency",1,])*1000
+    } else {
+      stimulusConditionsTemp <- unlist(theFile$EEG[,,1]$triggers["type",1,])
+      triggerTimes <- unlist(theFile$EEG[,,1]$triggers["offset",1,])
+      if (P == 10 & BLOCK == 2){
+        stimulusConditionsTemp <- stimulusConditionsTemp[-35]
+        triggerTimes <- triggerTimes[-35]
+      }
+    }
+    
+    electrodes <- unlist(theFile$EEG["label",,1]$label)
+    theElectrodes <-  which(electrodes %in% c("Oz", "O1", "O2", "POz"))
+    
+    triggerTimes <- triggerTimes[!(stimulusConditionsTemp %in% c(0, 99))] 
+    stimulusConditions <- stimulusConditionsTemp[!(stimulusConditionsTemp %in% c(0, 99))]
+    whichTrialsIDX <- stimulusConditions %in% c(1,3)
+    whichTrials <- seq(1:length(stimulusConditions))[whichTrialsIDX]
+    
+    trialsBlock[,BLOCK] <- stimulusConditions
+    
+    for (event in 1:length(triggerTimes)){
+      theEEGData <- theFile$EEG[,,1]$data[theElectrodes, (triggerTimes[event]+blankTime):(triggerTimes[event]+duration+blankTime-1)]
+      electrodeAveragedEEGData[,event,BLOCK] <- colMeans(theEEGData)
+    }
+  }
+  
+  TT <- 1
+  for (TT in 1:2){
+    theTrials <- which(trialsBlock == TT, arr.ind = TRUE)
+    
+    theTrialstoAverage <- matrix(NA, nrow = 11000, ncol = 12)
+    trialsFFT <- theTrialstoAverage
+    for (i in 1:12){
+      theTrialstoAverage[,i] <- electrodeAveragedEEGData[, theTrials[i,1], theTrials[i,2]]
+      trialsFFT[,i] <- fft(theTrialstoAverage[,i])
+    }
+    
+    tempxy <- data.frame(Re(trialsFFT[31,]),Im(trialsFFT[31,]))
+    D <- sqrt(mahalanobis(tempxy,colMeans(tempxy),cov(tempxy)))
+    outIDX <- which(D < 3)
+    theTrialstoAverageF <- theTrialstoAverage[,outIDX]
+    
+    theTrialsEEGData <- apply(theTrialstoAverageF, 1, mean)
+    fs <- 1000
+    windowLength <- 2*fs
+    overlap <- windowLength*.9
+    
+    spec <- specgram(x = theTrialsEEGData, n = windowLength, Fs = fs, overlap = overlap)
+    zData <- abs(spec$S)
+    
+    timeFFTData3Hz[,TT,P] <- zData[spec$f == 3,]
+    timeFFTDataNoise[,TT,P] <- colMeans(zData[spec$f %in% c(2.5,3.5),])
+    
+    zDataParticipants[,,TT,P] <- zData
+  }
+}
+
+save(spec, timeFFTData3Hz, timeFFTDataNoise, zDataParticipants, file = "C:/Users/Bruno/Box/Manuscripts/Binocular Noise Study/Processed Data/Time Analysis Experiment 1/spectrogramData.RData")
+```
+
+
+
+
+```{r, fig.width=10}
+par(mfcol = c(3,5), mai = c(.1,.25,.1,.2), omi = c(.5,.5,0,0))
+xLimit <- range(pretty(range(spec$t)))
+for (P in 1:15){
+  
+  SNR <- timeFFTData3Hz[,,P] / timeFFTDataNoise[,,P]
+  yLimit <- range(pretty(range(SNR)))
+  plot(x = NULL, y = NULL, xlim = xLimit, ylim = yLimit, axes = FALSE, ann = FALSE)
+  axis(1, at = pretty(xLimit), lwd = 2, tck = -.015, labels = FALSE)
+  axis(2, at = pretty(yLimit), lwd = 2, tck = -.015, labels = FALSE)
+  mtext(pretty(xLimit), 1, at =  pretty(xLimit), line = .4)
+  mtext(pretty(yLimit), 2, at =  pretty(yLimit), line = .4, las=  1)
+  lines(spec$t,SNR[,1], col = posterColours[1], lwd = 2)
+  lines(spec$t,SNR[,2], col = posterColours[9], lwd = 2)
+}
+```
+
+```{r}
+SNR <- timeFFTData3Hz / timeFFTDataNoise
+
+snrMedian <- apply(SNR, c(1,2), median)
+
+plot(snrMedian[,1], type = "l")
+plot(snrMedian[,2], type = "l")
+
+```
+
+
+```{r}
+coloursSpectro <- colorRampPalette(posterColours, interpolate = "linear" )
+theFsIDX <- spec$f > .5 & spec$f < 40
+
+zLimit <- range(pretty(range(zDataParticipants[theFsIDX,,1,1])))
+image(x = spec$f[theFsIDX], y = spec$t, z = zDataParticipants[theFsIDX,,1,1], zlim = zLimit, col = coloursSpectro(100))
+
+```
+
+
+
+
+
+
+```{r}
+# coloursSpectro <- colorRampPalette(posterColours, interpolate = "linear" )
+# theFsIDX <- spec$f > .5 & spec$f < 40
+
+# zLimit <- range(pretty(range(zData[theFsIDX,])))
+# image(x = spec$f[theFsIDX], y = spec$t, z = zData[theFsIDX,], zlim = zLimit, col = coloursSpectro(100))
+# rect(2.5,min(spec$t),3.5, max(spec$t), border = "red")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+SNR <- array(NA, dim = c(12, 2, 10000, length(theParticipants)))
+
+for (P in 1:length(theParticipants)){
+  trialsBlock <- matrix(NA, nrow= 39, ncol = 4)
+  
+  blankTime <- 3000
+  duration <- 11000
+  eAveraged <- array(NA, dim = c(39, 4,10000,3))
+  
+  for (BLOCK in 1:4){
+    theFile <- readMat(paste0(theBlockDirectory, theParticipants[P], "/EEG_", theParticipants[P], "BLOCK", BLOCK, ".mat"))
+    
+    if (P == 15){
+      stimulusConditionsTemp <- as.numeric(unlist(theFile$EEG[,,1]$event["type",1,]))
+      stimulusConditionsTemp[1] <- 0
+      triggerTimes <- unlist(theFile$EEG[,,1]$event["latency",1,])*1000
+    } else {
+      stimulusConditionsTemp <- unlist(theFile$EEG[,,1]$triggers["type",1,])
+      triggerTimes <- unlist(theFile$EEG[,,1]$triggers["offset",1,])
+      if (P == 10 & BLOCK == 2){
+        stimulusConditionsTemp <- stimulusConditionsTemp[-35]
+        triggerTimes <- triggerTimes[-35]
+      }
+    }
+    
+    electrodes <- unlist(theFile$EEG["label",,1]$label)
+    theElectrodes <-  which(electrodes %in% c("Oz", "O1", "O2", "POz"))
+    
+    fData.Temp <- array(NA, dim = c(4,10000,3))
+    triggerTimes <- triggerTimes[!(stimulusConditionsTemp %in% c(0, 99))] 
+    stimulusConditions <- stimulusConditionsTemp[!(stimulusConditionsTemp %in% c(0, 99))]
+    whichTrialsIDX <- stimulusConditions %in% c(1,3)
+    whichTrials <- seq(1:length(stimulusConditions))[whichTrialsIDX]
+    
+    trialsBlock[1:length(stimulusConditions[whichTrialsIDX]),BLOCK] <- stimulusConditions[whichTrialsIDX]
+    
+    for (event in 1:length(whichTrials)){
+      theEEGData <- theFile$EEG[,,1]$data[theElectrodes, (triggerTimes[whichTrials[event]]+blankTime):(triggerTimes[whichTrials[event]]+duration+blankTime-1)]
+      
+      for (Ft in 1:10000){
+        fData.Temp[1,Ft,] <- fft(theEEGData[1,Ft:(Ft+1000)])[2:4]
+        fData.Temp[2,Ft,] <- fft(theEEGData[2,Ft:(Ft+1000)])[2:4]
+        fData.Temp[3,Ft,] <- fft(theEEGData[3,Ft:(Ft+1000)])[2:4]
+        fData.Temp[4,Ft,] <- fft(theEEGData[4,Ft:(Ft+1000)])[2:4]
+      }
+      eAveraged[event, BLOCK,,] <- abs(apply(fData.Temp,c(2,3), mean))
+    }
+  }
+  
+  rowIDX <- 0
+  colIDX <- 0
+  nnTrials <- NULL
+  for (trialType in c(1,3)){
+    colIDX <- colIDX+1
+    for (b in 1:4){
+      nTrials <- sum(trialsBlock[,b] == trialType, na.rm = TRUE)
+      if (nTrials > 0){
+        if (b > 1){
+          rowIDX <- (max(rowIDX)+1):(max(rowIDX) + nTrials)
+        } else {
+          rowIDX <- 1:nTrials
+        }
+        for (ii in 1:10000){
+          SNR.temp <-  eAveraged[trialsBlock[,b] == trialType,b,ii,2]/apply(eAveraged[trialsBlock[,b] == trialType,b,ii,c(1,3)], 1, mean, na.rm = TRUE)
+          SNR[rowIDX,colIDX,ii, P] <- SNR.temp[1:nTrials]
+        }
+      }
+    }
+  }
+}
+```
+
+```{r}
+trialMedian <- apply(SNR,c(2,3,4), median)
+```
+
+Check Daniel
+
+```{r, fig.width=12}
+par(mfcol = c(3,4))
+for (i in 1:12){
+  plot(SNR[i,1, ,3], type = "l")
+  lines(SNR[i,2, ,3], col = "red")
+}
+```
+
+```{r, fig.width = 15}
+par(mfcol = c(3,5))
+for (i in 1:15){
+  plot(trialMedian[1,,i], type = "l", ylim = c(0, 1.4))
+  lines(trialMedian[2,,i], col = "red")
+}
+```
+
+```{r}
+P <- 3
+# for (P in 1:length(theParticipants)){
+trialsBlock <- matrix(NA, nrow= 39, ncol = 4)
+
+blankTime <- 3000
+duration <- 11000
+eAveragedL <- array(NA, dim = c(39, 4,10000,200))
+
+for (BLOCK in 1:4){
+  theFile <- readMat(paste0(theBlockDirectory, theParticipants[P], "/EEG_", theParticipants[P], "BLOCK", BLOCK, ".mat"))
+  
+  if (P == 15){
+    stimulusConditionsTemp <- as.numeric(unlist(theFile$EEG[,,1]$event["type",1,]))
+    stimulusConditionsTemp[1] <- 0
+    triggerTimes <- unlist(theFile$EEG[,,1]$event["latency",1,])*1000
+  } else {
+    stimulusConditionsTemp <- unlist(theFile$EEG[,,1]$triggers["type",1,])
+    triggerTimes <- unlist(theFile$EEG[,,1]$triggers["offset",1,])
+    if (P == 10 & BLOCK == 2){
+      stimulusConditionsTemp <- stimulusConditionsTemp[-35]
+      triggerTimes <- triggerTimes[-35]
+    }
+  }
+  
+  electrodes <- unlist(theFile$EEG["label",,1]$label)
+  theElectrodes <-  which(electrodes %in% c("Oz", "O1", "O2", "POz"))
+  
+  fData.TempL <- array(NA, dim = c(4,10000,200))
+  triggerTimes <- triggerTimes[!(stimulusConditionsTemp %in% c(0, 99))] 
+  stimulusConditions <- stimulusConditionsTemp[!(stimulusConditionsTemp %in% c(0, 99))]
+  whichTrialsIDX <- stimulusConditions %in% c(1,3)
+  whichTrials <- seq(1:length(stimulusConditions))[whichTrialsIDX]
+  
+  trialsBlock[1:length(stimulusConditions[whichTrialsIDX]),BLOCK] <- stimulusConditions[whichTrialsIDX]
+  
+  for (event in 1:length(whichTrials)){
+    theEEGData <- theFile$EEG[,,1]$data[theElectrodes, (triggerTimes[whichTrials[event]]+blankTime):(triggerTimes[whichTrials[event]]+duration+blankTime-1)]
+    
+    for (Ft in 1:10000){
+      fData.TempL[1,Ft,] <- fft(theEEGData[1,Ft:(Ft+1000)])[1:200]
+      fData.TempL[2,Ft,] <- fft(theEEGData[2,Ft:(Ft+1000)])[1:200]
+      fData.TempL[3,Ft,] <- fft(theEEGData[3,Ft:(Ft+1000)])[1:200]
+      fData.TempL[4,Ft,] <- fft(theEEGData[4,Ft:(Ft+1000)])[1:200]
+    }
+    eAveragedL[event, BLOCK,,] <- abs(apply(fData.TempL,c(2,3), mean))
+  }
+}
+
+rowIDX <- 0
+colIDX <- 0
+nnTrials <- NULL
+for (trialType in c(1,3)){
+  colIDX <- colIDX+1
+  for (b in 1:4){
+    nTrials <- sum(trialsBlock[,b] == trialType, na.rm = TRUE)
+    if (nTrials > 0){
+      if (b > 1){
+        rowIDX <- (max(rowIDX)+1):(max(rowIDX) + nTrials)
+      } else {
+        rowIDX <- 1:nTrials
+      }
+      for (ii in 1:10000){
+        SNR.temp <-  eAveragedL[trialsBlock[,b] == trialType,b,ii,2]/apply(eAveragedL[trialsBlock[,b] == trialType,b,ii,c(1,3)], 1, mean, na.rm = TRUE)
+        SNRL[rowIDX,colIDX,ii] <- SNR.temp[1:nTrials]
+      }
+    }
+  }
+}
+```
+
+```{r}
+dim(eAveragedL[1,1,,])
+image(1:10000,2:20,eAveragedL[3,1,,2:20])
+```

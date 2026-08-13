@@ -1,0 +1,136 @@
+---
+title: "timeAnalysis2"
+output: html_document
+date: "2026-06-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(signal)
+library(R.matlab)
+addalpha <- function(col, alpha=.5){apply(sapply(col, col2rgb)/255, 2, function(x) rgb(x[1], x[2], x[3], alpha=alpha))}
+```
+
+## Define some colours
+Now colourblind friendly
+
+```{r}
+posterColours <- c("#404040", "#5385A6", "#8DB4CC", "#CDE0ED", "#F0F6F9", "#FFF4F0", "#FFCAB9", "#F6987C", "#D65A3D", "#AD1F00")
+completePosterColours <- c("#404040", "#5385A6", "#8DB4CC", "#CDE0ED", "#F0F6F9", "#FFF4F0", "#FFCAB9", "#F6987C", "#D65A3D", "#AD1F00")
+```
+
+Define the data directory
+
+```{r, importData}
+is_windows <- Sys.info()["sysname"] == "Windows"
+
+if (is_windows){
+  theDataDirectory <- "G:/.shortcut-targets-by-id/1mhzB6Bm-yAwNrG1a7MkMaBWWAMHzl07L/binocularitynoise/Experiment2data/EEGdata/"
+} else {
+  theDataDirectory <- "~/Library/CloudStorage/GoogleDrive-brichard21@gmail.com/My Drive/YORK/binocularitynoise/Experiment2data/EEGdata/"
+}
+```
+
+```{r}
+theParticipantsTemp <- list.dirs(theDataDirectory, recursive = FALSE, full.names = FALSE)
+theParticipants <- theParticipantsTemp[!c(theParticipantsTemp %in% c("P116","P138"))]
+```
+
+```{r}
+timeFFTData3Hz <- array(NA, dim = c(45,2,5,length(theParticipants)))
+timeFFTDataNoise <- timeFFTData3Hz
+zDataParticipants <- array(NA, dim = c(1000,45,2,5,length(theParticipants)))
+
+for (P in 1:length(theParticipants)){
+  
+  blankTime <- 1000
+  duration <- 10000
+  legaltriggers <- c(11:15,21:25,31:35)  # trigger codes we used to indicate stimulus onset
+  theBlockData <- list.files(paste0(theDataDirectory,theParticipants[P]), pattern = "*.mat", full.names = TRUE)
+  
+  stimulusConditions <- matrix(NA, nrow= 30, ncol = length(theBlockData))
+  electrodeAveragedEEGData <- array(NA, dim = c(11000,30, length(theBlockData)))
+  
+  for (BLOCK in 1:length(theBlockData)){
+    theDataFile <- readMat(theBlockData[BLOCK])
+    
+    stimulusConditionsTemp <- as.numeric(unlist(theDataFile$EEG[,,1]$event["type",1,]))
+    stimulusConditionsTemp[1] <- 1
+    triggerTimes <- unlist(theDataFile$EEG[,,1]$event["latency",1,])
+    
+    electrodes <- unlist(theDataFile$EEG[,,1]$chanlocs["labels",,])
+    
+    triggerTimes <- triggerTimes[(stimulusConditionsTemp %in% legaltriggers)] 
+    stimulusConditions[, BLOCK] <- stimulusConditionsTemp[(stimulusConditionsTemp %in% legaltriggers)]
+    
+    theChannels <- c("Oz", "POz", "O1", "O2")
+    thedesiredChannels <- which(electrodes %in% theChannels)
+    
+    for (event in 1:length(stimulusConditions[, BLOCK])){
+      theEEGData <- theDataFile$EEG[,,1]$data[thedesiredChannels, (triggerTimes[event]):(triggerTimes[event]+duration+blankTime-1)]
+      electrodeAveragedEEGData[,event,BLOCK] <- colMeans(theEEGData)
+    }
+  }
+  
+  for (TT1 in 1:2){
+    for (TT2 in 1:5){
+      theTrials <- which(stimulusConditions == as.numeric(paste0(TT1,TT2)), arr.ind = TRUE)
+      
+      
+      theTrialstoAverage <- matrix(NA, nrow = 11000, ncol = 10)
+      trialsFFT <- theTrialstoAverage
+      for (i in 1:10){
+        theTrialstoAverage[,i] <- electrodeAveragedEEGData[, theTrials[i,1], theTrials[i,2]]
+        trialsFFT[,i] <- fft(theTrialstoAverage[,i])
+      }
+      
+      tempxy <- data.frame(Re(trialsFFT[31,]),Im(trialsFFT[31,]))
+      D <- sqrt(mahalanobis(tempxy,colMeans(tempxy),cov(tempxy)))
+      outIDX <- which(D < 3)
+      theTrialstoAverageF <- theTrialstoAverage[,outIDX]
+      
+      theTrialsEEGData <- apply(theTrialstoAverageF, 1, mean)
+      fs <- 1000
+      windowLength <- 2*fs
+      overlap <- windowLength*.9
+      
+      spec <- specgram(x = theTrialsEEGData, n = windowLength, Fs = fs, overlap = overlap)
+      zData <- abs(spec$S)
+      
+      timeFFTData3Hz[,TT1,TT2,P] <- zData[spec$f == 3,]
+      timeFFTDataNoise[,TT1,TT2,P] <- colMeans(zData[spec$f %in% c(2.5,3.5),])
+      
+      zDataParticipants[,,TT1,TT2,P] <- zData
+    }
+  }
+}
+
+save(spec, timeFFTData3Hz, timeFFTDataNoise, zDataParticipants, file = "C:/Users/Bruno/Box/Manuscripts/Binocular Noise Study/Processed Data/Time Analysis Experiment 2/spectrogramData.RData")
+```
+
+```{r}
+for (P in 1:length(theParticipants)){
+  SNR <- timeFFTData3Hz[,,,P]/timeFFTDataNoise[,,,P]
+plot(SNR[,2,5], type= "l")
+}
+
+ SNRp <- timeFFTData3Hz/timeFFTDataNoise
+```
+
+```{r}
+snrMedian <- apply(SNRp, c(1,2,3), mean)
+
+plot(snrMedian[,1,5], type = "l")
+plot(snrMedian[,2,5], type = "l")
+
+```
+
+```{r}
+SFIDX <- spec$f > .5 & spec$f < 40
+image(x = spec$t, y = spec$f[SFIDX], pracma::rot90(zDataParticipants[SFIDX,,1,5,5]))
+mtext("3Hz",2, at = 3, las = 1)
+```
+
