@@ -1,5 +1,0 @@
-load("/Users/brunorichard/Library/CloudStorage/Box-Box/Binocularity Noise/SSVEP_Phase_AntiPhase/Processed Data/reprocessedData_P001.RData")
-ls
-ls()
-avgSNRCondition
-load("/Users/brunorichard/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Processed Data/reprocessedData_P001.RData")
