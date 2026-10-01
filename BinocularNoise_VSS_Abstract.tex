@@ -143,13 +143,12 @@
 \usepackage{indentfirst}
 \setlength{\parindent}{15pt}
 \setlength{\parskip}{10pt}
-\usepackage[font=small]{caption}  % Options: small, footnotesize, scriptsize, etc.
+\usepackage[font=small]{caption}
 \usepackage[noblocks]{authblk}
 \renewcommand*{\Authsep}{, }
 \renewcommand*{\Authand}{, }
 \renewcommand*{\Authands}{, }
 \renewcommand\Affilfont{\small}
-% Define a keywords command for inline keywords
 \newcommand{\printkeywords}[1]{\noindent\textbf{Keywords:} #1\par}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
@@ -406,15 +405,15 @@ example stimuli.}
 
 \end{figure}%
 
-\paragraph{Psychophysics}\label{psychophysics}
+\paragraph{Disparity Thresholds}\label{disparity-thresholds}
 
-We measured observer stereothresholds with low-pass filtered white noise
-images (as in the SSVEP portion of this study) that included a sinewave
-disparity signal. The depth cue was generated in a manner similar to
-that explained in Ding and Levi (2011). Specifically, we built a series
-of 2D Gaussian filters with horizontal disparity range (\(X_{D_i}\))
-between 0.01 and .5 pixels (approximately 1 to 50 arcsecs) in steps of
-.02 pixels and vertical disparity (\(Y_D\)) set to 0
+We measured observer disparity thresholds with low-pass filtered white
+noise images (as in the SSVEP portion of this study) that included a
+sinewave disparity signal. The depth cue was generated in a manner
+similar to that explained in Ding and Levi (2011). Specifically, we
+built a series of 2D Gaussian filters with horizontal disparity range
+(\(X_{D_i}\)) between 0.01 and .5 pixels (approximately 1 to 50 arcsecs)
+in steps of .02 pixels and vertical disparity (\(Y_D\)) set to 0
 (Equation~\ref{eq-stereoNoiseStimuli}). Filters were built separately
 for the left (\(G_{L_{D_i}}\)) and right (\(G_{R_{D_i}}\)) eyes as
 \begin{equation}\protect\phantomsection\label{eq-stereoNoiseStimuli}{
@@ -476,7 +475,7 @@ SNRs was assessed via permutation tests, allowing for a non-parametric
 comparison of statistics across condition and from a baseline SNR value
 of 1.0 (see Richard and Baker (2026)).
 
-\paragraph{Psychophysics}\label{psychophysics-1}
+\paragraph{Disparity Thresholds}\label{disparity-thresholds-1}
 
 A potential behavioural correlate of neural responses to interocular
 correlation and anticorrelation is the stereoacuity of observers.
@@ -533,12 +532,11 @@ than a SNR of 1.0 (\(\text{median}_\text{SNR} = 2.28\), \(p\)
 \textless{} .001). Responses to anticorrelated stimuli were smaller than
 those to correlated stimuli (see Figure~\ref{fig-SSVEPResultsExp1}B) yet
 the cross-participant median SNR was still statistically significantly
-larger than 1.0 (\(\text{median}_\text{SNR} = 1.16\), \(p\) \textless{}
-.019). While the SNR to anticorrelated noise may be statistically
-significantly larger than 1.0, most participants did not show a
-meaningful response to interocular anticorrelation (see
-Figure~\ref{fig-SSVEPResultsExp1}C). This effect appears to be driven by
-the few that did.
+larger than 1.0 (\(\text{median}_\text{SNR} = 1.16\), \(p\) = .019).
+While the SNR to anticorrelated noise may be statistically significantly
+larger than 1.0, most participants did not show a meaningful response to
+interocular anticorrelation (see Figure~\ref{fig-SSVEPResultsExp1}C).
+This effect appears to be driven by the few that did.
 
 \begin{figure}
 
@@ -558,12 +556,12 @@ largest at the fundamental frequency of our stimulus (3Hz). We,
 additionally, observe a peak at a frequency of 18Hz, likely attributable
 to the sudo-sinusoidal change in interocular correlation from our
 stimulus. The spectrum for anticorrelated noise shows a small response
-at 3Hz, but it does not statistically differ from a signal-to-noise
-ratio of 1. C) Participant distribution of signal-to-noise ratios for
-both experimental conditions at 3Hz. Most observers generated large (SNR
-\textgreater{} 2.0) responses to correlated noise. Few observers
-generated meaningful responses for anticorrelated noise as a majority
-have signal-to-noise ratios near 1.0.}
+at 3Hz that is statistically significantly greater than 1. C)
+Participant distribution of signal-to-noise ratios for both experimental
+conditions at 3Hz. Most observers generated large (SNR \textgreater{}
+2.0) responses to correlated noise. Few observers generated meaningful
+responses for anticorrelated noise as a majority have signal-to-noise
+ratios near 1.0.}
 
 \end{figure}%
 
@@ -617,20 +615,20 @@ behavioural measures.}
 
 We compared the RDMs for each experimental condition by calculating
 Spearman's \(\rho\) on the lower triangular part of the difference
-matrix (excluding the diagonal). Statistical significant was determined
-with a permutation test, where the labels of the original data were
-shuffled and a new RDM was calculated. In this way, a particular
-participant response value was no longer necessarily assigned with its
-original experimental condition. The correlation coefficient was then
-calculated on the permuted RMDs and the process was repeated 1000 times.
-As we found from the single RDM calculated above, only the RDMs for our
-SSVEP conditions (interocular correlation and anticorrelation) were
-correlated in a statistically significant manner (\(\rho = .397\),
-\(p = .025\), Figure~\ref{fig-corSSVEPStereo}). No indication of
-similarity was observed between SSVEPs for interocular correlation and
-disparity thresholds (\(\rho = -.215\), \(p = .923\)) nor SSVEPs for
-interocular anticorrelation and disparity thresholds (\(\rho = -.053\),
-\(p = .527\)).
+matrix and excluding the diagonal Figure~\ref{fig-corSSVEPStereo}.
+Statistical significant was determined with a permutation test (Popal et
+al., 2019), where the labels of the original data were shuffled and a
+new RDM was calculated. In this way, a particular participant response
+value was no longer necessarily assigned with its original experimental
+condition. The correlation coefficient was then calculated on the
+permuted RMDs 1000 times. We obtain a similar finding to that of the
+single RDM calculated above: only the RDMs for our SSVEP conditions
+(interocular correlation and anticorrelation) were correlated in a
+statistically significant manner (\(\rho = .397\), \(p = .025\)). No
+indication of similarity was observed between SSVEPs for interocular
+correlation and disparity thresholds (\(\rho = -.215\), \(p = .923\))
+nor SSVEPs for interocular anticorrelation and disparity thresholds
+(\(\rho = -.053\), \(p = .527\)).
 
 \begin{figure}
 
@@ -652,65 +650,77 @@ RDMS are shown below.}
 \end{figure}%
 
 In Experiment 1 we measured observer SSVEPs to interocular correlation
-and anticorrelation and investigated how their response magnitude is
+and anticorrelation and investigated how their response magnitude may be
 associated with a psychophysical measure of their binocularity -
 disparity thresholds. We found that neural responses to interocular
-correlation and anticorrelation can be measured with SSVEPs, which
-indicates that summing and differencing channels (May and Zhaoping,
+correlation and anticorrelation can be measured with SSVEPs, a strong
+indication that summing and differencing channels (May and Zhaoping,
 2016; Zhaoping, 2017) can be targeted by our experimental procedure.
-Observers generated moderately large (SNR \textgreater{} 2) responses to
-interocular correlation,
+Observers generated moderately large (SNR \(\geq\) 2) responses to
+interocular correlation while responses to interocular anticorrelation
+were significantly smaller. Of the 15 observers who participated in the
+experiment, only two showed large responses to interocular
+anticorrelation while others had much more moderate signal-to-noise
+ratios. These two observers also generated larger responses to
+interocular correlation. Responses from differencing channels are
+expected to be smaller than those of summing channels as observers are
+biased towards the summing response Zhaoping (2017). It is therefore not
+surprising that the response to interocular anticorrelation is most
+easily measured in individuals that generally have larger SSVEPs.
 
-We found large responses for interocular correlation, which is to be
-expected as observers typically show a bias towards the summing channel.
-Nevertheless, we were able to measure a small response in our observers
-to interocular anticorrelation. Granted, this effect stems, in part,
-from the two observers that generated large neural response to
-anticorrelation. They are not, however, the sole contributors to this
-effect as nearly three-quarters of our observers had signal-to-noise
-ratios that exceeded a value of 1.0. Responses from differencing
-channels are expected to be smaller than those of summing channels,
-given the summing bias Zhaoping (2017), yet remain measurable in our
-small sample.
-
-Interestingly, we found little evidence of an association between
-observer stereothresholds and the magnitude of their signal-to-noise
-ratio to interocular correlation or anticorrelation. This is slightly at
-odds with previous work that did find an association between the two
-measures (Reynaud and Hess, 2018). Their approach, however, differed
-significantly from ours. Reynaud and Hess (2018) measured sensitivity to
-disparity and interocular correlation in stimuli with a single octave of
-spatial frequency content between 0.24 and 2.39 cycles/\(\circ\). The
-correlations they identified were across the peak amplitude of the
-respective sensitivity functions and their peak spatial frequency. Here,
-we measured responses to interocular correlation with broadband stimuli
-(spatial frequency content up to 3 cycles/\(\circ\)). Our neural
-responses represent an aggregate of channels tuned to multiple spatial
-frequencies too coarse to identify similar associations in our data.
+Our neuroimaging results demonstrated participant variability in the
+magnitude of responses to interocular correlation. This variability
+could be associated with their degree of binocularity or stereoacuity
+(Cormack et al., 1991; Julesz and Tyler, 1976; Poggio et al., 1988;
+Poggio et al., 1985; Tyler and Julesz, 1976). We measured disparity
+thresholds in our observers but found no evidence of an association
+between SSVEPs and thresholds. Neither RDMs for SSVEPs were
+statistically significantly similar to the RDM for disparity thresholds.
+Encoding interocular correlation and disparity may, therefore, stem from
+two related but different processes (Livingstone, 1996; Reynaud and
+Hess, 2018). They share sensitivity profiles as they are both similarly
+dependent on stimulus duration (Reynaud and Hess, 2018) and stimulus
+contrast (Cormack et al., 1991; Reynaud and Hess, 2018), yet also differ
+in important ways. For example, neural responses to depth reversing
+stimuli decrease at equiluminance, while those to interocular
+correlation increase (Livingstone, 1996) and the frequency tuning cutoff
+of interocular correlation is not as high as that of disparity (Reynaud
+and Hess, 2018). Indeed, Livingstone (1996) argued that the encoding of
+interocular correlation would be best completed by a population of
+binocular cells with no disparity selectivity. Responses to interocular
+correlation would therefore be more akin to binocular rivalry then
+disparity thresholds.
 
 \section{Experiment 2}\label{experiment-2}
 
-Experiment 1 demonstrated that neural responses to interocular
-correlation and anticorrelation can be measured with SSVEPs. Responses
-to anticorrelation were, however, very small. In Experiment 2 we
-increased our sample size to 50 to increase statistical power. The
-apparatus was identical as that of Experiment 1. Additionally, many of
-the experimental procedures in Experiment 2 are identical to those of
-Experiment 1. The following methods focuses on the differences between
-both studies.
+In experiment 1, we demonstrated that neural responses to interocular
+correlation and anticorrelation can be recorded with SSVEPs. While
+responses to interocular anticorrelation where small in most observers,
+a small group demonstrate large responses to SSVEPs. While we had
+anticipated individual differences in response magnitude to interocular
+correlation to be associated with the observer's binocularity (Cormack
+et al., 1991; Julesz and Tyler, 1976; Poggio et al., 1988; Poggio et
+al., 1985; Tyler and Julesz, 1976), we found no such indication. In
+experiment 2, we replicate our original study, but increase the sample
+size significantly (\(N = 48\)) and record neural responses to multiple
+levels of interocular correlation to measure response functions in our
+observers. As the results of experiment 1 indicated little association
+with disparity thresholds, we updated the behavioural methods of
+experiment 2 to measure both disparity thresholds and binocular rivalry
+in our large sample of observers.
 
 \subsection{Methods}\label{methods-1}
 
 \subsubsection{Participants}\label{participants-1}
 
-Forty eight observers (\(N_{male} = XX\); age range {[}XX XX{]})
-participated in this study. All observers had normal or
-corrected-to-normal visual acuity, as verified by a Snellen chart, and
-normal binocular vision, as verified by a Titmus test. Of the total
-participants, we have stereothreshold measures for 41 and binocular
-rivalry data for 47. Written informed consent was obtained from all
-participants, and experimental procedures were approved by the ethics
-committee of the Department of Psychology at the University of York.
+Forty six observers (\(N_{male} = XX\); age range {[}XX XX{]})
+participated in this study, of which 44 completed all experimental
+conditions. All observers had normal or corrected-to-normal visual
+acuity, as verified by a Snellen chart, and normal binocular vision, as
+verified by a Titmus test. Written informed consent was obtained from
+all participants, and experimental procedures were approved by the
+ethics committee of the Department of Psychology at the University of
+York.
 
 \subsubsection{Stimulus, Procedures, and
 Analysis}\label{stimulus-procedures-and-analysis}
@@ -729,7 +739,7 @@ trials (2 stimulus conditions \(\times\) 5 interocular correlation
 magnitude \(\times\) 10 repetitions). All other experiment procedures
 and data analysis were identical to those of Experiment 1.
 
-\paragraph{Stereothresholds}\label{stereothresholds}
+\paragraph{Disparity Thresholds}\label{disparity-thresholds-2}
 
 The stimuli used to measure observer stereothresholds were identical to
 that of Experiment 1, but the psychophysical procedure differed.
@@ -757,7 +767,9 @@ parameters, \(\alpha\) and \(\beta\), which return the threshold and
 slope, respectively. To fit the function (\(\psi_W\)) to observer data
 we add a guess rate (\(\gamma\) = 0.5) and lapse rate (\(\lambda\))
 parameter. All parameters except the guess rate were free. Individual
-observer fits are reported in the \textbf{appendix}.
+observer fits are reported in the \textbf{appendix} while the summary
+performance of all observers in the task is shown in
+Figure~\ref{fig-BehaviourResultsExp2}A.
 
 \paragraph{Binocular Rivalry}\label{binocular-rivalry}
 
@@ -767,16 +779,38 @@ cycle/\(\circ\). The gratings were windowed by a raised cosine envelope
 to subtend 5 \(\circ\) of visual angle on the retina. The dichoptic
 presentation of the two sinusoidal gratings was accomplished using the
 same stereo shutter goggles described in the apparatus of Experiment 1.
-Stimuli were presented at the center of the display for a duration of 60
-s, during which observers continuously indicated the orientation of the
-perceptually dominant grating via button press. Participants repeated
-the binocular rivalry task 5 times.
+Stimuli were presented at the center of the display for a duration of
+60s, during which observers continuously indicated the orientation of
+the perceptually dominant grating via button press. Participants
+repeated the binocular rivalry task 5 times. Average dominance duration
+was taken as the total duration of dominance events, across all five
+repetitions and regardless of eye of origin, divided by the total number
+of events. We also calculated the ratio of dominance durations across
+eyes as an indicator of binocular balance. The eye with the largest sum
+was always placed in the denominator. A binocular balance value of 1.0
+indicates perfect balance between the eyes while values smaller than 1.0
+indicate an imbalance, where one eye dominates in the binocular rivalry
+task more than the other. The summary results of the binocular rivalry
+task are shown in Figure~\ref{fig-BehaviourResultsExp2}B. The median
+dominance duration across participants was 13.13s and a binocular
+balance index of 0.73, indicating a mild imbalance in dominance duration
+across the eyes.
 
-Average dominance duration was taken as the total duration of dominance
-events, across all five repetitions and regardless of eye of origin,
-divided by the total number of events. We, in addition to average
-dominance duration, calculate the ratio of duration dominance between
-the left and right eyes as a measure of binocular balance.
+\begin{figure}
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{BinocularNoise_VSS_Abstract_files/figure-pdf/fig-BehaviourResultsExp2-1.pdf}}
+
+}
+
+\caption{\label{fig-BehaviourResultsExp2}A) Summary representation of
+observer performance on the disparity detection task. B) The
+distribution of dominance duration and binocular balance of our
+observers in the binocular rivalry task. Observers had a median
+dominance duration of 13.13s and a median binocular balance of 0.73.}
+
+\end{figure}%
 
 \subsection{Results and Discussion}\label{results-and-discussion}
 
@@ -788,57 +822,112 @@ the left and right eyes as a measure of binocular balance.
 
 }
 
-\caption{\label{fig-SSVEPResultsExp2}A) Head plots of the
-cross-participant average SSVEPs for the two conditions of Experiment 1
-(correlated and anticorrelated noise). We observe clear response in the
-occipital pole to correlated noise but very little to anticorrelated
-noise. B) Cross-participant median signal-to-noise ratios averaged
-across the four occipital electrodes. Responses to correlated noise are
-largest at the fundamental frequency of our stimulus (3Hz). We,
-additionally, observe a peak at a frequency of 18Hz, likely attributable
-to the sudo-sinusoidal change in interocular correlation from our
-stimulus. The spectrum for anticorrelated noise shows a small response
-at 3Hz, but it does not statistically differ from a signal-to-noise
-ratio of 1. C) Participant distribution of signal-to-noise ratios for
-both experimental conditions at 3Hz. Most observers generated large (SNR
-\textgreater{} 2.0) responses to correlated noise. Few observers
-generated meaningful responses for anticorrelated noise as a majority
-have signal-to-noise ratios near 1.0.}
+\caption{\label{fig-SSVEPResultsExp2}A and B) Head plots of the
+cross-participant average SSVEPs across the five interocular correlation
+and anticorrelation levels of experiment 2. Responses at the occipital
+pole appear at an interocular correlation/anticorrelation of \(\pm\).48,
+but are most easily identifiable at \(\pm\).96. C) The participant
+distribution of signal-to-noise ratios to interocular correlation and
+anticorrelation. The circle marker represents the median signal-to-noise
+value for each condition.}
 
 \end{figure}%
 
-The SSVEP results of Experiment 2 are summarized in
-Figure~\ref{fig-SSVEPResultsExp2}.
+Neural responses to interocular correlation and anticorrelation in
+experiment 2 are shown in Figure~\ref{fig-SSVEPResultsExp2} As in
+experiment 1, we only find responses to our stimuli at the fundamental
+frequency (3Hz). Responses appear at the occipital pole of observers
+once the degree of interocular correlation reaches \(\pm\).48, but the
+median SNRs for either interocular correlation
+(\(\text{median}_{\text{SNR}_\text{cor}} = 1.03\), \(p = .146\)) or
+anticorrelation (\(\text{median}_{\text{SNR}_\text{anti}} = 1.05\),
+\(p = .196\)) were not statistically significantly different from 1. We
+do, however, find that SNRs to interocular correlation
+(\(\text{median}_{\text{SNR}_\text{cor}} = 1.17\), \(p < .001\)) and
+interocular anticorrelation
+(\(\text{median}_{\text{SNR}_\text{anti}} = 1.06\), \(p = .002\)) were
+statistically significantly different from 1 at the highest degree of
+interocular correlation presented to observers, \(\pm\).96, albeit
+significantly smaller than SNRs reported in experiment 1. We find a
+large amount of variability in the magnitude of responses to interocular
+correlation and anticorrelation across our observers in the \(\pm\).96
+interocular correlation condition (see
+Figure~\ref{fig-SSVEPResultsExp2}C).
+
+\subsubsection{Representational Similarity Analysis
+(RSA)}\label{representational-similarity-analysis-rsa-1}
+
+As in experiment 1, we conducted a Representational Similarly Analysis
+(RSA) to explain participant variability in neural responses to
+interocular condition and behavioural performance. As a first step, we
+built a single Representational Dissimilarity Matrix (RDM) by computing
+the euclidean distance of the standardized (z-score) participant
+responses across all experimental conditions and clustered our observers
+with a Ward D2 hierarchical clustering algorithm. Participants separated
+into three clusters, which captured the participants that responded
+strongly (cluter 1, \(n = 3\)), those with moderate responses (cluter 2,
+\(n = 32\)), and participants that showed no responses (cluter 3,
+\(n = 9\)) to interocular correlation of .48, \(F_\text{cor}\)(2, 41) =
+4.63, \(p=\) 0.015, anticorrelation of -.48, \(F_\text{anti}\)(2, 41) =
+5.92, \(p=\) 0.006, interocular correlation of .96, \(F_\text{cor}\)(2,
+41) = 4.57, \(p=\) 0.016, and anticorrelation of -.96,
+\(F_\text{cor}\)(2, 41) = 22.04, \(p=\) 0 (see
+Figure~\ref{fig-RSAClustResultsExp2}).
+
+Behaviourally, not much differentiated our strong responders (cluster 1)
+from the moderate responders (cluster 2; see
+Figure~\ref{fig-RSAClustResultsExp2}), but both had disparity thresholds
+that were statistically significantly lower than the non-responders
+(\(m_{3-1} = 12.65\), \(p < .001\); \(m_{3-2} = 11.26\), \(p < .001\))
+and greater binocular balance (\(m_{3-1} = -0.40\), \(p = .007\);
+\(m_{3-2} = -0.24\), \(p = .004\)) as revealed by post-hoc Tukey
+comparisons. Where we do observe a difference between the strong and
+moderate responders in the average dominance duration of binocular
+rivalry, as larger responders had longer dominance duration than the
+moderate responders (\(m_{1-2} = 8.11\), \(p = .015\)). Interestingly,
+non-responders also experienced longer dominance durations
+(\(m_{3-2} = 4.28\), \(p = .046\)).
 
 \begin{figure}
 
 \centering{
 
-\pandocbounded{\includegraphics[keepaspectratio]{Figures/Exp2Behaviour.png}}
+\pandocbounded{\includegraphics[keepaspectratio]{BinocularNoise_VSS_Abstract_files/figure-pdf/fig-RSAClustResultsExp2-1.pdf}}
 
 }
 
-\caption{\label{fig-BehaviourResultsExp2}Behaviour Results}
+\caption{\label{fig-RSAClustResultsExp2}Participant responses across all
+experimental conditions of Experiment 2, separated according to the
+results of the clustering algorithm. A) The disparity thresholds of
+participants according to their cluster. Individuals in cluster 1, that
+responded strongly to interocular correlation and anticorrelation, show
+the lowest disparity thresholds. B) Average dominance duration of
+participants in the binocular rivalry task. Observers in cluster 1 show
+the longest dominance duration, albeit it is not statistically
+significantly different from observers in cluster 3, who did not respond
+to interocular correlation or anticorrelation. C) Binocular balance of
+observers as determined from the binocular rivalry task. Participants in
+cluster 1 show the highest degree of balance between both eyes. D) The
+interocular correlation response function of observers by cluster. E)
+The interocular anticorrelation response function of observers by
+cluster. In both D and E, observers in cluster 1 show responses that
+exceed a SNR of 1.0 at interocular correlation values of \(\pm\) .48 and
+greater.}
 
 \end{figure}%
 
-Neural responses to interocular correlation are well-localized on the
-scalp of observers (see Figure~\ref{fig-SSVEPResultsExp1}A) and
-generated signal-to-noise ratios (SNRs) at the fundamental frequency
-statistically significantly larger than a SNR of 1.0
-(\(\text{median}_\text{SNR} = 2.28\), \(p\) \textless{} .001). Responses
-to anticorrelated stimuli were smaller than those to correlated stimuli
-(see Figure~\ref{fig-SSVEPResultsExp1}B) yet the cross-participant
-median SNR was still statistically significantly larger than 1.0
-(\(\text{median}_\text{SNR} = 1.16\), \(p\) \textless{} .019). While the
-SNR to anticorrelated noise may be statistically significantly larger
-than 1.0, most participants did not show a meaningful response to
-interocular anticorrelation (see Figure~\ref{fig-SSVEPResultsExp1}C).
-This effect appears to be driven by the few that did.
-
-\pandocbounded{\includegraphics[keepaspectratio]{BinocularNoise_VSS_Abstract_files/figure-pdf/unnamed-chunk-11-1.pdf}}
-
-There will be text
+Representational Dissimilarity Matrices were also calculated for each
+experimental condition and compared using Spearman's \(\rho\), and as in
+Experiment 1, statistical significance was determined with a permutation
+test. To simplify the comparison, the RDMs for SSVEPs were calculated by
+collapsing across the entire interocular correlation response function
+of observers. When comparing RMDs, we only found similarities across
+observers within conditions (Figure~\ref{fig-SSVEPRSAResultsExp2}). That
+is, the RDMs for interocular correlation and anticorrelation were
+statistically significantly correlated (\(\rho\) \(=\) 0.136,
+\(p < .001\)) and so were the RDMs for dominance duration and binocular
+balance (\(\rho\) \(=\) 0.16, \(p < .001\)). We do not, however, find
+statistically significant associations across experimental conditions.
 
 \begin{figure}
 
@@ -848,17 +937,50 @@ There will be text
 
 }
 
-\caption{\label{fig-SSVEPRSAResultsExp2}A)}
+\caption{\label{fig-SSVEPRSAResultsExp2}A) Representational
+Dissimilarity Matrices for all behavioural conditions of Experiment 2.
+Participants are ordered given the results of the hierarchical
+clustering algorithm above. B) Representational Dissimilarity Matrices
+for both SSVEP conditions of Experiment 2. Distances in A and B are in
+standardized (z-scores) unites. C) The resulting correlation coefficient
+(Spearman's \(\rho\)) across the RMDs. Bordered boxes indicate
+statistically significant correlations determined via permutation test.}
 
 \end{figure}%
 
-\subsection{Time Analysis}\label{time-analysis}
+Brief discussion of the results for experiment 2.
+
+\section{Time Analysis}\label{time-analysis}
 
 Feedback signals are predominantly targeted at the summation channels
 (Zhaoping, 2017), so the response can be greater but should be later
 than difference channels. We look at the SSVEP signal over small chunks
 of time to see if the magnitude of differencing channels is mostly found
 in the first moments of stimulus presentation.
+
+\begin{figure}
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{Figures/SpectrumTimeAnalysisExp1.png}}
+
+}
+
+\caption{\label{fig-timeAnalysisExp1}A)}
+
+\end{figure}%
+
+\begin{figure}
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{Figures/SpectrumTimeAnalysisExp2.png}}
+
+}
+
+\caption{\label{fig-timeAnalysisExp2}A)}
+
+\end{figure}%
 
 \section{General Discussion}\label{general-discussion}
 
@@ -910,6 +1032,11 @@ Cybernetics 23, 25--32. \url{https://doi.org/10.1007/BF00344148}
 Kleiner, M., Brainard, D.H., Pelli, D.G., 2007. What's new in
 psychtoolbox-3?, in: Perception.
 
+\bibitem[\citeproctext]{ref-Livingstone1996}
+Livingstone, M.S., 1996. Differences between stereopsis, interocular
+correlation and binocularity. Vision Research 36, 1127--1140.
+\url{https://doi.org/10.1016/0042-6989(95)00175-1}
+
 \bibitem[\citeproctext]{ref-May2016}
 May, K.A., Zhaoping, L., 2016. Efficient coding theory predicts a tilt
 aftereffect from viewing untilted patterns. Curr Biol 26, 1571--1576.
@@ -919,6 +1046,17 @@ aftereffect from viewing untilted patterns. Curr Biol 26, 1571--1576.
 Pelli, D.G., 1997. The VideoToolbox software for visual psychophysics:
 Transforming numbers into movies. Spatial Vision 10, 437--442.
 \url{https://doi.org/10.1163/156856897X00366}
+
+\bibitem[\citeproctext]{ref-Poggio1988}
+Poggio, G.F., Gonzalez, F., Krauseb, F., 1988. Stereoscopic mechanisms
+in monkey visual cortex: Binocular correlation and disparity
+selectivity, The Journal of Neuroscience.
+
+\bibitem[\citeproctext]{ref-Poggio1985}
+Poggio, G.F., Motter, B.C., Squatrito, S., Trotter, Y., 1985. Responses
+of neurons in visual cortex (V1 and V2) of the alert macaque to dynamic
+random-dot stereograms. Vision Research 25, 397--406.
+\url{https://doi.org/10.1016/0042-6989(85)90065-3}
 
 \bibitem[\citeproctext]{ref-Popal2019}
 Popal, H., Wang, Y., Olson, I.R., 2019. A guide to representational
@@ -945,6 +1083,11 @@ https://doi.org/\url{https://doi.org/10.1016/j.visres.2026.108829}
 Tadmor, Y., Tolhurst, D.J., 1994. Discrimination of changes in the
 second-order statistics of natural and synthetic images. Vision Research
 34, 541--554. \url{https://doi.org/10.1016/0042-6989(94)90167-8}
+
+\bibitem[\citeproctext]{ref-Tyler1976}
+Tyler, C.W., Julesz, B., 1976. The neural transfer characteristic
+(neurontropy) for binocular stochastic stimulation. Biological
+Cybernetics 23, 33--37. \url{https://doi.org/10.1007/BF00344149}
 
 \bibitem[\citeproctext]{ref-Zhaoping2017}
 Zhaoping, L., 2017. Feedback from higher to lower visual areas for

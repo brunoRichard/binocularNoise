@@ -19,7 +19,6 @@ affiliations:
     name: "Department of Ophthalmology, McGill University, Montreal, Qc, Canada"
   - id: 3
     name: "Department of Psychology, University of York, York, UK"
-    format: pdf
 
 bibliography: references.bib
 csl: elsevier-harvard.csl
@@ -76,6 +75,7 @@ addalpha <- function(col, alpha=1){apply(sapply(col, col2rgb)/255, 2, function(x
 # theColours <- c("#56B4E9", "#E69F00", "#999999", "#009E73", "#F0E442", "#0072B2", "#D55E00","#CC79A7")
 theColours <- c("#404040", "#5385A6", "#8DB4CC", "#CDE0ED", "#F0F6F9", "#FFF4F0", "#FFCAB9", "#F6987C", "#D65A3D", "#AD1F00")
 colourRampFunction <- colorRampPalette(theColours, interpolate = "spline")
+colourRampFunctionRSA <- colorRampPalette(theColours[c(2,3,9,10)], interpolate = "linear")
 nSamples <- 10 # change to 1000
 is_windows <- Sys.info()["sysname"] == "Windows"
 ```
@@ -84,6 +84,8 @@ is_windows <- Sys.info()["sysname"] == "Windows"
 
 The human visual system is binocular, yet the perceptual experience is cyclopean. 
 The visual system encodes binocular signals via summing and differencing channels [@May2016] , yet the relative weighting of these pathways remains unclear.
+
+Interocular correlation as a method to target summing and differencing channels. That will require motivation. 
 
 Previous studies have demonstrated that humans can detect interocular correlation in broadband [@Cormack1991;@Julesz1976] and bandpass [@Reynaud2018] stimuli, with performance mediated by stimulus contrast. Early studies used random binary dots 
 
@@ -741,11 +743,14 @@ mtext(c(1,2), 1, at = c(1,2))
 mtext("Disparity\nThresholds", 1, font = 2, line = 2.5, at = (1+2)/2)
 ```
 
+
+
+
 ```{r, fig.width = 20, echo = FALSE, eval = FALSE}
 png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/RSAExp1.png", width = 16, height = 6, res = 300, units = "in", bg = "transparent")
-seq_combined_palette <- c("#CDE0ED", "#8DB4CC", "#5385A6", "#FFF4F0", "#FFCAB9", "#F6987C", "#D65A3D", "#AD1F00")
+# seq_combined_palette <- c("#CDE0ED", "#8DB4CC", "#5385A6", "#FFF4F0", "#FFCAB9", "#F6987C", "#D65A3D", "#AD1F00")
 # theColoursRSA <- c("#FFF4F0", "#FFCAB9", "#F6987C", "#D65A3D", "#AD1F00")
-colourRampFunctionRSA <- colorRampPalette(seq_combined_palette, interpolate = "spline")
+# colourRampFunctionRSA <- colorRampPalette(seq_combined_palette, interpolate = "spline")
 
 rdm_distCor <- dist(experiment1DataZ[,c("ssvepCor")], method = "euclidean")
 rdm_distCor.matrix <- as.matrix(rdm_distCor)
@@ -816,7 +821,7 @@ pvalues[2] <- mean(CSInt > corC)
 pvalues[3] <- mean(ASInt > corS)
 ```
 
-We compared the RDMs for each experimental condition by calculating Spearman's $\rho$ on the lower triangular part of the difference matrix and excluding the diagonal @fig-corSSVEPStereo. Statistical significant was determined with a permutation test, where the labels of the original data were shuffled and a new RDM was calculated. In this way, a particular participant response value was no longer necessarily assigned with its original experimental condition. The correlation coefficient was then calculated on the permuted RMDs 1000 times. We obtain a similar finding to that of the single RDM calculated above: only the RDMs for our SSVEP conditions (interocular correlation and anticorrelation) were correlated in a statistically significant manner ($\rho = .397$, $p = .025$). No indication of similarity was observed between SSVEPs for interocular correlation and disparity thresholds ($\rho = -.215$, $p = .923$) nor SSVEPs for interocular anticorrelation and disparity thresholds ($\rho = -.053$, $p = .527$).
+We compared the RDMs for each experimental condition by calculating Spearman's $\rho$ on the lower triangular part of the difference matrix and excluding the diagonal @fig-corSSVEPStereo. Statistical significant was determined with a permutation test [@Popal2019], where the labels of the original data were shuffled and a new RDM was calculated. In this way, a particular participant response value was no longer necessarily assigned with its original experimental condition. The correlation coefficient was then calculated on the permuted RMDs 1000 times. We obtain a similar finding to that of the single RDM calculated above: only the RDMs for our SSVEP conditions (interocular correlation and anticorrelation) were correlated in a statistically significant manner ($\rho = .397$, $p = .025$). No indication of similarity was observed between SSVEPs for interocular correlation and disparity thresholds ($\rho = -.215$, $p = .923$) nor SSVEPs for interocular anticorrelation and disparity thresholds ($\rho = -.053$, $p = .527$).
 
 ![Representational Dissimilarity Matrices for A) SSVEPs to interocular correlated noise, B) SSVEPs to interocular anticorrelated noise, and C) disparity thresholds. Dissimilarity between observers is defined as the Euclidean distance between scores across observers. Values here are standardized (z-scores) to show distance on a singular axis. The correlation coefficients ($\rho$) and p values (determined via permutation test) across all RDMS are shown below.](Figures/RSAExp1.png){#fig-corSSVEPStereo}
 
@@ -1015,7 +1020,7 @@ for (P in 1:length(theParticipantsRivalry)){
 # dominanceDurationCI <- apply(dominanceDurationCIs, 2, quantile, c(.025, .975))
 ```
 
-```{r, behaviour data figure experiment 2, echo = FALSE, fig.width=8}
+```{r, behaviour figure experiment 2, echo = FALSE, fig.width=8}
 #| label: fig-BehaviourResultsExp2
 #| fig-cap: "A) Summary representation of observer performance on the disparity detection task. B) The distribution of dominance duration and binocular balance of our observers in the binocular rivalry task. Observers had a median dominance duration of 13.13s and a median binocular balance of 0.73."
 
@@ -1326,7 +1331,7 @@ dev.off()
 
 ![A and B) Head plots of the cross-participant average SSVEPs across the five interocular correlation and anticorrelation levels of experiment 2. Responses at the occipital pole appear at an interocular correlation/anticorrelation of $\pm$.48, but are most easily identifiable at $\pm$.96. C) The participant distribution of signal-to-noise ratios to interocular correlation and anticorrelation. The circle marker represents the median signal-to-noise value for each condition.](Figures/Experiment2SSVEPResults.png){#fig-SSVEPResultsExp2}
 
-Neural responses to interocular correlation and anticorrelation in experiment 2 are shown in @fig-SSVEPResultsExp2 As in experiment 1, we only find responses to our stimuli at the fundamental frequency (3Hz). Responses appear at the occipital pole of observers once the degree of interocular correlation reaches $\pm$.48, but the median SNRs for either interocular correlation ($\text{median}_{\text{SNR}_\text{cor}} = 1.03$, $p = .146$) or anticorrelation ($\text{median}_{\text{SNR}_\text{anti}} = 1.05$, $p = .196$) were not statistically significantly different from 1. We do, however, find that SNRs to interocular correlation ($\text{median}_{\text{SNR}_\text{cor}} = 1.17$, $p < .001$) and interocular anticorrelation ($\text{median}_{\text{SNR}_\text{anti}} = 1.06$, $p = .002$) were statistically significantly different from 1 at the highest degree of interocular correlation presented to observers, $\pm$.96, albeit significantly smaller than SNRs reported in experiment 1. As in experiment 1, we find a large amount of variability in the magnitude of responses to interocular correlation and anticorrelation across our observers, particicularly in the $\pm$.96 interocular correlation condition (see [@fig-SSVEPResultsExp2]C).
+Neural responses to interocular correlation and anticorrelation in experiment 2 are shown in @fig-SSVEPResultsExp2 As in experiment 1, we only find responses to our stimuli at the fundamental frequency (3Hz). Responses appear at the occipital pole of observers once the degree of interocular correlation reaches $\pm$.48, but the median SNRs for either interocular correlation ($\text{median}_{\text{SNR}_\text{cor}} = 1.03$, $p = .146$) or anticorrelation ($\text{median}_{\text{SNR}_\text{anti}} = 1.05$, $p = .196$) were not statistically significantly different from 1. We do, however, find that SNRs to interocular correlation ($\text{median}_{\text{SNR}_\text{cor}} = 1.17$, $p < .001$) and interocular anticorrelation ($\text{median}_{\text{SNR}_\text{anti}} = 1.06$, $p = .002$) were statistically significantly different from 1 at the highest degree of interocular correlation presented to observers, $\pm$.96, albeit significantly smaller than SNRs reported in experiment 1. We find a large amount of variability in the magnitude of responses to interocular correlation and anticorrelation across our observers in the $\pm$.96 interocular correlation condition (see [@fig-SSVEPResultsExp2]C).
 
 ```{r, get p value experiment 2, echo = FALSE}
 set.seed(42)
@@ -1371,9 +1376,14 @@ mergedDataFrameBehaviour <- merge(stereoDataFrameExp2, allPsRivalry, by.x = "PP"
 mergedDataExp2 <- merge(mergedDataFrameBehaviour, ssvepExp2DataFrame, by = "PP")
 ```
 
+```{r}
+hcl.colors(8, palette = "red-blue", rev = TRUE)
+```
+
+
 ```{r, echo = FALSE}
-seq_combined_palette <- c("#CDE0ED", "#8DB4CC", "#5385A6", "#FFF4F0", "#FFCAB9", "#F6987C", "#D65A3D", "#AD1F00")
-colourRampFunctionRSA <- colorRampPalette(seq_combined_palette)
+# seq_combined_palette <- c("#AEB6E5", "#B1A3DD", "#B68FD1", "#BA79C2", "#BD64AE", "#BB4F95", "#B53E77", "#A93154")
+# colourRampFunctionRSA <- colorRampPalette(seq_combined_palette)
 theColoursRMD <- colourRampFunctionRSA(100)
 
 out <- sapply(mergedDataExp2, FUN = is.numeric, USE.NAMES = TRUE)
@@ -1437,7 +1447,6 @@ tukey_cor96 <- TukeyHSD(anova_cor96)
 anova_anti96 <- aov(anti96 ~ clusterAssignment, data = mergedDataExp2)
 tukey_anti96 <- TukeyHSD(anova_anti96)
 
-
 anova_cor48 <- aov(cor48 ~ clusterAssignment, data = mergedDataExp2)
 anova_anti48 <- aov(anti48 ~ clusterAssignment, data = mergedDataExp2)
 
@@ -1458,35 +1467,13 @@ anovaoutanti12 <-summary(anova_anti12)
 
 ```
 
-As in experiment 1, the 44 participants that completed all experimental conditions were ordered according to the results of a Ward D2 hierarchical clustering algorithm applied to a RDM that measured the euclidean distance across all experimental conditions. In experiment 2, participants separated into three clusters, which captured the participants that responded strongly ($n = 3$), those with moderate responses ($n = 32$) and finally, participants that showed no responses ($n = 9$) to interocular correlation of $\pm$.48 and greater (see tbl).
+We conducted a Representational Similarly Analysis (RSA) to explain participant variability in neural responses to interocular condition and behavioural performance. As a first step, we built a single Representational Dissimilarity Matrix (RDM) by computing the euclidean distance of the standardized (z-score) participant responses across all experimental conditions and grouped our observers according to the results of a Ward D2 hierarchical clustering algorithm. Participants separated into three clusters:the participants that responded strongly (cluster 1, $n = 3$), those with moderate responses (cluster 2, $n = 32$), and participants that showed no responses (cluster 3, $n = 9$) to interocular correlation of $\pm .48$, $F_\text{cor}$(`r anovaout48[[1]]["clusterAssignment","Df"]`, `r anovaout48[[1]]["Residuals","Df"]`) = `r round(anovaout48[[1]]["clusterAssignment","F value"],2)`, $p=$ `r round(anovaout48[[1]]["clusterAssignment","Pr(>F)"],3)`, $F_\text{anti}$(`r anovaoutanti48[[1]]["clusterAssignment","Df"]`, `r anovaoutanti48[[1]]["Residuals","Df"]`) = `r round(anovaoutanti48[[1]]["clusterAssignment","F value"],2)`, $p=$ `r round(anovaoutanti48[[1]]["clusterAssignment","Pr(>F)"],3)`, and $\pm .96$, $F_\text{cor}$(`r anovaout96[[1]]["clusterAssignment","Df"]`, `r anovaout96[[1]]["Residuals","Df"]`) = `r round(anovaout96[[1]]["clusterAssignment","F value"],2)`, $p=$ `r round(anovaout96[[1]]["clusterAssignment","Pr(>F)"],3)`, $F_\text{cor}$(`r anovaoutanti96[[1]]["clusterAssignment","Df"]`, `r anovaoutanti96[[1]]["Residuals","Df"]`) = `r round(anovaoutanti96[[1]]["clusterAssignment","F value"],2)`, $p=$ `r round(anovaoutanti96[[1]]["clusterAssignment","Pr(>F)"],3)` (see @fig-RSAClustResultsExp2). None of the observers demonstrated reliable responses to lower degrees of interocular correlation. 
 
-| Interocular Correlation | F(2,41) | $p$ | $\eta^2$ |
-|:--------------|:----:|:----:|:----:|
-| .12 | `r round(anovaout12[[1]]["clusterAssignment", "F value"],2)` | `r round(anovaout12[[1]]["clusterAssignment","Pr(>F)"],3)` | `r round(anovaout12[[1]]["clusterAssignment","Sum Sq"]/sum(anovaout12[[1]][,"Sum Sq"]),3)` |
-| .24 | `r round(anovaout24[[1]]["clusterAssignment", "F value"],2)` | `r round(anovaout24[[1]]["clusterAssignment","Pr(>F)"],3)` | `r round(anovaout24[[1]]["clusterAssignment","Sum Sq"]/sum(anovaout24[[1]][,"Sum Sq"]),3)` |
-| .48 | `r round(anovaout48[[1]]["clusterAssignment", "F value"],2)` | `r round(anovaout48[[1]]["clusterAssignment","Pr(>F)"],3)` | `r round(anovaout48[[1]]["clusterAssignment","Sum Sq"]/sum(anovaout48[[1]][,"Sum Sq"]),3)` |
-| .96 | `r round(anovaout96[[1]]["clusterAssignment", "F value"],2)` | `r round(anovaout96[[1]]["clusterAssignment","Pr(>F)"],3)` | `r round(anovaout96[[1]]["clusterAssignment","Sum Sq"]/sum(anovaout96[[1]][,"Sum Sq"]),3)` |
-| |  |  |  |
-| -.12 |`r round(anovaoutanti12[[1]]["clusterAssignment", "F value"],2)` | `r round(anovaoutanti12[[1]]["clusterAssignment","Pr(>F)"],3)` | `r round(anovaoutanti12[[1]]["clusterAssignment","Sum Sq"]/sum(anovaoutanti12[[1]][,"Sum Sq"]),3)` |
-| -.24 | `r round(anovaoutanti24[[1]]["clusterAssignment", "F value"],2)` | `r round(anovaoutanti24[[1]]["clusterAssignment","Pr(>F)"],3)` | `r round(anovaoutanti24[[1]]["clusterAssignment","Sum Sq"]/sum(anovaoutanti24[[1]][,"Sum Sq"]),3)` |
-| -.48 |  `r round(anovaoutanti48[[1]]["clusterAssignment", "F value"],2)` | `r round(anovaoutanti48[[1]]["clusterAssignment","Pr(>F)"],3)` | `r round(anovaoutanti48[[1]]["clusterAssignment","Sum Sq"]/sum(anovaoutanti48[[1]][,"Sum Sq"]),3)` |
-| -.96 | `r round(anovaoutanti96[[1]]["clusterAssignment", "F value"],2)` | `r round(anovaoutanti96[[1]]["clusterAssignment","Pr(>F)"],3)` | `r round(anovaoutanti96[[1]]["clusterAssignment","Sum Sq"]/sum(anovaoutanti96[[1]][,"Sum Sq"]),3)` |
-
-: Goodness-of-fit metrics for all models compared in this study. Errors in predictions for the linear sum model were too large to calculate $R^2$. RMSE is the Root Mean Square error and AIC is the Aikaike Information Criterion. {#tbl-ANOVATableExp2}
-
-
-$F_\text{cor}$(`r anovaout48[[1]]["clusterAssignment","Df"]`, `r anovaout48[[1]]["Residuals","Df"]`) = `r round(anovaout48[[1]]["clusterAssignment","F value"],2)`, $p=$ `r round(anovaout48[[1]]["clusterAssignment","Pr(>F)"],3)`, and anticorrelation of $\pm$.48, $F_\text{anti}$(`r anovaoutanti48[[1]]["clusterAssignment","Df"]`, `r anovaoutanti48[[1]]["Residuals","Df"]`) = `r round(anovaoutanti48[[1]]["clusterAssignment","F value"],2)`, $p=$ `r round(anovaoutanti48[[1]]["clusterAssignment","Pr(>F)"],3)`. 
-
-(see @fig-RSAClustResultsExp2).  
-
-
-Participants with the largest neural responses had a higher degree of binocular balance (M = `r round(theMediansExp2$binocularBalance[1],2)`) 
-
-and longest dominance duration (`r round(theMediansExp2$dominanceDuration[1]/1000,2)`) in the binocular rivalry task, in addition to the lowest disparity thresholds (`r round(theMediansExp2$treshold[1],2)`). 
+Behaviourally, not much differentiated our strong responders (cluster 1) from the moderate responders (cluster 2; see @fig-RSAClustResultsExp2). Both had disparity thresholds that were statistically significantly lower than the non-responders ($m_{3-1} = 12.65$, $p < .001$; $m_{3-2} = 11.26$, $p < .001$) and greater binocular balance ($m_{3-1} = -0.40$, $p = .007$; $m_{3-2} = -0.24$, $p = .004$) as revealed by post-hoc Tukey comparisons. Where we do observe a difference between the strong and moderate responders in the average dominance duration of binocular rivalry, as larger responders had longer dominance duration than the moderate responders ($m_{1-2} = 8.11$, $p = .015$). Interestingly, non-responders also experienced longer dominance duration than the moderate responders ($m_{3-2} = 4.28$, $p = .046$). 
 
 ```{r, fig.width=12, fig.height=12, echo = FALSE}
 #| label: fig-RSAClustResultsExp2
-#| fig-cap: "Big ass figure."
+#| fig-cap: "Participant responses across all experimental conditions of Experiment 2, separated according to the results of the clustering algorithm. A) The disparity thresholds of participants according to their cluster. Individuals in cluster 1, that responded strongly to interocular correlation and anticorrelation, show the lowest disparity thresholds. B) Average dominance duration of participants in the binocular rivalry task. Observers in cluster 1 show the longest dominance duration, albeit it is not statistically significantly different from observers in cluster 3, who did not respond to interocular correlation or anticorrelation. C) Binocular balance of observers as determined from the binocular rivalry task. Participants in cluster 1 show the highest degree of balance between both eyes. D) The interocular correlation response function of observers by cluster. E) The interocular anticorrelation response function of observers by cluster. In both D and E, observers in cluster 1 show responses that exceed a SNR of 1.0 at interocular correlation values of $\\pm$ .48 and greater."
 
 layout(matrix(c(1,2,3,4,4,4,5,5,5), nrow = 3, ncol = 3, byrow = TRUE), widths = c(1,1,1), heights = c(1,1,1))
 
@@ -1495,29 +1482,32 @@ par(mai = c(.5,.2,.2,.2), omi = c(.2, .5, 0,0))
 yLimit <- range(pretty(range(mergedDataExp2$treshold)))
 boxplot(treshold ~ clusterAssignment, data = mergedDataExp2, ylim = yLimit, axes = FALSE, ann = FALSE, boxwex = .5, staplewex = .25, border = theColours[c(1,3,9)], col = NA, lwd = 2)
 axis(2, at = pretty(yLimit), tck = -.015, lwd = 2, labels = FALSE)
-mtext(pretty(yLimit),2, at = pretty(yLimit), line = .4, las = 1)
-mtext("Disparity Thresholds (dB)", 2, font = 2, line = 2.5)
+mtext(pretty(yLimit),2, at = pretty(yLimit), line = .6, las = 1)
+mtext("Disparity Thresholds (dB)", 2, font = 2, line = 2.75)
 mtext("1", 1, at = 1, col = theColours[1])
 mtext("2", 1, at = 2, col = theColours[3])
 mtext("3", 1, at = 3,  col = theColours[9])
+mtext("A", 3, adj = 0, font = 2)
 
 yLimit <- range(pretty(range(mergedDataExp2$dominanceDuration)))
 boxplot(dominanceDuration ~ clusterAssignment, data = mergedDataExp2,ylim = yLimit, axes = FALSE, ann = FALSE, boxwex = .5, staplewex = .25, border = theColours[c(1,3,9)], col = NA, lwd = 2)
 axis(2, at = pretty(yLimit), tck = -.015, lwd = 2, labels = FALSE)
-mtext(pretty(yLimit)/1000,2, at = pretty(yLimit), line = .4, las = 1)
-mtext("Dominance Duration (s)", 2, font = 2, line = 2.5)
+mtext(pretty(yLimit)/1000,2, at = pretty(yLimit), line = .6, las = 1)
+mtext("Dominance Duration (s)", 2, font = 2, line = 2.75)
 mtext("1", 1, at = 1, col = theColours[1])
 mtext("2", 1, at = 2, col = theColours[3])
 mtext("3", 1, at = 3,  col = theColours[9])
+mtext("B", 3, adj = 0, font = 2)
 
 yLimit <- range(pretty(range(mergedDataExp2$binocularBalance)))
 boxplot(binocularBalance ~ clusterAssignment, data = mergedDataExp2,ylim = yLimit, axes = FALSE, ann = FALSE, boxwex = .5, staplewex = .25, border = theColours[c(1,3,9)], col = NA, lwd = 2)
 axis(2, at = pretty(yLimit), tck = -.015, lwd = 2, labels = FALSE)
-mtext(pretty(yLimit),2, at = pretty(yLimit), line = .4, las = 1)
-mtext("Binocular Balance", 2, font = 2, line = 2.5)
+mtext(pretty(yLimit),2, at = pretty(yLimit), line = .6, las = 1)
+mtext("Binocular Balance", 2, font = 2, line = 2.75)
 mtext("1", 1, at = 1, col = theColours[1])
 mtext("2", 1, at = 2, col = theColours[3])
 mtext("3", 1, at = 3,  col = theColours[9])
+mtext("C", 3, adj = 0, font = 2)
 
 yLimit <- range(pretty(range(mergedDataExp2$cor12,mergedDataExp2$cor24,mergedDataExp2$cor48,mergedDataExp2$cor96)))
 boxplot(mergedDataExp2$cor12[mergedDataExp2$clusterAssignment == 1], xlim = c(0,2.5), at = .1, ylim = yLimit, border = NA, col = "white", lwd = 2,boxwex = .35, staplewex = .25, axes = FALSE, ann = FALSE)
@@ -1537,13 +1527,13 @@ boxplot(mergedDataExp2$cor24[mergedDataExp2$clusterAssignment == 3], xlim = c(0,
 boxplot(mergedDataExp2$cor48[mergedDataExp2$clusterAssignment == 3], xlim = c(0,2.5), add = TRUE, at = 2.3, border = theColours[9], col = "white", lwd = 2,boxwex = .35, staplewex = .25, axes = FALSE, ann = FALSE)
 boxplot(mergedDataExp2$cor96[mergedDataExp2$clusterAssignment == 3],xlim = c(0,2.5), add = TRUE, at = 2.5, border = theColours[9], col = "white", lwd = 2,boxwex = .35, staplewex = .25, axes = FALSE, ann = FALSE)
 axis(2, at = pretty(yLimit), lwd = 2, tck = -.015, labels = FALSE)
-mtext(sprintf("%.1f",pretty(yLimit)),2, at = pretty(yLimit), las = 1, line = .4)
-mtext("Signal-to-Noise Ratio", 2, font = 2, line = 2.5)
-mtext(c(.12,.24,.48,.96), 1, at = c(.1,.3,.5,.7,1,1.2,1.4,1.6,1.9,2.1,2.3,2.5), line = 0)
-mtext("Interocular Correlation", 3, font = 2, adj = 0)
-mtext("1", 1, at = .4, line = 2, col = theColours[1])
-mtext("2", 1, at = 1.3, line = 2, col = theColours[3])
-mtext("3", 1, at = 2.2, line = 2, col = theColours[9])
+mtext(sprintf("%.1f",pretty(yLimit)),2, at = pretty(yLimit), las = 1, line = .6)
+mtext("Signal-to-Noise Ratio", 2, font = 2, line = 2.75)
+mtext(c(.12,.24,.48,.96), 1, at = c(.1,.3,.5,.7,1,1.2,1.4,1.6,1.9,2.1,2.3,2.5), line = -1)
+mtext("D. Interocular Correlation", 3, font = 2, adj = 0)
+mtext("1", 1, at = .4, line = 1, col = theColours[1])
+mtext("2", 1, at = 1.3, line = 1, col = theColours[3])
+mtext("3", 1, at = 2.2, line = 1, col = theColours[9])
 
 yLimit <- range(pretty(range(mergedDataExp2$anti12,mergedDataExp2$anti24,mergedDataExp2$anti48,mergedDataExp2$anti96)))
 boxplot(mergedDataExp2$anti12[mergedDataExp2$clusterAssignment == 1], xlim = c(0,2.5), at = .1, ylim = yLimit, border = NA, col = "white", lwd = 2,boxwex = .35, staplewex = .25, axes = FALSE, ann = FALSE)
@@ -1563,13 +1553,13 @@ boxplot(mergedDataExp2$anti24[mergedDataExp2$clusterAssignment == 3], xlim = c(0
 boxplot(mergedDataExp2$anti48[mergedDataExp2$clusterAssignment == 3], xlim = c(0,2.5), add = TRUE, at = 2.3, border = theColours[9], col = "white", lwd = 2,boxwex = .35, staplewex = .25, axes = FALSE, ann = FALSE)
 boxplot(mergedDataExp2$anti96[mergedDataExp2$clusterAssignment == 3],xlim = c(0,2.5), add = TRUE, at = 2.5, border = theColours[9], col = "white", lwd = 2,boxwex = .35, staplewex = .25, axes = FALSE, ann = FALSE)
 axis(2, at = pretty(yLimit), lwd = 2, tck = -.015, labels = FALSE)
-mtext(sprintf("%.1f",pretty(yLimit)),2, at = pretty(yLimit), las = 1, line = .4)
-mtext("Signal-to-Noise Ratio", 2, font = 2, line = 2.5)
-mtext(c(-.12,-.24,-.48,-.96), 1, at = c(.1,.3,.5,.7,1,1.2,1.4,1.6,1.9,2.1,2.3,2.5), line = 0)
-mtext("Interocular Antiorrelation", 3, font = 2, line = 0, adj = 0)
-mtext("1", 1, at = .4, line = 2, col = theColours[1])
-mtext("2", 1, at = 1.3, line =2, col = theColours[3])
-mtext("3", 1, at = 2.2, line = 2, col = theColours[9])
+mtext(sprintf("%.1f",pretty(yLimit)),2, at = pretty(yLimit), las = 1, line = .6)
+mtext("Signal-to-Noise Ratio", 2, font = 2, line = 2.75)
+mtext(c(-.12,-.24,-.48,-.96), 1, at = c(.1,.3,.5,.7,1,1.2,1.4,1.6,1.9,2.1,2.3,2.5), line = -1)
+mtext("E. Interocular Antiorrelation", 3, font = 2, line = 0, adj = 0)
+mtext("1", 1, at = .4, line = 1, col = theColours[1])
+mtext("2", 1, at = 1.3, line = 1, col = theColours[3])
+mtext("3", 1, at = 2.2, line = 1, col = theColours[9])
 ```
 
 
@@ -1676,147 +1666,183 @@ dev.off()
 ```
 
 ```{r, echo = FALSE}
-outDist.Stereo <- dist(mergedDataExp2Z[,1], method = "euclidean")
-outDist.Dominance <- dist(mergedDataExp2Z[,2], method = "euclidean")
-outDist.Balance <- dist(mergedDataExp2Z[,3], method = "euclidean")
-outDist.Cor <- dist(mergedDataExp2Z[,4:7], method = "euclidean")
-outDist.Anti <- dist(mergedDataExp2Z[,8:11], method = "euclidean")
+conditionsExp2 <- c("Stereo", "Dominance", "Balance", "Correlated1", "Correlated2","Correlated3","Correlated4","Anticorrelated1","Anticorrelated2","Anticorrelated3","Anticorrelated4")
+outDist <- array(NA, dim = c(dim(mergedDataExp2Z)[1], dim(mergedDataExp2Z)[1],length(conditionsExp2)))
 
-theCorMatrix <- matrix(NA, nrow = 5, ncol = 5)
-colnames(theCorMatrix) <- c("Stereo", "Dominance", "Balance", "Correlated", "Anticorrelated")
-rownames(theCorMatrix) <- c("Stereo", "Dominance", "Balance", "Correlated", "Anticorrelated")
+for (ii in 1:length(conditionsExp2)){
+  outDist[,,ii] <- as.matrix(dist(mergedDataExp2Z[,ii], method = "euclidean"))
+}
 
-theCorMatrix["Dominance", "Stereo"] <- cor(outDist.Stereo, outDist.Dominance, method = "spearman")
-theCorMatrix["Balance", "Stereo"] <- cor(outDist.Stereo, outDist.Balance, method = "spearman")
-theCorMatrix["Correlated", "Stereo"] <- cor(outDist.Stereo, outDist.Cor, method = "spearman")
-theCorMatrix["Anticorrelated", "Stereo"] <- cor(outDist.Stereo, outDist.Anti, method = "spearman")
+dimnames(outDist)[[1]] <- 1:44
+dimnames(outDist)[[2]] <- 1:44
+dimnames(outDist)[[3]] <- conditionsExp2
 
-theCorMatrix["Balance", "Dominance"] <- cor(outDist.Balance, outDist.Dominance, method = "spearman")
-theCorMatrix["Correlated", "Dominance"] <- cor(outDist.Cor, outDist.Dominance, method = "spearman")
-theCorMatrix["Anticorrelated", "Dominance"] <- cor(outDist.Anti, outDist.Dominance, method = "spearman")
+triIDX <- lower.tri(matrix(NA, nrow = dim(mergedDataExp2Z)[1], ncol = dim(mergedDataExp2Z)[1]), diag = FALSE)
 
-theCorMatrix["Correlated", "Balance"] <- cor(outDist.Cor, outDist.Balance, method = "spearman")
-theCorMatrix["Anticorrelated", "Balance"] <- cor(outDist.Anti, outDist.Balance, method = "spearman")
+theConditionsToCorrelation <- expand.grid(conditionsExp2, conditionsExp2)
+theCorMatrix <- matrix(NA, nrow = 11, ncol = 11)
+colnames(theCorMatrix) <- c("Stereo", "Dominance", "Balance", "Correlated1", "Correlated2","Correlated3","Correlated4","Anticorrelated1","Anticorrelated2","Anticorrelated3","Anticorrelated4")
+rownames(theCorMatrix) <- c("Stereo", "Dominance", "Balance", "Correlated1", "Correlated2","Correlated3","Correlated4","Anticorrelated1","Anticorrelated2","Anticorrelated3","Anticorrelated4")
 
-theCorMatrix["Anticorrelated", "Correlated"] <- cor(outDist.Anti,outDist.Cor, method = "spearman")
+for (iii in 1:dim(theConditionsToCorrelation)[1]){
+  variable1 <- outDist[,,theConditionsToCorrelation[iii,1]]
+  variable2 <- outDist[,,theConditionsToCorrelation[iii,2]]
+
+  theCorMatrix[theConditionsToCorrelation[iii,1], theConditionsToCorrelation[iii, 2]] <- cor(variable1[triIDX], variable2[triIDX], method = "spearman")
+}
 ```
 
-```{r, echo = FALSE, eval = FALSE}
-png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/RSAExp2CorResults.png", width = 6, height = 6, res = 300, units = "in", bg = "transparent")
-par(pty = "s", xpd = TRUE, omi = c(0, 1, .25, 0))
-image(1:5, 1:5, pracma::rot90(theCorMatrix,3), col = colourBarColours, zlim = c(-1,1), axes = FALSE, ann = FALSE)
-text(1,4, round(theCorMatrix[2,1],3))
-text(1,3, round(theCorMatrix[3,1],3))
-text(1,2, round(theCorMatrix[4,1],3))
-text(1,1, round(theCorMatrix[5,1],3))
+```{r, echo = FALSE, eval = FALSE, fig.width=20}
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/RSAExp2CorResults.png", width = 12, height = 12, res = 300, units = "in", bg = "transparent")
+colourBarColours <- colourRampFunctionRSA(100)
 
-text(2,3, round(theCorMatrix[3,2],3))
-text(2,2, round(theCorMatrix[4,2],3))
-text(2,1, round(theCorMatrix[5,2],3))
+IDX <- lower.tri(theCorMatrix, diag = FALSE)
+theCorMatrix[!IDX] <- NA
 
-text(3,2, round(theCorMatrix[4,3],3))
-text(3,1, round(theCorMatrix[5,3],3))
+par(pty = "s", xpd = TRUE, omi = c(0, 1.25, .25, 0))
+image(1:11, 1:11, pracma::rot90(theCorMatrix,3), col = colourBarColours, zlim = c(-1,1), axes = FALSE, ann = FALSE)
 
-text(4,1, round(theCorMatrix[5,4],3))
+text(1,10:1, rev(round(theCorMatrix[11:2,1],3)))
+text(2,9:1, rev(round(theCorMatrix[11:3,2],3)))
+text(3,8:1, rev(round(theCorMatrix[11:4,3],3)))
+text(4,7:1, rev(round(theCorMatrix[11:5,4],3)))
+text(5,6:1, rev(round(theCorMatrix[11:6,5],3)))
+text(6,5:1, rev(round(theCorMatrix[11:7,6],3)))
+text(7,4:1, rev(round(theCorMatrix[11:8,7],3)))
+text(8,3:1, rev(round(theCorMatrix[11:9,8],3)))
+text(9,2:1, rev(round(theCorMatrix[11:10,9],3)))
+text(10, 1, rev(round(theCorMatrix[11,10],3)))
 
-mtext("Dominance\nDuration", 2, at = 4, font = 1, las = 1, line = .2)
-mtext("Binocular\nBalance", 2, at = 3, font = 1, las = 1, line = .2)
-mtext("SSVEP\nCorrelated Noise", 2, at = 2, font =1, las = 1, line = .2)
-mtext("SSVEP\nAnticorrelated Noise", 2, at = 1, font =1, las = 1, line = .2)
+mtext("Dominance\nDuration", 2, at = 10, font = 1, las = 1, line = .2)
+mtext("Binocular\nBalance", 2, at = 9, font = 1, las = 1, line = .2)
+mtext("SSVEP\nCorrelated Noise (.12)", 2, at = 8, font =1, las = 1, line = .2)
+mtext("SSVEP\nCorrelated Noise (.24)", 2, at = 7, font =1, las = 1, line = .2)
+mtext("SSVEP\nCorrelated Noise (.48)", 2, at = 6, font =1, las = 1, line = .2)
+mtext("SSVEP\nCorrelated Noise (.96)", 2, at = 5, font =1, las = 1, line = .2)
 
+mtext("SSVEP\nAnticorrelated Noise (-.12)", 2, at = 4, font =1, las = 1, line = .2)
+mtext("SSVEP\nAnticorrelated Noise (-.24)", 2, at = 3, font =1, las = 1, line = .2)
+mtext("SSVEP\nAnticorrelated Noise (-.48)", 2, at = 2, font =1, las = 1, line = .2)
+mtext("SSVEP\nAnticorrelated Noise (-.96)", 2, at = 1, font =1, las = 1, line = .2)
 
-text(1,4.6,"Disparity\nThresholds", srt = 90, adj = 0, font = 1)
-text(2,3.6,"Dominance\nDuration", srt = 90, adj = 0, font = 1)
-text(3,2.6,"Binocular\nBalance",srt = 90, adj = 0, font = 1)
-text(4, 1.6, "SSVEP\nCorrelated Noise", srt = 90, adj = 0, font = 1)
+text(1,10.6,"Disparity\nThresholds", srt = 90, adj = 0, font = 1)
+text(2,9.6,"Dominance\nDuration", srt = 90, adj = 0, font = 1)
+text(3,8.6,"Binocular\nBalance",srt = 90, adj = 0, font = 1)
 
-rect(1.5,3.5,2.5,2.5, lwd = 3, border = theColours[1])
-rect(3.5,0.5,4.5,1.5, lwd = 3, border = theColours[1])
+text(4, 7.6, "SSVEP\nCorrelated Noise (.12)", srt = 90, adj = 0, font = 1)
+text(5, 6.6, "SSVEP\nCorrelated Noise (.24)", srt = 90, adj = 0, font = 1)
+text(6, 5.6, "SSVEP\nCorrelated Noise (.48)", srt = 90, adj = 0, font = 1)
+text(7, 4.6, "SSVEP\nCorrelated Noise (.96)", srt = 90, adj = 0, font = 1)
+
+text(8, 3.6, "SSVEP\nAnticorrelated Noise (-.12)", srt = 90, adj = 0, font = 1)
+text(9, 2.6, "SSVEP\nAnticorrelated Noise (-.24)", srt = 90, adj = 0, font = 1)
+text(10, 1.6, "SSVEP\nAnticorrelated Noise (-.48)", srt = 90, adj = 0, font = 1)
+
+rect(0.5,4.5,1.5,5.5, lwd = 3, border = theColours[1])
+rect(1.5,8.5,2.5,9.5, lwd = 3, border = theColours[1])
+rect(1.5,5.5,2.5,6.5, lwd = 3, border = theColours[1])
+rect(9.5,0.5,10.5,1.5, lwd = 3, border = theColours[1])
+rect(4.5,5.5,5.5,6.5, lwd = 3, border = theColours[1])
+
 mtext("C. RDM Correlations ", 3, font = 2, at = -.6, line = 0)
 dev.off()
 ```
 
 ```{r, echo = FALSE}
-theCorMatrixCI <- array(NA, dim = c(5,5,1000))
-colnames(theCorMatrixCI) <- c("Stereo", "Dominance", "Balance", "Correlated", "Anticorrelated")
-rownames(theCorMatrixCI) <- c("Stereo", "Dominance", "Balance", "Correlated", "Anticorrelated")
+nSamples <- 1000
+conditionsExp2 <- c("Stereo", "Dominance", "Balance", "Correlated1", "Correlated2","Correlated3","Correlated4","Anticorrelated1","Anticorrelated2","Anticorrelated3","Anticorrelated4")
+outDistCI <- array(NA, dim = c(dim(mergedDataExp2Z)[1], dim(mergedDataExp2Z)[1],length(conditionsExp2)))
+theConditionsToCorrelation <- expand.grid(conditionsExp2, conditionsExp2)
+theCorMatrixCI <- array(NA, dim = c(11, 11, nSamples))
 
 for (i in 1:nSamples){
-  pIDXStereo <- sample(length(mergedDataExp2Z), 44, replace = TRUE)
-  pIDXDominance <- sample(length(mergedDataExp2Z), 44, replace = TRUE)
-  pIDXBalance <- sample(length(mergedDataExp2Z), 44, replace = TRUE)
+  for (ii in 1:length(conditionsExp2)){
+    pIDX <- sample(length(mergedDataExp2Z), 44, replace = TRUE)
+    outDistCI[,,ii] <- as.matrix(dist(mergedDataExp2Z[pIDX], method = "euclidean"))
+  }
   
-  pIDXCor <- sample(length(mergedDataExp2Z), 44, replace = TRUE)
-  pIDXAnti <- sample(length(mergedDataExp2Z), 44, replace = TRUE)
-
-  outDist.StereoCI <- dist(mergedDataExp2Z[pIDXStereo], method = "euclidean")
-  outDist.DominanceCI <- dist(mergedDataExp2Z[pIDXDominance], method = "euclidean")
-  outDist.BalanceCI <- dist(mergedDataExp2Z[pIDXBalance], method = "euclidean")
+  dimnames(outDistCI)[[1]] <- 1:44
+  dimnames(outDistCI)[[2]] <- 1:44
+  dimnames(outDistCI)[[3]] <- conditionsExp2
   
-  outDist.CorCI <- dist(mergedDataExp2Z[pIDXCor], method = "euclidean")
-  outDist.AntiCI <- dist(mergedDataExp2Z[pIDXAnti], method = "euclidean")
+  triIDX <- lower.tri(matrix(NA, nrow = dim(mergedDataExp2Z)[1], ncol = dim(mergedDataExp2Z)[1]), diag = FALSE)
   
-  theCorMatrixCI["Dominance", "Stereo",i] <- cor(outDist.StereoCI, outDist.DominanceCI, method = "spearman")
-  theCorMatrixCI["Balance", "Stereo",i] <- cor(outDist.StereoCI, outDist.BalanceCI, method = "spearman")
-  theCorMatrixCI["Correlated", "Stereo",i] <- cor(outDist.StereoCI, outDist.CorCI, method = "spearman")
-  theCorMatrixCI["Anticorrelated", "Stereo",i] <- cor(outDist.StereoCI, outDist.AntiCI, method = "spearman")
+  dimnames(theCorMatrixCI)[[1]] <- c("Stereo", "Dominance", "Balance", "Correlated1", "Correlated2","Correlated3","Correlated4","Anticorrelated1","Anticorrelated2","Anticorrelated3","Anticorrelated4")
+  dimnames(theCorMatrixCI)[[2]] <- c("Stereo", "Dominance", "Balance", "Correlated1", "Correlated2","Correlated3","Correlated4","Anticorrelated1","Anticorrelated2","Anticorrelated3","Anticorrelated4")
   
-  theCorMatrixCI["Balance", "Dominance",i] <- cor(outDist.BalanceCI, outDist.DominanceCI, method = "spearman")
-  theCorMatrixCI["Correlated", "Dominance",i] <- cor(outDist.CorCI, outDist.DominanceCI, method = "spearman")
-  theCorMatrixCI["Anticorrelated", "Dominance",i] <- cor(outDist.AntiCI, outDist.DominanceCI, method = "spearman")
-  
-  theCorMatrixCI["Correlated", "Balance",i] <- cor(outDist.CorCI, outDist.BalanceCI, method = "spearman")
-  theCorMatrixCI["Anticorrelated", "Balance",i] <- cor(outDist.AntiCI, outDist.BalanceCI, method = "spearman")
-  
-  theCorMatrixCI["Anticorrelated", "Correlated",i] <- cor(outDist.AntiCI,outDist.CorCI, method = "spearman")
+  for (iii in 1:dim(theConditionsToCorrelation)[1]){
+    variable1 <- outDistCI[,,theConditionsToCorrelation[iii,1]]
+    variable2 <- outDistCI[,,theConditionsToCorrelation[iii,2]]
+    
+    theCorMatrixCI[theConditionsToCorrelation[iii,1], theConditionsToCorrelation[iii, 2], i] <- cor(variable1[triIDX], variable2[triIDX], method = "spearman")
+  }
 }
 
-# apply(theCorMatrixCI, c(1,2), quantile, probs = c(.025, .975), na.rm = TRUE)
+exp2RMDCorpValue <- matrix(NA, nrow = 11, ncol = 11)
+colnames(exp2RMDCorpValue) <- c("Stereo", "Dominance", "Balance", "Correlated1", "Correlated2","Correlated3","Correlated4","Anticorrelated1","Anticorrelated2","Anticorrelated3","Anticorrelated4")
+rownames(exp2RMDCorpValue) <- c("Stereo", "Dominance", "Balance", "Correlated1", "Correlated2","Correlated3","Correlated4","Anticorrelated1","Anticorrelated2","Anticorrelated3","Anticorrelated4")
 
-exp2RMDCorpValue <- NULL
-exp2RMDCorpValue[1] <- mean(theCorMatrixCI["Dominance", "Stereo",] >= theCorMatrix["Dominance", "Stereo"])
-exp2RMDCorpValue[2] <- mean(theCorMatrixCI["Balance", "Stereo",] >= theCorMatrix["Balance", "Stereo"])
-exp2RMDCorpValue[3] <- mean(theCorMatrixCI["Correlated", "Stereo",] >= theCorMatrix["Correlated", "Stereo"])
-exp2RMDCorpValue[4] <- mean(theCorMatrixCI["Anticorrelated", "Stereo",] >= theCorMatrix["Anticorrelated", "Stereo"])
-
-exp2RMDCorpValue[5] <- mean(theCorMatrixCI["Balance", "Dominance",] >= theCorMatrix["Balance", "Dominance"])
-exp2RMDCorpValue[6] <- mean(theCorMatrixCI["Correlated", "Dominance",] >= theCorMatrix["Correlated", "Dominance"])
-exp2RMDCorpValue[6] <- mean(theCorMatrixCI["Anticorrelated", "Dominance",] >= theCorMatrix["Anticorrelated", "Dominance"])
-
-exp2RMDCorpValue[7] <- mean(theCorMatrixCI["Correlated", "Balance",] >= theCorMatrix["Correlated", "Balance"])
-exp2RMDCorpValue[8] <- mean(theCorMatrixCI["Anticorrelated", "Balance",] >= theCorMatrix["Anticorrelated", "Balance"])
-
-exp2RMDCorpValue[9] <- mean(theCorMatrixCI["Anticorrelated", "Correlated",] >= theCorMatrix["Anticorrelated", "Correlated"])
+for (p in 1:dim(theConditionsToCorrelation)[1]){
+  if (!is.na(theCorMatrix[theConditionsToCorrelation[p,1], theConditionsToCorrelation[p,2]])){
+    if (theCorMatrix[theConditionsToCorrelation[p,1], theConditionsToCorrelation[p,2]] > 0){
+      exp2RMDCorpValue[theConditionsToCorrelation[p,1], theConditionsToCorrelation[p,2]] <- mean(theCorMatrixCI[theConditionsToCorrelation[p,1],theConditionsToCorrelation[p,2],] >= theCorMatrix[theConditionsToCorrelation[p,1], theConditionsToCorrelation[p,2]])
+    } else {
+      exp2RMDCorpValue[theConditionsToCorrelation[p,1], theConditionsToCorrelation[p,2]] <- mean(theCorMatrixCI[theConditionsToCorrelation[p,1],theConditionsToCorrelation[p,2],] <= theCorMatrix[theConditionsToCorrelation[p,1], theConditionsToCorrelation[p,2]])
+    }
+  }
+}
 ```
 
+Representational Dissimilarity Matrices were also calculated for each experimental condition and compared using Spearman's $\rho$, and as in Experiment 1, statistical significance was determined with a permutation test. The resulting RMDs for each experimental condition are shown in @fig-SSVEPRSAResultsExp2. Comparing condition specific RMDs revealed slightly different results from the single RDM analysis above. We found positive associations between RDMs for binocular balance and dominance duration ($\rho$ $=$ `r round(theCorMatrix["Balance", "Dominance"],3)`, $p = .015$), between dominance duration and SSVEP SNRs for interocular correlation of .48 ($\rho$ $=$ `r round(theCorMatrix["Correlated3", "Dominance"],3)`, $p = .046$), and between SSVEP SNRs for interocular anticorrelation of -.48 and -.96 ($\rho$ $=$ `r round(theCorMatrix["Anticorrelated4", "Anticorrelated3"],3)`, $p = .027$). We found negative associations between SSVEP SNRs for interocular correlations of .96 and disparity thresholds ($\rho$ $=$ `r round(theCorMatrix["Correlated4", "Stereo"],3)`, $p = .004$), and between SSVEP SNRs for interocular correlation of .24 and .48 ($\rho$ $=$ `r round(theCorMatrix["Correlated3", "Correlated2"],3)`, $p = .049$). 
+ 
+![A) Representational Dissimilarity Matrices for all behavioural conditions of Experiment 2. Participants are ordered given the results of the hierarchical clustering algorithm above. B) Representational Dissimilarity Matrices for both SSVEP conditions of Experiment 2. Distances in A and B are in standardized (z-scores) unites. C) The resulting correlation coefficient (Spearman's $\rho$) across the RMDs. Bordered boxes indicate statistically significant correlations determined via permutation test.](Figures/RSAExp2_Behaviour.png){#fig-SSVEPRSAResultsExp2}
 
-There will be text
+```{r, echo = FALSE, eval = FALSE, fig.width=20}
+zLimit <- range(pretty(range(outDist)))
 
-![A) ](Figures/RSAExp2_RMDCorResults.png){#fig-SSVEPRSAResultsExp2}
+for (i in 1:3){
+  png(paste0("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/RSAExp2_BehaviourAndSSVEP",i,".png"), width = 4, height = 4, res = 300, units = "in", bg = "transparent")
+  par(pty = "s", mai = c(.3,.3,.3,.3), omi = c(.1,.2,.3,.2))
+  image(1:dim(mergedDataExp2Z)[1], 1:dim(mergedDataExp2Z)[1], pracma::rot90(outDist[OO,OO,i],3), axes = FALSE, ann = FALSE, col = colourRampFunctionRSA(100), zlim = zLimit)
+  
+  if (i == 1){
+    mtext("1. Disparity Thresholds", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
+    mtext("A. Psychophysics", 3, font = 2,line = 2, adj = 0, cex = 1.2)
+  } else if (i == 2){
+    mtext("2. Dominance Duration", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
+  } else if (i == 3){
+    mtext("3. Binocular Balance", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
+  }
+  dev.off()
+}
 
-```{r, echo = FALSE, eval = FALSE}
-outDist.Cor.Matrix <- as.matrix(outDist.Cor)
-outDist.Anti.Matrix <- as.matrix(outDist.Anti)
+for (i in 4:11){
+    png(paste0("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/RSAExp2_BehaviourAndSSVEP",i,".png"), width = 4, height = 4, res = 300, units = "in", bg = "transparent")
+    par(pty = "s", mai = c(.3,.3,.3,.3), omi = c(.1,.2,.3,.2))
+  image(1:dim(mergedDataExp2Z)[1], 1:dim(mergedDataExp2Z)[1], pracma::rot90(outDist[OO,OO,i],3), axes = FALSE, ann = FALSE, col = colourRampFunctionRSA(100), zlim = zLimit)
+  
+  if (i == 4){
+    mtext("4. Correlated Noise (.12)", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
+    mtext("B. SSVEP", 3, font = 2,line = 2, adj = 0, cex = 1.2)
+  } else if (i == 5) {
+    mtext("5. Correlated Noise (.24)", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
+  } else if (i == 6) {
+    mtext("6. Correlated Noise (.48)", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
+  } else if (i == 7) {
+    mtext("7. Correlated Noise (.96)", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
+  } else if (i == 8){
+    mtext("8. Anticorrelated Noise (-.12)", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
+  } else if (i == 9) {
+    mtext("9. Anticorrelated Noise (-.24)", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
+  } else if (i == 10) {
+    mtext("10. Anticorrelated Noise (-.48)", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
+  } else if (i == 11) {
+    mtext("11. Anticorrelated Noise (-.96)", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
+  }
+  dev.off()
+}
 
-zLimit <- range(pretty(range(RDMsarray[,,1:3],outDist.Cor,outDist.Anti)))
-
-png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/RSAExp2_BehaviourAndSSVEP.png", width = 18, height = 12, res = 300, units = "in", bg = "transparent")
-
-theLayoutMatrix <- matrix(c(1,2,3,4,5,6,7,8), nrow = 2, ncol = 4, byrow = TRUE)
-layout(theLayoutMatrix, widths = c(1,1,1,.2), heights = 1)
-
-par(pty = "s", mai = c(.3,.3,.3,.3), omi = c(.1,.2,.3,.2))
-image(1:dim(mergedDataExp2Z)[1], 1:dim(mergedDataExp2Z)[1], pracma::rot90(RDMsarray[OO,OO,1],3), axes = FALSE, ann = FALSE, col = colourRampFunctionRSA(100), zlim = zLimit)
-mtext("1. Disparity Thresholds", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
-mtext("A. Psychophysics", 3, font = 2,line = 3, adj = 0, cex = 1.2)
-
-par(pty = "s",mai = c(.3,.3,.3,.3))
-image(1:dim(mergedDataExp2Z)[1], 1:dim(mergedDataExp2Z)[1], pracma::rot90(RDMsarray[OO,OO,2],3), axes = FALSE, ann = FALSE, col = colourRampFunctionRSA(100), zlim = zLimit)
-mtext("2. Dominance Duration", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
-
-par(pty = "s",mai = c(.3,.3,.3,.3))
-image(1:dim(mergedDataExp2Z)[1], 1:dim(mergedDataExp2Z)[1], pracma::rot90(RDMsarray[OO,OO,3],3), axes = FALSE, ann = FALSE, col = colourRampFunctionRSA(100), zlim = zLimit)
-mtext("3. Binocular Balance", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/RSAExp2_Coloursbar.png", width = 1.25, height = 4 , res = 300, units = "in", bg = "transparent")
 
 par(pty = "m",mai = c(.5,.3,.5,.3))
 plot(x = NULL, y = NULL, xlim = c(0,1), ylim = c(0,100), ann = FALSE, axes = FALSE)
@@ -1827,22 +1853,14 @@ for (i in 1:100){
 axis(4, at = seq(0,100, length.out = length(pretty(zLimit))), tck = .1, lwd = 3, labels = FALSE)
 mtext(pretty(zLimit), 4, at = seq(0,100, length.out = length(pretty(zLimit))), las = 1, cex = 1.2, line = .4)
 mtext(bquote(bold("Euclidean Distance ("*sigma*")")), 2, font = 2, adj = 1, at = 100,cex = 1.2)
-
-par(pty = "s",mai = c(.3,.3,.3,.3))
-image(1:dim(mergedDataExp2Z)[1], 1:dim(mergedDataExp2Z)[1], pracma::rot90(outDist.Cor.Matrix[OO,OO],3), axes = FALSE, ann = FALSE, col = colourRampFunctionRSA(100), zlim = zLimit)
-mtext("4. Correlated Noise", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
-mtext("B. SSVEP - Interocular Correlation Response Function", 3, font = 2,line = 3, adj = 0, cex = 1.2)
-
-par(pty = "s",mai = c(.3,.3,.3,.3))
-image(1:dim(mergedDataExp2Z)[1], 1:dim(mergedDataExp2Z)[1], pracma::rot90(outDist.Anti.Matrix[OO,OO],3), axes = FALSE, ann = FALSE, col = colourRampFunctionRSA(100), zlim = zLimit)
-mtext("5. Anticorrelated Noise", 3, font = 2,line = 0.5, adj = 0, cex = 1.2)
-
 dev.off()
 ```
 
-## Time Analysis
+Experiment 1 demonstrated that neural responses to interocular correlation can be recorded with SSVEPs, and while we also measured responses to interocular anticorrelation, they were small. We, additionally, found little indication of a behavioural correlate in disparity sensitivity. In Experiment 2, we repeated the procedures of Experiment 1, but increased sample size to 44 to increase power, manipulated the degree of interocular correlation to measure response functions, and added a binocular rivalry task as an additional measure of binocularity in our observers. The median SSVEP responses to interocular correlation and anticorrelation of our large sample was smaller than in Experiment 1, but increasing the sample size did reveal interesting patterns across observers. As in Experiment 1, only a minority of participants demonstrated large SSVEPs to interocular correlations of $\pm$ .48 or greater, while the vast majority of observers ($n = 32$) had moderate responses. The remaining 9 participants had no measurable neural responses to interocular correlation. Responses to interocular anticorrelation were smaller than those to correlation, as would be predicted given the bias towards summing responses in observers [@Zhaoping2017]. 
 
-Feedback signals are predominantly targeted at the summation channels [@Zhaoping2017], so the response can be greater but should be later than difference channels. We look at the SSVEP signal over small chunks of time to see if the magnitude of differencing channels is mostly found in the first moments of stimulus presentation. 
+Unlike in Experiment 1, we did find differences in behavioural measures across the participant clusters. Strong responders had smaller disparity thresholds and better binocular balance than individuals who did not generate SSVEPs to interocular correlation. Strong responders also had longer dominance duration of binocular rivalry than the moderate responders, but these did not differ from the non-responders. Comparing condition specific RDMs altered the findings slightly. While we still find similarity across and within experimental conditions (e.g., binocular balance and dominance duration), very few of the correlation coefficients were statistically significant. Evidently, individual observer responses are more varied, and their analysis returned more moderate results. 
+
+# Time-Frequency Analysis
 
 ```{r, echo = FALSE}
 if (!is_windows){
@@ -1857,7 +1875,44 @@ coloursSpectro <- colorRampPalette(theColours, interpolate = "linear")
 theFsIDX <- spec$f > .5 & spec$f < 20
 
 medianZData <- apply(zDataParticipants, c(1,2,3), median)
+
+snrMedianZData <- array(NA, dim = c(41,45,2,15))
+for (P in 1:15){
+  for (c in 1:2){
+    for (t in 1:45){
+      for (f in 1:41){
+        snrMedianZData[f,t,c,P] <- zDataParticipants[f, t,c,P] / mean(zDataParticipants[c(f-1, f+1), t,c,P])
+      }
+    }
+  }
+}
+medianSNRZData <- apply(snrMedianZData, c(1,2,3), median)
 ```
+
+```{r, echo = FALSE}
+set.seed(42)
+
+pValueCor <- matrix(NA, nrow = 45, ncol = 2)
+for (condition in 1:2){
+  for (time in 1:45){
+    theMedianCor <- median(snrMedianZData[7,time,condition,])
+    dataSubset <- snrMedianZData[7,time,condition,]
+    randomSignsMedian <- NULL
+    
+    diff <- dataSubset - 1
+    
+    for (i in 1:nSamples){
+      IDX1 <- sample(c(-1,1), length(dataSubset), replace = TRUE)
+      randomSigns <- abs(diff) * IDX1
+      randomSignsMedian[i] <- sum(randomSigns)
+    }
+    
+    statisticCor <- sum(diff)
+    pValueCor[time, condition] <- mean(randomSignsMedian >= statisticCor)
+  }
+}
+```
+
 
 ```{r, fig.width=12, fig.height=6, echo = FALSE, eval = FALSE}
 png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/spectroExp1.png", width = 12, height = 5.5, res = 300,units = "in", bg = "transparent")
@@ -1865,8 +1920,8 @@ layoutMatrix <- matrix(c(1,2,3), nrow = 1, ncol = 3)
 layout(layoutMatrix, widths = c(1,1,.2), heights = 1)
 
 par(mai = c(.2,.3,.2,.3), omi = c(.3,.1,.3,.1))
-zLimit <- range(pretty(range(medianZData[theFsIDX,,])))
-image(y = spec$f[theFsIDX], x = spec$t, z = pracma::rot90(medianZData[theFsIDX,,1]), zlim = zLimit, col = colourRampFunctionRSA(100), axes = FALSE, ann = FALSE)
+zLimit <- range(pretty(range(medianZData[3:40,,])))
+image(y = spec$f[theFsIDX], x = spec$t, z = pracma::rot90(medianZData[3:40,,1]), zlim = zLimit, col = colourRampFunctionRSA(100), axes = FALSE, ann = FALSE)
 mtext(c("3Hz", "6Hz", "9Hz", "12Hz", "15Hz", "18Hz"), 2, at = seq(3,18,3), las = 1)
 axis(1, at = c(0:8, max(spec$t)), lwd = 2, tck = -.01, labels = FALSE)
 mtext(0:8, 1, at = 0:8, line = .6)
@@ -1918,11 +1973,13 @@ xLimit <- c(0,9)
 par(mai = c(.2,.3,0,.3), omi = c(.3,.3,.3,.1))
 plot(x = NULL, y = NULL, xlim = xLimit, ylim = yLimit, axes = FALSE, ann = FALSE)
 abline(h = 1, lty = 2, col = "gray75", lwd = 2)
-polygon(c(spec$t, rev(spec$t)), c(snrConfidenceInterval[1,,1], rev(snrConfidenceInterval[2,,1])), col = addalpha(theColours[2]), border = NA)
+
+polygon(c(spec$t, rev(spec$t)), c(snrConfidenceInterval[1,,1], rev(snrConfidenceInterval[2,,1])), col = addalpha(theColours[2],.4), border = NA)
 lines(spec$t, medianSNRs[,1], col = theColours[2], lwd = 3)
 
-polygon(c(spec$t, rev(spec$t)), c(snrConfidenceInterval[1,,2], rev(snrConfidenceInterval[2,,2])), col = addalpha(theColours[9]), border = NA)
+polygon(c(spec$t, rev(spec$t)), c(snrConfidenceInterval[1,,2], rev(snrConfidenceInterval[2,,2])), col = addalpha(theColours[9],.4), border = NA)
 lines(spec$t, medianSNRs[,2], col = theColours[9], lwd = 3)
+
 axis(1, at = 0:9, lwd = 2, tck = -.015,labels = FALSE)
 axis(2, at = pretty(yLimit), lwd = 2, tck = -.015,labels = FALSE)
 mtext(0:9,1,at = 0:9, line = .4)
@@ -1931,6 +1988,15 @@ mtext("Time (s)", 1, font = 2, line = 1.5, adj = 1)
 mtext("SNR", 2, font = 2, line = 2)
 legend("topleft", legend = c("Correlated Noise", "Anticorrelated Noise"), col = theColours[c(2,9)], lwd = 3, bty = "n")
 mtext("B. 3Hz SNR", 3, font = 2, line = 0, adj = 0)
+
+for (i in 1:length(spec$t)){
+  if (pValueCor[i,1] < .05){
+    lines(c(spec$t[i], spec$t[i+1]), c(.25,.25), lwd = 3, col = theColours[2])
+  }
+  if (pValueCor[i,2] < .05){
+    lines(c(spec$t[i], spec$t[i+1]), c(.15,.15), lwd = 3, col = theColours[9])
+  }
+}
 
 dev.off()
 ```
@@ -1952,7 +2018,7 @@ medianZData <- apply(zDataParticipants, c(1,2,3,4), median)
 ```
 
 ```{r, fig.width=22, eval = FALSE, echo = FALSE}
-png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/spectroExp2.png", width = 22, height = 11, res = 300,units = "in", bg = "transparent")
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/spectroExp2.png", width = 22, height = 8, res = 300,units = "in", bg = "transparent")
 
 layoutMatrix <- matrix(c(1:12), nrow = 2, ncol = 6, byrow = TRUE)
 layout(layoutMatrix, widths = c(rep(1,5),.2), heights = c(1,1))
@@ -2011,8 +2077,35 @@ for (i in 1:nSamples){
 snrConfidenceInterval <- apply(medianSNRCI, c(1,2,3), quantile, c(.025, .975))
 ```
 
+```{r, echo = FALSE}
+set.seed(42)
+
+pValueCor <- array(NA, dim = c(45,2,5))
+for (cor in 1:5){
+  for (condition in 1:2){
+    for (time in 1:45){
+      theMedianCor <- median(SNR[time,condition,cor,])
+      dataSubset <- SNR[time,condition,cor, ]
+      randomSignsMedian <- NULL
+      
+      diff <- dataSubset - 1
+      
+      for (i in 1:nSamples){
+        IDX1 <- sample(c(-1,1), length(dataSubset), replace = TRUE)
+        randomSigns <- abs(diff) * IDX1
+        randomSignsMedian[i] <- sum(randomSigns)
+      }
+      
+      statisticCor <- sum(diff)
+      pValueCor[time, condition, cor] <- mean(randomSignsMedian >= statisticCor)
+    }
+  }
+}
+```
+
+
 ```{r, fig.width=12, echo = FALSE, eval = FALSE}
-png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/spectro3HzExp2.png", width = 22, height = 5, res = 300,units = "in", bg = "transparent")
+png("~/Library/CloudStorage/Box-Box/Manuscripts/Binocular Noise Study/Figures/spectro3HzExp2.png", width = 23, height = 5, res = 300,units = "in", bg = "transparent")
 
 yLimit <- c(0,round(max(range(pretty(range(snrConfidenceInterval))))))
 xLimit <- c(0,9)
@@ -2021,10 +2114,10 @@ par(mfcol = c(1,5), mai = c(.2,.1,0,.1), omi = c(.3,.4,.4,.1))
 for (i in 1:5){
   plot(x = NULL, y = NULL, xlim = xLimit, ylim = yLimit, axes = FALSE, ann = FALSE)
   abline(h = 1, lty = 2, col = "gray75", lwd = 2)
-  polygon(c(spec$t, rev(spec$t)), c(snrConfidenceInterval[1,,1,i], rev(snrConfidenceInterval[2,,1,i])), col = addalpha(theColours[2]), border = NA)
+  polygon(c(spec$t, rev(spec$t)), c(snrConfidenceInterval[1,,1,i], rev(snrConfidenceInterval[2,,1,i])), col = addalpha(theColours[2],.4), border = NA)
   lines(spec$t, medianSNRs[,1,i], col = theColours[2], lwd = 3)
   
-  polygon(c(spec$t, rev(spec$t)), c(snrConfidenceInterval[1,,2,i], rev(snrConfidenceInterval[2,,2,i])), col = addalpha(theColours[9]), border = NA)
+  polygon(c(spec$t, rev(spec$t)), c(snrConfidenceInterval[1,,2,i], rev(snrConfidenceInterval[2,,2,i])), col = addalpha(theColours[9],.4), border = NA)
   lines(spec$t, medianSNRs[,2,i], col = theColours[9], lwd = 3)
   axis(1, at = 0:9, lwd = 2, tck = -.01,labels = FALSE)
   axis(2, at = pretty(yLimit), lwd = 2, tck = -.01,labels = FALSE)
@@ -2037,10 +2130,26 @@ for (i in 1:5){
     mtext("B. 3Hz SNR", 3, font = 2, line = 1.5, adj = 0)
   }
   mtext(paste0("r = ",theCors[i]), 3, font = 2, line = 0)
+  
+  for (t in 1:length(spec$t)){
+  if (pValueCor[t,1,i] < .05){
+    lines(c(spec$t[t], spec$t[t+1]), c(.25,.25), lwd = 3, col = theColours[2])
+  }
+  if (pValueCor[t,2,i] < .05){
+    lines(c(spec$t[t], spec$t[t+1]), c(.15,.15), lwd = 3, col = theColours[9])
+  }
+}
 }
 dev.off()
 ```
 
+When reporting on the magnitude of SSVEPs above, we return the amplitude of the fundamental frequency (3Hz) over a 10 second window. While this allows for excellent resolution of temporal frequency, it hides any potential difference in the onset of responses to interocular correlation and anticorrelation. The bias towards summing responses has been argued to stem from an imbalance in the feedback received by summing and differencing channels [@Zhaoping2017; @May2016]. Summing channels receive a larger proportion of feedback from subsequent visual processes, leading to a behavioural and neural bias towards summing responses. This should also mean that summing responses, which are dependent on feedback, occur later than differencing responses. Here, we use short-time Fourier analysis to determine if there are any onset differences in responses to interocular correlation and anticorrelation. 
+
+![A) Time-frequency data (i.e., spectrograms) for interocular correlation (left) and anticorrelation (right). For visualization purposes only frequencies from 0.5Hz to 20Hz are shown. The 3Hz response to stimuli is clearly visible in the interocular correlated noise spectrogram throughout the entire stimulation time. The response to interocular anticorrelation is generally weaker, but is visible at the 6s mark. B) The 3Hz SNRs drawn across time. The filled area represents the 95\% bootstrapped confidence intervals while the lines at the bottom indicate SNRs that are statistically significantly different from 1.0. We observe no meaningful difference in the temporal profile of SNRs across experimental conditions.  ](Figures/SpectrumTimeAnalysisExp1.png){#fig-timeAnalysisExp1}
+
+Spectrograms were built using a short-time Fourier analysis across the entire 11 second duration each trial. To balance the temporal and frequency resolution of the spectrograms, we set the Hann window length to be 2000ms with 90\% overlap. The resulting spectrograms, in [@fig-timeAnalysisExp1]A and [@fig-timeAnalysisExp2]A, show the cross-participant median amplitude of neural responses between .5 and 20 Hz for the first 8.8 seconds of trials. The 3Hz response in experiment 1 to interocular correlation ([@fig-timeAnalysisExp1]A) is clearly visible, while the response to interocular anticorrelation appears to have a later onset. To compare the two experimental condition, we draw the SNRs 3Hz response across time for both experimental conditions ([@fig-timeAnalysisExp1]B) and determined the statistical significance of SNRs across time using a permutation test approach as that used to evaluate SNRs in Experiment 1 and 2. While responses to anticorrelation appear to drop faster than interocular correlation, we find no difference in their onset. We find the exact same pattern in the data collected for Experiment 2 ([@fig-timeAnalysisExp2]B) for all interocular correlation magnitudes. 
+
+![A) Time-frequency data (i.e., spectrograms) for interocular correlation and anticorrelation at all interocular correlation strengths (0 to .96). The 3Hz response is generally smaller than that of experiment 2, but is visible in the strongest interocular correlation conditions (.96). B) The 3Hz SNRs drawn across time. The filled area represents the 95\% bootstrapped confidence intervals while the lines at the bottom indicate SNRs that are statistically significantly different from 1.0. We observe no meaningful difference in the temporal profile of SNRs across experimental conditions.](Figures/SpectrumTimeAnalysisExp2.png){#fig-timeAnalysisExp2}
 
 # General Discussion
 
