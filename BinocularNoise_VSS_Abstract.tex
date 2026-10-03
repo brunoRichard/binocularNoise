@@ -65,6 +65,46 @@
 \fi
 \makeatother
 
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{241,243,245}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.40,0.45,0.13}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\ExtensionTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.28,0.35,0.67}{#1}}
+\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.00,0.46,0.62}{#1}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.07,0.07,0.07}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
 
 \usepackage{longtable,booktabs,array}
 \newcounter{none} % for unnumbered tables
@@ -194,6 +234,10 @@
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
 \hypersetup{
   pdftitle={Neural responses to binocular correlated and anticorrelated noise stimuli},
   pdfauthor={Bruno Richard; Robert F. Hess; Sing Ip Lee; Daniela Marinova; Daniel H. Baker},
@@ -265,6 +309,9 @@ The human visual system is binocular, yet the perceptual experience is
 cyclopean. The visual system encodes binocular signals via summing and
 differencing channels (May and Zhaoping, 2016) , yet the relative
 weighting of these pathways remains unclear.
+
+Interocular correlation as a method to target summing and differencing
+channels. That will require motivation.
 
 Previous studies have demonstrated that humans can detect interocular
 correlation in broadband (Cormack et al., 1991; Julesz and Tyler, 1976)
@@ -857,26 +904,38 @@ Figure~\ref{fig-SSVEPResultsExp2}C).
 \subsubsection{Representational Similarity Analysis
 (RSA)}\label{representational-similarity-analysis-rsa-1}
 
-As in experiment 1, we conducted a Representational Similarly Analysis
-(RSA) to explain participant variability in neural responses to
-interocular condition and behavioural performance. As a first step, we
-built a single Representational Dissimilarity Matrix (RDM) by computing
-the euclidean distance of the standardized (z-score) participant
-responses across all experimental conditions and clustered our observers
-with a Ward D2 hierarchical clustering algorithm. Participants separated
-into three clusters, which captured the participants that responded
-strongly (cluter 1, \(n = 3\)), those with moderate responses (cluter 2,
-\(n = 32\)), and participants that showed no responses (cluter 3,
-\(n = 9\)) to interocular correlation of .48, \(F_\text{cor}\)(2, 41) =
-4.63, \(p=\) 0.015, anticorrelation of -.48, \(F_\text{anti}\)(2, 41) =
-5.92, \(p=\) 0.006, interocular correlation of .96, \(F_\text{cor}\)(2,
-41) = 4.57, \(p=\) 0.016, and anticorrelation of -.96,
-\(F_\text{cor}\)(2, 41) = 22.04, \(p=\) 0 (see
-Figure~\ref{fig-RSAClustResultsExp2}).
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{hcl.colors}\NormalTok{(}\DecValTok{8}\NormalTok{, }\AttributeTok{palette =} \StringTok{"red{-}blue"}\NormalTok{, }\AttributeTok{rev =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+[1] "#AEB6E5" "#B1A3DD" "#B68FD1" "#BA79C2" "#BD64AE" "#BB4F95" "#B53E77"
+[8] "#A93154"
+\end{verbatim}
+
+We conducted a Representational Similarly Analysis (RSA) to explain
+participant variability in neural responses to interocular condition and
+behavioural performance. As a first step, we built a single
+Representational Dissimilarity Matrix (RDM) by computing the euclidean
+distance of the standardized (z-score) participant responses across all
+experimental conditions and grouped our observers according to the
+results of a Ward D2 hierarchical clustering algorithm. Participants
+separated into three clusters:the participants that responded strongly
+(cluster 1, \(n = 3\)), those with moderate responses (cluster 2,
+\(n = 32\)), and participants that showed no responses (cluster 3,
+\(n = 9\)) to interocular correlation of \(\pm .48\),
+\(F_\text{cor}\)(2, 41) = 4.63, \(p=\) 0.015, \(F_\text{anti}\)(2, 41) =
+5.92, \(p=\) 0.006, and \(\pm .96\), \(F_\text{cor}\)(2, 41) = 4.57,
+\(p=\) 0.016, \(F_\text{cor}\)(2, 41) = 22.04, \(p=\) 0 (see
+Figure~\ref{fig-RSAClustResultsExp2}). None of the observers
+demonstrated reliable responses to lower degrees of interocular
+correlation.
 
 Behaviourally, not much differentiated our strong responders (cluster 1)
 from the moderate responders (cluster 2; see
-Figure~\ref{fig-RSAClustResultsExp2}), but both had disparity thresholds
+Figure~\ref{fig-RSAClustResultsExp2}). Both had disparity thresholds
 that were statistically significantly lower than the non-responders
 (\(m_{3-1} = 12.65\), \(p < .001\); \(m_{3-2} = 11.26\), \(p < .001\))
 and greater binocular balance (\(m_{3-1} = -0.40\), \(p = .007\);
@@ -885,8 +944,8 @@ comparisons. Where we do observe a difference between the strong and
 moderate responders in the average dominance duration of binocular
 rivalry, as larger responders had longer dominance duration than the
 moderate responders (\(m_{1-2} = 8.11\), \(p = .015\)). Interestingly,
-non-responders also experienced longer dominance durations
-(\(m_{3-2} = 4.28\), \(p = .046\)).
+non-responders also experienced longer dominance duration than the
+moderate responders (\(m_{3-2} = 4.28\), \(p = .046\)).
 
 \begin{figure}
 
@@ -919,21 +978,24 @@ greater.}
 Representational Dissimilarity Matrices were also calculated for each
 experimental condition and compared using Spearman's \(\rho\), and as in
 Experiment 1, statistical significance was determined with a permutation
-test. To simplify the comparison, the RDMs for SSVEPs were calculated by
-collapsing across the entire interocular correlation response function
-of observers. When comparing RMDs, we only found similarities across
-observers within conditions (Figure~\ref{fig-SSVEPRSAResultsExp2}). That
-is, the RDMs for interocular correlation and anticorrelation were
-statistically significantly correlated (\(\rho\) \(=\) 0.136,
-\(p < .001\)) and so were the RDMs for dominance duration and binocular
-balance (\(\rho\) \(=\) 0.16, \(p < .001\)). We do not, however, find
-statistically significant associations across experimental conditions.
+test. The resulting RMDs for each experimental condition are shown in
+Figure~\ref{fig-SSVEPRSAResultsExp2}. Comparing condition specific RMDs
+revealed slightly different results from the single RDM analysis above.
+We found positive associations between RDMs for binocular balance and
+dominance duration (\(\rho\) \(=\) 0.16, \(p = .015\)), between
+dominance duration and SSVEP SNRs for interocular correlation of .48
+(\(\rho\) \(=\) 0.118, \(p = .046\)), and between SSVEP SNRs for
+interocular anticorrelation of -.48 and -.96 (\(\rho\) \(=\) 0.151,
+\(p = .027\)). We found negative associations between SSVEP SNRs for
+interocular correlations of .96 and disparity thresholds (\(\rho\) \(=\)
+-0.139, \(p = .004\)), and between SSVEP SNRs for interocular
+correlation of .24 and .48 (\(\rho\) \(=\) -0.095, \(p = .049\)).
 
 \begin{figure}
 
 \centering{
 
-\pandocbounded{\includegraphics[keepaspectratio]{Figures/RSAExp2_RMDCorResults.png}}
+\pandocbounded{\includegraphics[keepaspectratio]{Figures/RSAExp2_Behaviour.png}}
 
 }
 
@@ -948,15 +1010,55 @@ statistically significant correlations determined via permutation test.}
 
 \end{figure}%
 
-Brief discussion of the results for experiment 2.
+Experiment 1 demonstrated that neural responses to interocular
+correlation can be recorded with SSVEPs, and while we also measured
+responses to interocular anticorrelation, they were small. We,
+additionally, found little indication of a behavioural correlate in
+disparity sensitivity. In Experiment 2, we repeated the procedures of
+Experiment 1, but increased sample size to 44 to increase power,
+manipulated the degree of interocular correlation to measure response
+functions, and added a binocular rivalry task as an additional measure
+of binocularity in our observers. The median SSVEP responses to
+interocular correlation and anticorrelation of our large sample was
+smaller than in Experiment 1, but increasing the sample size did reveal
+interesting patterns across observers. As in Experiment 1, only a
+minority of participants demonstrated large SSVEPs to interocular
+correlations of \(\pm\) .48 or greater, while the vast majority of
+observers (\(n = 32\)) had moderate responses. The remaining 9
+participants had no measurable neural responses to interocular
+correlation. Responses to interocular anticorrelation were smaller than
+those to correlation, as would be predicted given the bias towards
+summing responses in observers (Zhaoping, 2017).
 
-\section{Time Analysis}\label{time-analysis}
+Unlike in Experiment 1, we did find differences in behavioural measures
+across the participant clusters. Strong responders had smaller disparity
+thresholds and better binocular balance than individuals who did not
+generate SSVEPs to interocular correlation. Strong responders also had
+longer dominance duration of binocular rivalry than the moderate
+responders, but these did not differ from the non-responders. Comparing
+condition specific RDMs altered the findings slightly. While we still
+find similarity across and within experimental conditions (e.g.,
+binocular balance and dominance duration), very few of the correlation
+coefficients were statistically significant. Evidently, individual
+observer responses are more varied, and their analysis returned more
+moderate results.
 
-Feedback signals are predominantly targeted at the summation channels
-(Zhaoping, 2017), so the response can be greater but should be later
-than difference channels. We look at the SSVEP signal over small chunks
-of time to see if the magnitude of differencing channels is mostly found
-in the first moments of stimulus presentation.
+\section{Time-Frequency Analysis}\label{time-frequency-analysis}
+
+When reporting on the magnitude of SSVEPs above, we return the amplitude
+of the fundamental frequency (3Hz) over a 10 second window. While this
+allows for excellent resolution of temporal frequency, it hides any
+potential difference in the onset of responses to interocular
+correlation and anticorrelation. The bias towards summing responses has
+been argued to stem from an imbalance in the feedback received by
+summing and differencing channels (May and Zhaoping, 2016; Zhaoping,
+2017). Summing channels receive a larger proportion of feedback from
+subsequent visual processes, leading to a behavioural and neural bias
+towards summing responses. This should also mean that summing responses,
+which are dependent on feedback, occur later than differencing
+responses. Here, we use short-time Fourier analysis to determine if
+there are any onset differences in responses to interocular correlation
+and anticorrelation.
 
 \begin{figure}
 
@@ -966,9 +1068,40 @@ in the first moments of stimulus presentation.
 
 }
 
-\caption{\label{fig-timeAnalysisExp1}A)}
+\caption{\label{fig-timeAnalysisExp1}A) Time-frequency data (i.e.,
+spectrograms) for interocular correlation (left) and anticorrelation
+(right). For visualization purposes only frequencies from 0.5Hz to 20Hz
+are shown. The 3Hz response to stimuli is clearly visible in the
+interocular correlated noise spectrogram throughout the entire
+stimulation time. The response to interocular anticorrelation is
+generally weaker, but is visible at the 6s mark. B) The 3Hz SNRs drawn
+across time. The filled area represents the 95\% bootstrapped confidence
+intervals while the lines at the bottom indicate SNRs that are
+statistically significantly different from 1.0. We observe no meaningful
+difference in the temporal profile of SNRs across experimental
+conditions.}
 
 \end{figure}%
+
+Spectrograms were built using a short-time Fourier analysis across the
+entire 11 second duration each trial. To balance the temporal and
+frequency resolution of the spectrograms, we set the Hann window length
+to be 2000ms with 90\% overlap. The resulting spectrograms, in
+Figure~\ref{fig-timeAnalysisExp1}A and
+Figure~\ref{fig-timeAnalysisExp2}A, show the cross-participant median
+amplitude of neural responses between .5 and 20 Hz for the first 8.8
+seconds of trials. The 3Hz response in experiment 1 to interocular
+correlation (Figure~\ref{fig-timeAnalysisExp1}A) is clearly visible,
+while the response to interocular anticorrelation appears to have a
+later onset. To compare the two experimental condition, we draw the SNRs
+3Hz response across time for both experimental conditions
+(Figure~\ref{fig-timeAnalysisExp1}B) and determined the statistical
+significance of SNRs across time using a permutation test approach as
+that used to evaluate SNRs in Experiment 1 and 2. While responses to
+anticorrelation appear to drop faster than interocular correlation, we
+find no difference in their onset. We find the exact same pattern in the
+data collected for Experiment 2 (Figure~\ref{fig-timeAnalysisExp2}B) for
+all interocular correlation magnitudes.
 
 \begin{figure}
 
@@ -978,7 +1111,16 @@ in the first moments of stimulus presentation.
 
 }
 
-\caption{\label{fig-timeAnalysisExp2}A)}
+\caption{\label{fig-timeAnalysisExp2}A) Time-frequency data (i.e.,
+spectrograms) for interocular correlation and anticorrelation at all
+interocular correlation strengths (0 to .96). The 3Hz response is
+generally smaller than that of experiment 2, but is visible in the
+strongest interocular correlation conditions (.96). B) The 3Hz SNRs
+drawn across time. The filled area represents the 95\% bootstrapped
+confidence intervals while the lines at the bottom indicate SNRs that
+are statistically significantly different from 1.0. We observe no
+meaningful difference in the temporal profile of SNRs across
+experimental conditions.}
 
 \end{figure}%
 
