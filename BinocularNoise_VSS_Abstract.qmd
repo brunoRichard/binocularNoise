@@ -1376,11 +1376,6 @@ mergedDataFrameBehaviour <- merge(stereoDataFrameExp2, allPsRivalry, by.x = "PP"
 mergedDataExp2 <- merge(mergedDataFrameBehaviour, ssvepExp2DataFrame, by = "PP")
 ```
 
-```{r}
-hcl.colors(8, palette = "red-blue", rev = TRUE)
-```
-
-
 ```{r, echo = FALSE}
 # seq_combined_palette <- c("#AEB6E5", "#B1A3DD", "#B68FD1", "#BA79C2", "#BD64AE", "#BB4F95", "#B53E77", "#A93154")
 # colourRampFunctionRSA <- colorRampPalette(seq_combined_palette)
